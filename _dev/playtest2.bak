@@ -1,0 +1,460 @@
+// Yangi (mashina) o'yin uchun moslashtirilgan testlar to'plami.
+const sh = require('./shim.js');
+const { run, results, win } = sh;
+const out = [];
+function T(label, code) { const r = run(label, code); out.push(label + ': ' + r); return r; }
+
+const N = sh.sandbox.NY3D;
+out.push('handle: ' + (N ? 'OK' : 'YO\'Q'));
+if (!N) { console.log(out.join('\n') + '\n' + results.join('\n')); process.exit(1); }
+out.push('initial: running=' + N.G.running + ' objs=' + N.G.objs.length + ' coins=' + N.G.coins + ' best=' + N.G.meta.best);
+T('render-menu', 'NY3D.render(); "ok"');
+
+// 1) uzoq sessiya
+T('longrun', `(() => {
+  const g = NY3D, G = g.G;
+  g.startRun();
+  let i = 0, err = null, levels = 0, cards = 0, collisions = 0, maxObjs = 0, maxFaces = 0, restarts = 0;
+  const kinds = {};
+  try {
+    for (i = 0; i < 6000; i++) {
+      if (G.paused) { g.pickCard(g.UPGRADES[(Math.random()*g.UPGRADES.length)|0].k); cards++; }
+      if (!G.running) { G.lives = 3; g.startRun(); restarts++; }
+      G.lives = Math.max(G.lives, 2);
+      if (i % 19 === 0) g.moveLane(Math.random() < .5 ? -1 : 1);
+      if (i % 37 === 0) g.jump();
+      if (i % 91 === 0) G.boostOn = !G.boostOn;
+      const before = G.lives;
+      g.update(1/60);
+      if (G.lives < before) collisions++;
+      for (const o of G.objs) kinds[o.kind] = 1;
+      maxObjs = Math.max(maxObjs, G.objs.length);
+      levels = Math.max(levels, G.level);
+      if (i % 6 === 0) { g.render(); }
+    }
+  } catch (e) { err = e.message + ' @' + i; }
+  return JSON.stringify({ frames: i, err, dist: Math.round(G.dist), score: Math.round(G.score), levels, cards,
+    collisions, restarts, coins: G.runCoins, maxObjs, kinds: Object.keys(kinds).sort().join(','),
+    tut: G.tut, lesson: G.lesson, kmh: Math.round(G.maxSpeed * 3.6) });
+})()`);
+
+// 2) spawn qoidasi: har qatorda kamida bitta bo'sh yo'lak, dastlab faqat tangа
+T('spawn-invariant', `(() => {
+  const g = NY3D, G = g.G;
+  g.startRun();
+  let badRows = 0, hazardEarly = 0, rows = 0;
+  for (let r = 0; r < 900; r++) {
+    const z = 200 + r * 14;
+    G.dist = 120 + r * 6;            // 110 m dan o'tgan rejim
+    const before = G.objs.length;
+    g.spawnRow(z);
+    const added = G.objs.slice(before);
+    const lanes = [0, 1, 2].map(l => added.some(o => o.lane === l && g.HAZARD[o.kind]));
+    if (lanes.every(Boolean)) badRows++;
+    rows++;
+    G.objs.length = before;
+  }
+  G.dist = 20; G.objs.length = 0;
+  for (let r = 0; r < 60; r++) { g.spawnRow(30 + r * 12); }
+  for (const o of G.objs) if (g.HAZARD[o.kind] && o.kind !== 'bar' && o.kind !== 'wall') hazardEarly++;
+  const earlyKinds = Array.from(new Set(G.objs.map(o => o.kind))).sort().join(',');
+  return JSON.stringify({ rows, fullyBlockedRows: badRows, firstPhaseKinds: earlyKinds, badEarly: hazardEarly });
+})()`);
+
+// 3) xavf/mukofot vizual tili: har tur uchun badge + patch xatosiz chiziladi
+T('semantics', `(() => {
+  const g = NY3D, G = g.G;
+  g.startRun(); G.objs.length = 0;
+  const seen = { hazard: [], good: [] };
+  for (const k of Object.keys(g.OBJ)) {
+    const o = { kind: k, x: 0, z: 12, y: g.OBJ[k].y, rot: 0.4, lane: 1, taken: false, dead: false };
+    g.drawObj(o);
+    (g.HAZARD[k] ? seen.hazard : seen.good).push(k);
+  }
+  const missingMesh = Object.keys(g.OBJ).filter(k => k !== 'car' && !g.MESHES[k]);
+  return JSON.stringify({ hazard: seen.hazard.join(','), good: seen.good.join(','), missingMesh });
+})()`);
+
+// 4) o'lim yo'li (qizil mashina) -> revive
+T('deathpath', `(() => {
+  const g = NY3D, G = g.G;
+  g.startRun();
+  G.lives = 1; G.shield = 0; G.invul = 0; G.boost = 0; G.boostOn = false; G.nitroT = 0; G.paused = false; G.tut = false;
+  G.objs.length = 0;
+  G.objs.push({ kind: g.KIND.CAR, x: G.x, z: 0.4, y: 0, rot: 0, lane: G.lane, taken: false, dead: false });
+  g.update(1/60);
+  return JSON.stringify({ running: G.running, lives: G.lives, reviveShown: !document.querySelector('#scrRevive').classList.contains('hidden') });
+})()`);
+
+// 5) sakrab o'tish: barjer ustidan — jon ketmaydi, devor ostidan — ketadi
+T('jump-rule', `(() => {
+  const g = NY3D, G = g.G;
+  function trial(kind, y) {
+    g.startRun();
+    G.lives = 3; G.shield = 0; G.invul = 0; G.boost = 0; G.nitroT = 0; G.tut = false; G.paused = false;
+    G.objs.length = 0; G.y = y; G.onGround = false; G.vy = 1;
+    G.objs.push({ kind, x: G.x, z: 0.4, y: 0, rot: 0, lane: G.lane, taken: false, dead: false });
+    const l0 = G.lives; g.update(1/60); return l0 - G.lives;
+  }
+  return JSON.stringify({ barJumped: trial('bar', 1.2), wallJumped: trial('wall', 1.2), coneJumped: trial('cone', 1.2), barRunOver: trial('bar', 0) });
+})()`);
+
+// 6) o'qitish (lessons) ketma-ketligi
+T('tutorial', `(() => {
+  const g = NY3D, G = g.G;
+  g.store.set('tutDone', false); G.tutDone = false;
+  g.startRun();
+  const seq = [];
+  const read = () => seq.push(G.lesson + (document.querySelector('#hint').classList.contains('on') ? '*' : '-'));
+  read();
+  ['lane', 'lane', 'coin', 'coin', 'jump', 'avoid', 'nitro'].forEach(e => { g.lessonEvent(e); read(); });
+  const tut = G.tut;
+  for (let i = 0; i < 60 * 20; i++) g.lessonTick(1/60);
+  return JSON.stringify({ seq: seq.join('>'), finished: !G.tut, tutAfterEvents: tut, legendDim: document.querySelector('#legend').classList.contains('dim') });
+})()`);
+
+// 7) garaj: daraja talabi bilan mashina olish / tanlash
+T('shop', `(() => {
+  const g = NY3D, G = g.G;
+  g.ACCT.lvl = 1; g.ACCT.save();
+  G.coins = 5000;
+  const click = id => document.querySelector('#shipList').dispatch('click',
+    { target: { closest: () => ({ dataset: { id: String(id) } }) } });
+  click(3);
+  const blocked = { car: G.car, owned3: g.store.get('owned3', false), coins: G.coins };
+  g.ACCT.lvl = 20; g.ACCT.save();
+  click(3);
+  const bought = { car: G.car, coins: G.coins, owned: g.store.get('owned3', false) };
+  click(1);
+  g.renderShips();
+  g.ACCT.lvl = 1; g.ACCT.pts = 0; g.ACCT.total = 0; g.ACCT.spent = 0; g.ACCT.save();
+  g.store.set('owned1', false); g.store.set('owned3', false); g.store.set('car', 0); G.car = 0;
+  return JSON.stringify({ blocked, bought, afterSelect: G.car, persisted: g.store.get('car', -1) });
+})()`);
+
+// 8) barcha kuchaytirishlar
+T('allUpgrades', `(() => {
+  const g = NY3D, G = g.G;
+  g.startRun();
+  g.UPGRADES.forEach(u => g.pickCard(u.k));
+  return JSON.stringify({ n: Object.keys(G.upgrades).length, baseSpeed: +G.baseSpeed.toFixed(1), energonMax: G.energonMax,
+    magnetMax: Math.round(G.magnetMax), jumpV: +G.jumpV.toFixed(2), coinMult: +G.coinMult.toFixed(2),
+    maxLives: G.maxLives, lives: G.lives, smashBonus: G.smashBonus, brakePow: +G.brakePow.toFixed(2) });
+})()`);
+
+// 9) klaviatura + touch
+T('keys', `(() => {
+  const g = NY3D, G = g.G;
+  g.startRun();
+  const lane0 = G.lane;
+  const kd = k => window.dispatch('keydown', { key: k, preventDefault() {} });
+  const ku = k => window.dispatch('keyup', { key: k, preventDefault() {} });
+  kd('ArrowLeft'); kd('ArrowLeft'); ku('ArrowLeft'); kd('a'); ku('a');
+  kd(' '); ku(' '); kd('Shift');
+  for (let i = 0; i < 40; i++) g.update(1/60);
+  ku('Shift'); kd('p'); ku('p'); kd('p'); ku('p'); kd('m'); ku('m');
+  const lane1 = G.lane;
+  kd('ArrowRight'); kd('d'); ku('d'); kd('s'); ku('s');
+  window.dispatch('resize', {});
+  return JSON.stringify({ lane0, lane1, boostOn: G.boostOn, paused: G.paused, sound: g.Sound.on, jump: !G.onGround });
+})()`);
+
+// 10) menyu / pause / restart sikli
+T('screens', `(() => {
+  const g = NY3D, G = g.G;
+  g.startRun(); g.togglePause(); g.togglePause();
+  document.querySelector('#btnQuit').dispatch('click', {});
+  document.querySelector('#btnHow').dispatch('click', {});
+  document.querySelector('#btnHowBack').dispatch('click', {});
+  document.querySelector('#btnPlay').dispatch('click', {});
+  const a = { running: G.running };
+  g.gameOver();
+  document.querySelector('#btnMenu').dispatch('click', {});
+  g.startRun(); g.render(); g.menuStats(); g.renderShips();
+  for (let i = 0; i < 200; i++) { g.update(1/60); if (i % 4 === 0) g.render(); }
+  return JSON.stringify({ afterPlay: a, over: G.over, running: G.running, fps: G.fps, frameMs: Math.round(G.frameMs * 10) / 10 });
+})()`);
+
+// 11) akkount iqtisodi: poygadan ochko, daraja oshirish, doimiy bonuslar
+T('acct-economy', `(() => {
+  const g = NY3D, G = g.G, A = g.ACCT;
+  A.lvl = 1; A.pts = 0; A.total = 0; A.spent = 0; A.save();
+  g.startRun();
+  G.score = 12000; G.dist = 900; G.level = 5; G.runCoins = 120; G.meta.best = 1000;
+  const want = A.runPoints(G);
+  g.gameOver();
+  const afterRun = { want, pts: A.pts, total: A.total, banked: g.store.get('coins', -1) >= 0 };
+  A.pts = 500; A.save();
+  const c1 = A.cost(1), ok = A.up();
+  const afterUp = { ok, lvl: A.lvl, pts: A.pts, spent: A.spent, c1 };
+  g.startRun();
+  const lvl2 = { baseSpeed: +G.baseSpeed.toFixed(2), coinMult: +G.coinMult.toFixed(3) };
+  A.lvl = 30; g.startRun();
+  const maxed = { baseSpeed: +G.baseSpeed.toFixed(2), maxLives: G.maxLives, lives: G.lives,
+    energonMax: G.energonMax, jumpV: +G.jumpV.toFixed(3), shieldMax: G.shieldMax };
+  const noPts = (function () { A.lvl = 1; A.pts = 10; A.save(); return { up: A.up(), lvl: A.lvl }; })();
+  A.lvl = 1; A.pts = 0; A.total = 0; A.spent = 0; A.save();
+  return JSON.stringify({ afterRun, afterUp, lvl2, maxed, noPts });
+})()`);
+
+// 12) doimiy kuchlar: narx, daraja talabi, startRun'ga ta'siri, saqlanish
+T('perm-upgrades', `(() => {
+  const g = NY3D, G = g.G, A = g.ACCT, P = g.PERM;
+  A.lvl = 1; A.pts = 0; A.spent = 0; A.save(); P.reset();
+  g.startRun(); const b0 = +G.baseSpeed.toFixed(2);
+  const noMoney = P.buyable(g.UPGRADES[0]);
+  A.pts = 3000; A.save();
+  const p1 = P.price(g.UPGRADES[0]), bought = P.buy(g.UPGRADES[0]);
+  const blockedByLvl = P.buyable(g.UPGRADES.find(u => u.k === 'life'));
+  g.startRun();
+  const after = { baseSpeed: +G.baseSpeed.toFixed(2), rank: P.n('speed'), nextPrice: P.price(g.UPGRADES[0]),
+    persisted: JSON.stringify(g.store.get('perm', null)) };
+  A.lvl = 8; g.startRun();
+  const before = G.maxLives, okLife = P.buy(g.UPGRADES.find(u => u.k === 'life'));
+  g.startRun();
+  const lives = { before: before, maxLives: G.maxLives, lives: G.lives };
+  // maksimal rankdan keyin sotib bo'lmaydi
+  let guard = 0; while (P.buyable(g.UPGRADES.find(u => u.k === 'brake')) === 'ok' && guard++ < 10) P.buy(g.UPGRADES.find(u => u.k === 'brake'));
+  const maxedState = P.buyable(g.UPGRADES.find(u => u.k === 'brake'));
+  P.reset(); A.lvl = 1; A.pts = 0; A.spent = 0; A.save();
+  return JSON.stringify({ b0, noMoney, p1, bought, blockedByLvl, after, okLife, lives, maxedState });
+})()`);
+
+// 13) garaj ma'lumotlari: 9 mashina, har xil shakl, o'sib boruvchi narx/daraja
+T('garage-data', `(() => {
+  const g = NY3D;
+  const bad = [];
+  g.CARS.forEach((c, i) => {
+    if (c.id !== i) bad.push('id@' + i);
+    if (!(c.lvl >= 1)) bad.push('lvl@' + i);
+    if (!(c.cost >= 0)) bad.push('cost@' + i);
+    if (!c.mesh || !c.mesh.f || !c.mesh.f.length) bad.push('mesh@' + i);
+    if (!c.name || !c.tag) bad.push('txt@' + i);
+    if (!(c.boost > 0 && c.magnet > 0)) bad.push('stat@' + i);
+  });
+  let mono = true;
+  for (let i = 1; i < g.CARS.length; i++)
+    if (g.CARS[i].cost <= g.CARS[i - 1].cost || g.CARS[i].lvl <= g.CARS[i - 1].lvl) mono = false;
+  const shapes = {}; g.CARS.forEach(c => { shapes[c.shape] = (shapes[c.shape] || 0) + 1; });
+  g.ACCT.lvl = 1; g.ACCT.save(); g.G.coins = 0; g.renderShips();
+  const html = document.querySelector('#shipList').innerHTML;
+  g.ACCT.lvl = 30; g.G.coins = 99999; g.renderShips();
+  const html2 = document.querySelector('#shipList').innerHTML;
+  g.ACCT.lvl = 1; g.ACCT.save();
+  return JSON.stringify({ cars: g.CARS.length, bad, monotonic: mono, shapes,
+    lockChips: (html.match(/KERAK/g) || []).length, buyChips: (html2.match(/TANBA/g) || []).length });
+})()`);
+
+// 14) progress UI oqimi: game-over paneli, daraja tugmasi, kuchlar bo'limi
+T('progress-ui', `(() => {
+  const g = NY3D, G = g.G, A = g.ACCT;
+  A.lvl = 1; A.pts = 0; A.total = 0; A.spent = 0; A.save(); g.PERM.reset();
+  g.menuStats(); g.renderShips(); g.renderAcct(); g.renderPerks();
+  const perkHtml = document.querySelector('#perkList').innerHTML;
+  const acctHtml = document.querySelector('#acctInfo').innerHTML;
+  G.coins = 900;
+  g.startRun(); G.score = 5000; G.dist = 400; G.level = 3; G.runCoins = 50; G.meta.best = 999999; G.tut = false;
+  g.gameOver();
+  const over = { pts: document.querySelector('#oPts').textContent, cap: document.querySelector('#oAcctCap').textContent,
+    bar: document.querySelector('#oBar').style.width, upShown: !document.querySelector('#btnOverUp').classList.contains('hidden') };
+  document.querySelector('#btnOverUp').dispatch('click', {});
+  const backToMenu = !document.querySelector('#scrMenu').classList.contains('hidden') && !G.over;
+  A.pts = 100; A.save(); g.menuStats();
+  document.querySelector('#btnAcctUp').dispatch('click', {});
+  const lvlAfterBtn = A.lvl, ptsAfter = A.pts;
+  A.pts = 3000; A.save();
+  document.querySelector('#perkList').dispatch('click', { target: { closest: () => ({ dataset: { k: 'speed' } }) } });
+  const rank = g.PERM.n('speed');
+  ['perk', 'acct', 'ships', 'stat', 'set'].forEach(t => g.activateTab(t));
+  const tabsOk = !document.querySelector('#tabSet').classList.contains('hidden') &&
+    document.querySelector('#tabShips').classList.contains('hidden');
+  g.activateTab('ships');
+  g.startRun(); g.render(); g.menuStats();
+  const clean = { lvl: A.lvl, perm: g.PERM.n('speed') };
+  A.lvl = 1; A.pts = 0; A.total = 0; A.spent = 0; A.save(); g.PERM.reset();
+  g.store.set('owned1', false); g.store.set('owned3', false); g.store.set('car', 0);
+  return JSON.stringify({ perkRanks: /class="ranks"/.test(perkHtml), acctRows: (acctHtml.match(/perkline/g) || []).length,
+    over, backToMenu, lvlAfterBtn, ptsAfter, rank, tabsOk, clean });
+})()`);
+
+// 15) Skinlar: ochish, saqlash, mesh qayta qurish, vitrina chip'lari
+T('skins', `(() => {
+  const g = NY3D, A = g.ACCT, c = g.CARS[0], c2 = g.CARS[1];
+  A.lvl = 1; A.save();
+  const lockedIdx = g.SKINS.findIndex(s => (s.lvl || 1) > 1);
+  g.store.set(g.skinKey(c.id), lockedIdx);
+  const fallback = g.skinIdx(c);                      // daraja past -> 0 ga qaytishi kerak
+  g.applySkin(c);
+  const stockPal = c.pal.body === c.body;
+  A.lvl = 30; A.save();
+  const pick = g.SKINS.findIndex(s => s.pal);
+  g.store.set(g.skinKey(c.id), pick); g.applySkin(c);
+  const applied = c.pal.body === g.SKINS[pick].pal.body && c.mesh.v.length > 20;
+  const meshChanged = c.mesh !== g.buildCar(c.body, c.roof, c.glass, c.acc, c.shape, c);
+  // ikkinchi mashina mustaqil skin saqlaydi
+  g.store.set(g.skinKey(c2.id), 0); g.applySkin(c2);
+  const independent = c2.pal.body === c2.body && c.pal.body !== c2.pal.body;
+  // chip'lar: barchasi ko'rinadi, tanlangani active, ochilmagani lock
+  g.G.car = 0; g.renderShips();
+  const html = document.querySelector('#skinPicker').innerHTML;
+  const chips = (html.match(/skin-chip/g) || []).length;
+  A.lvl = 1; A.save(); g.applySkin(c); g.renderShips();
+  const html2 = document.querySelector('#skinPicker').innerHTML;
+  const locked = (html2.match(/ lock/g) || []).length;
+  const hasActive = /skin-chip active/.test(html2);
+  // tugma orqali bosish (ochilmagan skin qo'llanilmasligi kerak)
+  const chipIdx = lockedIdx;
+  document.querySelector('#skinPicker').dispatch('click', { target: { closest: () => ({ dataset: { sk: String(chipIdx) } }) } });
+  const stillStock = g.skinIdx(c) === 0;
+  A.lvl = 30; A.save(); g.applySkin(c); g.store.remove ? 0 : 0;
+  document.querySelector('#skinPicker').dispatch('click', { target: { closest: () => ({ dataset: { sk: String(chipIdx) } }) } });
+  const nowApplied = g.skinIdx(c) === chipIdx;
+  // tozalash
+  g.SKINS.forEach((s, i) => g.store.set(g.skinKey(0), 0));
+  g.store.set(g.skinKey(c2.id), 0);
+  g.applySkin(c); g.applySkin(c2); g.G.car = 0;
+  return JSON.stringify({ skins: g.SKINS.length, fallbackToStock: fallback === 0, stockPal, applied, meshChanged,
+    independent, chips, locked, hasActive, blockedWhileLocked: stillStock, unlockedApplied: nowApplied });
+})()`);
+
+// 16) Responsiv: har xil ekran o'lchamlarida FOV/gorizont va render
+T('responsive', `(() => {
+  const g = NY3D, win = window;
+  const sizes = [[320, 560], [360, 740], [390, 844], [844, 390], [768, 1024], [1024, 600], [1440, 900], [1920, 1080]];
+  const rows = [];
+  let err = null;
+  try {
+    for (const s of sizes) {
+      win.innerWidth = s[0]; win.innerHeight = s[1];
+      g.resize();
+      g.CAM.x = 0;
+      const fov = g.CAM.fov;
+      // o'yinchi mashinasi dz = 8 birlikda turadi: chetki qator ekranda sig'ishi kerak
+      const pOut = g.proj([g.LANES[2], 0, 0], { x: 0, y: 0, s: 0, dz: 0, vis: true });
+      const lanePx = Math.abs(pOut.x - s[0] / 2);
+      const horizon = g.G.lastCy;
+      g.render();
+      rows.push({ w: s[0], h: s[1], fov, laneRatio: +(lanePx / (s[0] / 2)).toFixed(2), fits: lanePx <= s[0] / 2 });
+    }
+  } catch (e) { err = e.message; }
+  win.innerWidth = 1280; win.innerHeight = 720; g.resize();
+  const portrait = (function () { win.innerWidth = 390; win.innerHeight = 844; g.resize(); const p = g.G.portrait; win.innerWidth = 844; win.innerHeight = 390; g.resize(); return { portrait: p, landscape: !g.G.portrait }; })();
+  win.innerWidth = 1280; win.innerHeight = 720; g.resize();
+  return JSON.stringify({ err, sizesOk: rows.every(r => r.fits), worst: rows.map(r => r.w + 'x' + r.h + ':' + r.laneRatio).join(' '), portrait, fovRange: [Math.min.apply(0, rows.map(r => r.fov)) | 0, Math.max.apply(0, rows.map(r => r.fov)) | 0] });
+})()`);
+
+// 17) Tosiqlar/to'plarni chizish: xatosiz + meshlar to'liq
+T('objects-draw', `(() => {
+  const g = NY3D, G = g.G;
+  g.startRun(); G.tut = false; g.setHint(-1); G.objs.length = 0;
+  const kinds = ['car', 'truck', 'bar', 'wall', 'cone', 'coin', 'nitro', 'shield', 'magnet', 'life'];
+  let err = null, drawn = 0;
+  try {
+    kinds.forEach((k, i) => { g.addObj(k, i % 3, 6 + i * 2); });
+    for (const o of G.objs) { const f = g.facesOf(g.MESHES[o.kind] || (o.kind === 'car' ? g.MESHES.car : null), [o.x, 0, o.z], 0, 1); if (!f.length) throw new Error('bo\'sh mesh: ' + o.kind); g.drawObj(o); drawn++; }
+    // uzoqdan yaqindgacha har xil masofada
+    G.t = 1.2;
+    for (const o of G.objs) { o.z = 40; g.drawObj(o); o.z = 2; g.drawObj(o); }
+    g.render();
+  } catch (e) { err = e.message; }
+  const coinFaces = g.MESHES.coin.f.length, ringFaces = g.meshOfRing(.4, .2, '#fff', 8).f.length;
+  const thick = coinFaces > ringFaces * 2;   // qalin disk: old + orqa + yon + muhr
+  const jumpLine = JSON.stringify({ bar: !!g.JUMPABLE.bar, cone: !!g.JUMPABLE.cone, wall: !g.JUMPABLE.wall });
+  G.objs.length = 0; G.running = false;
+  return JSON.stringify({ err, drawn, coinFaces, thickerThanRing: thick, jumpLine, kinds: kinds.length });
+})()`);
+
+// 15) Skinlar: ochish, saqlash, mesh qayta qurish, vitrina chip'lari
+T('skins', `(() => {
+  const g = NY3D, A = g.ACCT, c = g.CARS[0], c2 = g.CARS[1];
+  A.lvl = 1; A.save();
+  const lockedIdx = g.SKINS.findIndex(s => (s.lvl || 1) > 1);
+  g.store.set(g.skinKey(c.id), lockedIdx);
+  g.applySkin(c);
+  const fallback = g.skinIdx(c) === 0 && c.pal.body === c.body;   // daraja past -> zavod rangi
+  A.lvl = 30; A.save();
+  const pick = g.SKINS.findIndex(s => s.pal);
+  g.store.set(g.skinKey(c.id), pick); g.applySkin(c);
+  const applied = c.pal.body === g.SKINS[pick].pal.body;
+  const inMesh = c.mesh.c.indexOf(g.SKINS[pick].pal.body) >= 0 && c.mesh.v.length > 20;
+  g.store.set(g.skinKey(c2.id), 0); g.applySkin(c2);
+  const independent = c2.pal.body === c2.body && c.pal.body !== c2.pal.body;
+  g.G.car = 0; g.renderShips();
+  const html = document.querySelector('#skinPicker').innerHTML;
+  const chips = (html.match(/skin-chip/g) || []).length;
+  const hasActive = /skin-chip active/.test(html);
+  A.lvl = 1; A.save(); g.applySkin(c); g.renderShips();
+  const html2 = document.querySelector('#skinPicker').innerHTML;
+  const lockedChips = (html2.match(/ lock/g) || []).length;
+  document.querySelector('#skinPicker').dispatch('click', { target: { closest: () => ({ dataset: { sk: String(lockedIdx) } }) } });
+  const blockedWhileLocked = g.skinIdx(c) === 0;
+  A.lvl = 30; A.save(); g.applySkin(c);
+  document.querySelector('#skinPicker').dispatch('click', { target: { closest: () => ({ dataset: { sk: String(lockedIdx) } }) } });
+  const unlockedApplied = g.skinIdx(c) === lockedIdx;
+  g.store.set(g.skinKey(c.id), 0); g.store.set(g.skinKey(c2.id), 0);
+  g.applySkin(c); g.applySkin(c2); g.G.car = 0; A.lvl = 1; A.save();
+  return JSON.stringify({ skins: g.SKINS.length, fallback, applied, inMesh, independent, chips, hasActive,
+    lockedChips, blockedWhileLocked, unlockedApplied });
+})()`);
+
+// 16) Responsiv: har xil ekran o'lchamida FOV, gorizont va chizish
+T('responsive', `(() => {
+  const g = NY3D, win = window, P = { x: 0, y: 0, s: 0, dz: 0, vis: true };
+  const sizes = [[320, 560], [360, 740], [390, 844], [844, 390], [768, 1024], [1024, 600], [1440, 900], [1920, 1080]];
+  const rows = [];
+  let err = null;
+  try {
+    for (const s of sizes) {
+      win.innerWidth = s[0]; win.innerHeight = s[1];
+      g.resize();
+      g.CAM.x = 0;
+      const pOut = g.proj([g.LANES[2], 0, 0], P);            // chetki qator (o'yinchi balandligida)
+      const lanePx = Math.abs(pOut.x - s[0] / 2);
+      const hor = g.proj([0, 0, 900], P).y;                  // ufq: uzoq nuqta = cy
+      g.render();
+      rows.push({ w: s[0], h: s[1], fov: Math.round(g.CAM.fov), laneRatio: +(lanePx / (s[0] / 2)).toFixed(2),
+        horR: +(hor / s[1]).toFixed(2), fits: lanePx <= s[0] / 2, horOk: hor > s[1] * .25 && hor < s[1] * .62 });
+    }
+  } catch (e) { err = e.message; }
+  win.innerWidth = 390; win.innerHeight = 844; g.resize(); const portrait = g.G.portrait === true;
+  win.innerWidth = 844; win.innerHeight = 390; g.resize(); const landscape = g.G.portrait === false;
+  win.innerWidth = 1280; win.innerHeight = 720; g.resize();
+  const cvs = document.querySelector('#cvShowcase');
+  cvs.clientWidth = 300; cvs.clientHeight = 150;
+  const fit1 = g.fitShowcase(cvs);
+  const fit2 = g.fitShowcase(cvs);
+  return JSON.stringify({ err, allFit: rows.every(r => r.fits), horizonOk: rows.every(r => r.horOk),
+    lane: rows.map(r => r.w + 'x' + r.h + ':' + r.laneRatio).join(' '),
+    fovRange: [Math.min.apply(0, rows.map(r => r.fov)), Math.max.apply(0, rows.map(r => r.fov))],
+    portrait, landscape, fitStable: fit1.w === fit2.w && fit1.dpr === fit2.dpr, fit: fit1 });
+})()`);
+
+// 17) Tosiqlar/to'plarni chizish: xatosiz + meshlar to'liq
+T('objects-draw', `(() => {
+  const g = NY3D, G = g.G;
+  g.startRun(); G.tut = false; g.setHint(-1); G.objs.length = 0;
+  const kinds = ['car', 'truck', 'bar', 'wall', 'cone', 'coin', 'nitro', 'shield', 'magnet', 'life'];
+  let err = null, drawn = 0;
+  try {
+    kinds.forEach((k, i) => { g.addObj(k, i % 3, 6 + i * 2); });
+    for (const o of G.objs) {
+      const mesh = o.kind === 'car' ? g.MESHES.car : g.MESHES[o.kind];
+      if (!mesh || !g.facesOf(mesh, [o.x, 0, o.z], 0, 1).length) throw new Error('bo\\'sh mesh: ' + o.kind);
+      g.drawObj(o); drawn++;
+    }
+    G.t = 1.2;
+    for (const o of G.objs) { o.z = 40; g.drawObj(o); o.z = 2; g.drawObj(o); }
+    g.render();
+  } catch (e) { err = e.message; }
+  const coinFaces = g.MESHES.coin.f.length;
+  const ringFaces = g.meshOfRing(.4, .2, '#ffffff', 8).f.length;
+  const thickCoin = coinFaces > ringFaces * 2;
+  const jumpable = { bar: !!g.JUMPABLE.bar, cone: !!g.JUMPABLE.cone, wall: !g.JUMPABLE.wall };
+  const bobY = JSON.stringify(Object.keys(g.G.objs.length ? {} : {}));
+  G.objs.length = 0; G.running = false;
+  return JSON.stringify({ err, drawn, coinFaces, ringFaces, thickCoin, jumpable });
+})()`);
+
+console.log(out.join('\n'));
+if (results.length) console.log('\n--- FAILURES ---\n' + results.join('\n'));
+process.exit(results.length ? 1 : 0);

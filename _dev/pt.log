@@ -1,0 +1,25 @@
+handle: OK
+initial: running=false objs=0 coins=0 best=0
+render-menu: ok
+longrun: {"frames":6000,"err":null,"dist":2082,"score":51873,"levels":2,"cards":1,"collisions":5,"restarts":0,"coins":2510,"maxObjs":36,"kinds":"bar,car,coin,cone,life,magnet,nitro,shield,wall","tut":false,"lesson":-1,"kmh":148}
+spawn-invariant: {"rows":900,"fullyBlockedRows":0,"firstPhaseKinds":"coin","badEarly":0}
+semantics: {"hazard":"car,truck,bar,wall,cone","good":"coin,nitro,shield,magnet,life","missingMesh":[]}
+deathpath: {"running":false,"lives":0,"reviveShown":true}
+jump-rule: {"barJumped":0,"wallJumped":1,"coneJumped":0,"barRunOver":1}
+tutorial: {"seq":"0*>1*>1*>2*>2*>3*>4*>-1-","finished":true,"tutAfterEvents":false,"legendDim":true}
+shop: {"blocked":{"car":0,"owned3":false,"coins":5000},"bought":{"car":3,"coins":3600,"owned":true},"afterSelect":0,"persisted":0}
+allUpgrades: {"n":9,"baseSpeed":16.2,"energonMax":125,"magnetMax":12,"jumpV":1.18,"coinMult":1.3,"maxLives":5,"lives":5,"smashBonus":200,"brakePow":0.5}
+keys: {"lane0":1,"lane1":0,"boostOn":false,"paused":false,"sound":false,"jump":true}
+screens: {"afterPlay":{"running":true},"over":false,"running":true,"fps":60,"frameMs":16}
+acct-economy: {"afterRun":{"want":596,"pts":596,"total":596,"banked":true},"afterUp":{"ok":true,"lvl":2,"pts":400,"spent":100,"c1":100},"lvl2":{"baseSpeed":15.18,"coinMult":1.015},"maxed":{"baseSpeed":20.22,"maxLives":9,"lives":9,"energonMax":205,"jumpV":1.27,"shieldMax":18},"noPts":{"up":false,"lvl":1}}
+perm-upgrades: {"b0":15,"noMoney":"pts","p1":120,"bought":true,"blockedByLvl":"lvl","after":{"baseSpeed":16.2,"rank":1,"nextPrice":222,"persisted":"{\"speed\":1}"},"okLife":true,"lives":{"before":5,"maxLives":6,"lives":6},"maxedState":"max"}
+garage-data: {"cars":15,"bad":[],"monotonic":true,"shapes":{"sport":4,"muscle":3,"suv":1,"racer":2,"van":2,"pickup":1,"hyper":2},"lockChips":14,"buyChips":15,"ptsChips":14,"perkChips":15}
+progress-ui: {"perkRanks":true,"acctRows":11,"over":{"pts":"+241","cap":"AKKAUNT LVL 1 · ⭐241 OCHKO","bar":"100.0%","upShown":true},"backToMenu":true,"lvlAfterBtn":2,"ptsAfter":0,"rank":1,"tabsOk":true,"clean":{"lvl":2,"perm":1}}
+skins: {"skins":10,"fallback":true,"applied":true,"inMesh":true,"independent":true,"chips":10,"hasActive":true,"lockedChips":8,"blockedWhileLocked":true,"unlockedApplied":true}
+responsive: {"err":null,"allFit":true,"horizonOk":true,"lane":"320x560:0.61 360x740:0.61 390x844:0.61 844x390:0.36 768x1024:0.61 1024x600:0.46 1440x900:0.41 1920x1080:0.31","fovRange":[326,980],"portrait":true,"landscape":true,"fitStable":true,"fit":{"w":300,"h":150,"dpr":1}}
+objects-draw: {"err":null,"drawn":10,"coinFaces":15,"thickCoin":true,"edgeFaces":12,"jumpable":{"bar":true,"cone":true,"wall":true}}
+buy-points: {"byPts":true,"spentPts":680,"expect5":680,"owned5":true,"auto":true,"autoUsedPts":true,"byCoins":true,"coinsSpent":true,"blocked":true,"untouched":true,"pricePair":true}
+car-perks: {"perks":15,"cars":15,"unknown":[],"noPerk":[],"dupes":[],"unused":[],"inert":[],"nitroSaves":1.82,"steadySlower":true,"speedPlain":23.22,"speedSteady":22.32,"scorePerkMore":true,"scorePlain":71,"scoreMore":91,"magPlain":13.6,"magUp":19.6,"magnetUpWorks":true,"lanePlain":0.183,"laneBrakes":0.05,"brakesSnappier":true,"smashPlain":0,"smashUp":250,"autoRevive":true,"plainAsksAd":true,"air1":true,"dblV":7.37,"singleV":8,"doubleJumpWorks":true,"shieldRegenAfter":5.5}
+track-rotation: {"bad":["A band:1","almashinuv kam:3"],"tracks":8,"sec":120,"transDur":1.7,"timerSwitchSec":120,"orderA":"1,2","seq":"1,3,5,7","bands":"0,1,2,3","atSec":"38,148,268","switches":3,"dupConsec":0,"wrongBand":0,"bandDrop":0,"incomplete":[],"hzAsc":true,"diffAsc":true,"perBand":[2,2,2,2],"blended":true,"sameAfter":true,"hzRange":[0.78,1.34],"props":"cactus,city,crystal,grid,mesa,palm,pyramid,volcano","names":"NEON SHAHAR[OSON★] | PALM SOHIL[OSON★] | QIZIL SAHRO[ORTA★★] | KIBER MATRITSA[ORTA★★] | MUZ TOGʼLARI[QIYIN★★★] | QADIMY PIRAMIDA[QIYIN★★★] | KRISTAL VODIY[EKSTREMAL★★★★] | VULQON HALQASI[EKSTREMAL★★★★]","simMinutes":360}
+easier-road: {"hazPerRow":0.42,"goodPerRow":3.13,"coinPerRow":2.51,"blockedAll":0,"noSafeLane":0,"baseSpeed":15,"after90s":{"level":2,"maxKmh":104,"lives":4},"openingClean":true,"earlyKinds":"bar,coin"}
+car-shapes: {"shapes":7,"bad":[],"meshBad":[],"cars":15}

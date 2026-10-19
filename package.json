@@ -1,0 +1,12 @@
+{
+  "name": "neon-yarish-duel-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WebSocket matchmaking and authoritative state for Neon Yarish duels",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
