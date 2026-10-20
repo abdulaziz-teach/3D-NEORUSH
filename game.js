@@ -29,12 +29,12 @@ const ACCT = {
   can(lvl) { return lvl <= this.lvl; },
   canUp() { return this.lvl < this.maxLvl && this.pts >= this.cost(this.lvl); },
   up() {
-    if (this.lvl >= this.maxLvl) { toast('⭐ Maksimal daraja!'); return false; }
+    if (this.lvl >= this.maxLvl) { toast('⭐ Достигнут максимальный уровень!'); return false; }
     const c = this.cost(this.lvl);
-    if (this.pts < c) { toast((c - this.pts) + ' ⭐ ochko yetishmaydi'); Sound.blip(200, .12, 'sawtooth', .18); return false; }
+    if (this.pts < c) { toast('Не хватает ' + (c - this.pts) + ' ⭐ очков'); Sound.blip(200, .12, 'sawtooth', .18); return false; }
     this.pts -= c; this.spent += c; this.lvl++; this.save();
     Sound.chord([523, 659, 784, 1046], .4, .2);
-    toast('⭐ AKKAUNT ' + this.lvl + '-DARAJAGA OCHILDI! ' + this.nextBonusText(this.lvl), 2600);
+    toast('⭐ ОТКРЫТ ' + this.lvl + '-Й УРОВЕНЬ АККАУНТА! ' + this.nextBonusText(this.lvl), 2600);
     renderAcct(); renderPerks(); renderShips(); menuStats();
     return true;
   },
@@ -47,24 +47,24 @@ const ACCT = {
   extraShield() { return Math.floor((this.lvl - 1) / 6) * 3; },
   bonusRows() {
     return [
-      ['⚡ Bazaviy tezlik', '+' + Math.round((this.speedMul() - 1) * 100) + '%'],
-      ['🪙 Tanga va ochko', '+' + Math.round((this.coinMul() - 1) * 100) + '%'],
-      ['❤ Qoʼshimcha jon', this.extraLives() + ' ta'],
-      ['🛢 Nitro sigʼimi', '+' + this.extraEnergon()],
-      ['🦘 Sakrash kuchi', '+' + Math.round((this.jumpMul() - 1) * 100) + '%'],
-      ['🛡 Boshlangʼich qalqon', this.extraShield() + ' s'],
-      ['🚗 Garaj', CARS.filter(c => c.lvl <= this.lvl).length + ' / ' + CARS.length + ' mashina ochiq']
+      ['⚡ Базовая скорость', '+' + Math.round((this.speedMul() - 1) * 100) + '%'],
+      ['🪙 Монеты и очки', '+' + Math.round((this.coinMul() - 1) * 100) + '%'],
+      ['❤ Дополнительные жизни', this.extraLives()],
+      ['🛢 Запас нитро', '+' + this.extraEnergon()],
+      ['🦘 Сила прыжка', '+' + Math.round((this.jumpMul() - 1) * 100) + '%'],
+      ['🛡 Стартовый щит', this.extraShield() + ' с'],
+      ['🚗 Гараж', CARS.filter(c => c.lvl <= this.lvl).length + ' / ' + CARS.length + ' машин открыто']
     ];
   },
   nextBonusText(n) {
     n = n == null ? this.lvl : n; // n = yangi daraja
-    const b = ['⚡ Tezlik +1.2%'];
-    if (n % 4 === 1) b.push('🛢 Nitro zaxirasi +15');
-    if (n % 5 === 1) b.push('❤ Qoʼshimcha jon +1');
-    if (n % 3 === 1) b.push('🦘 Sakrash +3%');
-    if (n % 6 === 1) b.push('🛡 Qalqon +3 s');
+    const b = ['⚡ Скорость +1,2%'];
+    if (n % 4 === 1) b.push('🛢 Запас нитро +15');
+    if (n % 5 === 1) b.push('❤ Дополнительная жизнь +1');
+    if (n % 3 === 1) b.push('🦘 Прыжок +3%');
+    if (n % 6 === 1) b.push('🛡 Щит +3 с');
     const nc = CARS.filter(c => (c.lvl || 1) === n).map(c => c.name);
-    if (nc.length) b.push('🔓 Yangi mashina: ' + nc.join(', '));
+    if (nc.length) b.push('🔓 Новая машина: ' + nc.join(', '));
     return b.join(' · ');
   },
   /* Poyga natijasidan ochko hisoblash */
@@ -86,14 +86,14 @@ const PERM = {
   },
   buy(u) {
     const st = this.buyable(u);
-    if (st === 'max') { toast(u.ic + ' Bu kuch allaqachon maksimal'); return false; }
-    if (st === 'lvl') { toast('🔒 Buning uchun akkaunt ' + (u.pl || 1) + '-daraja kerak'); Sound.blip(200, .12, 'sawtooth', .18); return false; }
-    if (st === 'pts') { toast((this.price(u) - ACCT.pts) + ' ⭐ ochko yetishmaydi'); Sound.blip(200, .12, 'sawtooth', .18); return false; }
+    if (st === 'max') { toast(u.ic + ' Улучшение уже максимального уровня'); return false; }
+    if (st === 'lvl') { toast('🔒 Требуется ' + (u.pl || 1) + '-й уровень аккаунта'); Sound.blip(200, .12, 'sawtooth', .18); return false; }
+    if (st === 'pts') { toast('Не хватает ' + (this.price(u) - ACCT.pts) + ' ⭐ очков'); Sound.blip(200, .12, 'sawtooth', .18); return false; }
     ACCT.pts -= this.price(u); ACCT.spent += this.price(u);
     this.data[u.k] = this.n(u.k) + 1;
     store.set('perm', this.data); ACCT.save();
     Sound.chord([659, 880, 1174], .3, .18);
-    toast(u.ic + ' ' + u.name + ' → ' + this.n(u.k) + '/' + this.rankMax(u) + ' rank');
+    toast(u.ic + ' ' + u.name + ' → уровень ' + this.n(u.k) + '/' + this.rankMax(u));
     return true;
   },
   reset() { this.data = {}; store.set('perm', {}); }
@@ -527,24 +527,24 @@ const Sound = {
 
 /* --------------------------- YANDEX GAMES SDK --------------------------- */
 const YA = {
-  ready: false, player: null, lang: 'uz', sdk: null,
+  ready: false, player: null,   lang: 'ru', sdk: null,
   async init() {
     const note = document.getElementById('sdkNote'), rn = document.getElementById('reviveNote');
     try {
       if (typeof window.YaGames === 'undefined') {
-        if (note) note.textContent = "SDK topilmadi — o'yin to'liq avtonom ishlaydi (offline rejim).";
-        if (rn) rn.textContent = "SDK yo'q: tiriltirish reklamasiz, bir marta beriladi.";
+        if (note) note.textContent = 'SDK не найден — игра работает автономно (офлайн).';
+          if (rn) rn.textContent = 'Без SDK доступно одно бесплатное воскрешение.';
         return;
       }
       const sdk = await window.YaGames.init({ leaderboards: true, cloudSave: true });
       this.sdk = sdk; this.ready = true;
-      this.lang = (sdk.environment && sdk.environment.i18n && sdk.environment.i18n.lang) || 'uz';
+      this.lang = 'ru';
       try { this.player = await sdk.getPlayer(); } catch {}
       try { sdk.features && sdk.features.LoadingAPI && sdk.features.LoadingAPI.ready(); } catch {}
-      if (note) note.textContent = 'Yandex Games SDK ulang — reklama, saqlash va liderbord faol.';
-      if (rn) rn.textContent = 'Reklama ko‘rib tiriltirasiz (1 marta).';
+      if (note) note.textContent = 'Yandex Games SDK подключён — реклама, сохранения и таблица лидеров активны.';
+      if (rn) rn.textContent = 'Воскресните, посмотрев рекламу (1 раз).';
     } catch (e) {
-      if (note) note.textContent = "SDK: ba'zi imkoniyatlar mavjud emas — o'yin baribir ishlaydi.";
+      if (note) note.textContent = 'SDK: некоторые функции недоступны, но игра продолжит работать.';
     }
   },
   async interstitial() {
@@ -852,68 +852,68 @@ const MESHES = { car: null, truck: MESH_TRUCK, bar: MESH_BAR, wall: MESH_WALL, c
    DIQQAT: 15 ta mashina va 15 ta noyub perk — hech bir perk takrorlanmaydi,
    har bir perk o'yin mantig'ida haqiqiy ta'sirga ega (applyPerk + update). */
 const PERKS = {
-  steady:   { ic: '🌱', name: 'Ilıq start', desc: 'Tezlik 30% sekinroq oshadi — boshlash oson' },
-  drain:    { ic: '⚡', name: 'Tejamkor nitro', desc: 'Energon 45% sekin sarflanadi' },
-  score:    { ic: '🏆', name: 'Rekordchi', desc: 'Har bir metr 28% koʼp ochko beradi' },
-  coin:     { ic: '🪙', name: 'Oltin qoʼl', desc: 'Har bir tanga koʼproq beradi' },
-  magnetup: { ic: '🧲', name: 'Uzoq magnit', desc: 'Magnit 6 sekund koʼproq ishlaydi' },
-  turbo:    { ic: '🚀', name: 'Turbo yurak', desc: 'Bazaviy tezlik va nitro kuchliroq' },
-  armor:    { ic: '❤', name: 'Zirh', desc: '+1 qoʼshimcha jon bilan boshlaysiz' },
-  luck:     { ic: '🍀', name: 'Baxt', desc: 'Yoʼlda kuchlar koʼproq chiqadi' },
-  combo:    { ic: '🔥', name: 'Kombo ustasi', desc: 'Kombo 50% sekin soʼnadi' },
-  smash:    { ic: '💥', name: 'Bufer kuchi', desc: 'Nitroda tosiqni urib +250 ochko' },
-  brakes:   { ic: '🛑', name: 'Aniq burilish', desc: 'Qatorlar orasida chaqqon oʼtadi' },
-  sregen:   { ic: '♻', name: 'Qayta tiklanuvchi qalqon', desc: 'Qalqon tugasa, oʼz-oʼzidan qaytadi' },
-  djump:    { ic: '🦘', name: 'Ikki marta sakrash', desc: 'Havoda yana bir marta sakraydi' },
-  revive:   { ic: '🚑', name: 'Tirik qolgich', desc: 'Jon tugasa — reklamasiz bir marta tiriladi' },
-  ghost:    { ic: '👻', name: 'Arvoh', desc: 'Baʼzi urilishlarni sezmaydi oʼtadi' }
+  steady:   { ic: '🌱', name: 'Плавный старт', desc: 'Скорость растёт на 30% медленнее — проще начать' },
+  drain:    { ic: '⚡', name: 'Экономное нитро', desc: 'Энергия расходуется на 45% медленнее' },
+  score:    { ic: '🏆', name: 'Рекордсмен', desc: 'На 28% больше очков за каждый метр' },
+  coin:     { ic: '🪙', name: 'Золотая жила', desc: 'Каждая монета приносит больше' },
+  magnetup: { ic: '🧲', name: 'Долгий магнит', desc: 'Магнит работает на 6 секунд дольше' },
+  turbo:    { ic: '🚀', name: 'Турбодвигатель', desc: 'Выше базовая скорость и мощнее нитро' },
+  armor:    { ic: '❤', name: 'Броня', desc: 'Начинайте гонку с дополнительной жизнью' },
+  luck:     { ic: '🍀', name: 'Удача', desc: 'На трассе чаще появляются бонусы' },
+  combo:    { ic: '🔥', name: 'Мастер комбо', desc: 'Комбо угасает на 50% медленнее' },
+  smash:    { ic: '💥', name: 'Мощный бампер', desc: 'Тараньте препятствия на нитро и получайте +250 очков' },
+  brakes:   { ic: '🛑', name: 'Точный поворот', desc: 'Быстрее перестраивайтесь между полосами' },
+  sregen:   { ic: '♻', name: 'Восстановление щита', desc: 'Щит восстанавливается после окончания' },
+  djump:    { ic: '🦘', name: 'Двойной прыжок', desc: 'Можно прыгнуть ещё раз в воздухе' },
+  revive:   { ic: '🚑', name: 'Второй шанс', desc: 'Один раз воскресните без рекламы' },
+  ghost:    { ic: '👻', name: 'Призрак', desc: 'Иногда позволяет проскочить сквозь препятствие' }
 };
 const PERK_KEYS = Object.keys(PERKS);
 const CARS = [
-  { id: 0, name: 'Neon Skor', cost: 0, pcost: 0, lvl: 1, shape: 'sport', body: '#00e5ff', roof: '#0b2e46', glass: '#bff5ff', acc: '#7dff9b',
-    boost: 1.00, shieldStart: 0, magnet: 1.0, tag: 'Boshlangʼich mashina', perk: 'steady' },
-  { id: 1, name: 'Pushti Yel', cost: 450, pcost: 90, lvl: 2, shape: 'sport', body: '#ff2fb9', roof: '#3a0d2c', glass: '#ffd9f2', acc: '#ffd166',
-    boost: 1.25, shieldStart: 0, magnet: 1.10, tag: 'Nitro kuchliroq', perk: 'drain' },
-  { id: 2, name: 'Oltin Fursat', cost: 900, pcost: 180, lvl: 3, shape: 'muscle', body: '#ffd166', roof: '#3b2e10', glass: '#fff6d8', acc: '#fff3c4',
-    boost: 1.15, shieldStart: 6, magnet: 1.30, tag: 'Ochko bilan start', perk: 'score' },
-  { id: 3, name: 'Sariq Taksi', cost: 1400, pcost: 280, lvl: 4, shape: 'sport', body: '#ffc21a', roof: '#2b2205', glass: '#fff4cf', acc: '#1a1a1a', sign: 1,
-    boost: 1.20, shieldStart: 3, magnet: 1.45, tag: 'Tangani koʼprok yigʼadi', perk: 'coin' },
-  { id: 4, name: 'Yashil Fantom', cost: 2200, pcost: 440, lvl: 6, shape: 'sport', body: '#7dff9b', roof: '#0e3320', glass: '#dcffe4', acc: '#00e5ff',
-    boost: 1.10, shieldStart: 8, magnet: 1.60, tag: 'Magnit uzoq ishlaydi', perk: 'magnetup' },
-  { id: 5, name: 'Chaqmoq Racer', cost: 3400, pcost: 680, lvl: 8, shape: 'racer', body: '#c8d6ff', roof: '#16204a', glass: '#8ef9ff', acc: '#ff2fb9',
-    boost: 1.60, shieldStart: 0, magnet: 1.20, tag: 'Eng tez mashina', perk: 'turbo' },
-  { id: 6, name: 'Qalʼa GT', cost: 4800, pcost: 960, lvl: 11, shape: 'muscle', body: '#9fb4ff', roof: '#1b2352', glass: '#e6eeff', acc: '#ffd166',
-    boost: 1.05, shieldStart: 16, magnet: 1.35, tag: 'Ogʼir zirh: +1 jon', perk: 'armor' },
-  { id: 7, name: 'Politseyskiy', cost: 6500, pcost: 1300, lvl: 14, shape: 'sport', body: '#f2f6ff', roof: '#10131f', glass: '#cfe9ff', acc: '#0b1020', bar: 1,
-    boost: 1.40, shieldStart: 10, magnet: 1.70, tag: 'Tinchlik qoʼriqchisi', perk: 'luck' },
-  { id: 8, name: 'Titan Yel', cost: 9000, pcost: 1800, lvl: 18, shape: 'muscle', body: '#ff6d2f', roof: '#3a1200', glass: '#ffd9c2', acc: '#ffe066',
-    boost: 1.55, shieldStart: 12, magnet: 1.95, tag: 'Kuchli dvigatel', perk: 'combo' },
-  { id: 9, name: 'Koʼk GT', cost: 12000, pcost: 2400, lvl: 20, shape: 'hyper', body: '#3b8cff', roof: '#0a1b3a', glass: '#cfe4ff', acc: '#7dff9b',
-    boost: 1.25, shieldStart: 10, magnet: 1.50, tag: 'Bufer: tosiqni urib ochadi', perk: 'smash' },
-  { id: 10, name: 'Kumush Bolt', cost: 15000, pcost: 3000, lvl: 22, shape: 'racer', body: '#dfe8ff', roof: '#2b3550', glass: '#9fe8ff', acc: '#00e5ff',
-    boost: 1.70, shieldStart: 4, magnet: 1.30, tag: 'Chaqqon qator almashish', perk: 'brakes' },
-  { id: 11, name: 'Yongin Ochiq', cost: 18500, pcost: 3700, lvl: 24, shape: 'muscle', body: '#ff3b30', roof: '#3a0a06', glass: '#ffd7c2', acc: '#ffb02e', scoop: 1,
-    boost: 1.45, shieldStart: 18, magnet: 1.60, tag: 'Olov qalqoni', perk: 'sregen' },
-  { id: 12, name: 'Shamol Yoʼlchisi', cost: 23000, pcost: 4600, lvl: 26, shape: 'hyper', body: '#7dff9b', roof: '#04140c', glass: '#e6fff2', acc: '#00e5ff', wing: 2,
-    boost: 1.65, shieldStart: 8, magnet: 1.75, tag: 'Havoda ikki marta sakraydi', perk: 'djump' },
-  { id: 13, name: 'Oltin GT', cost: 28000, pcost: 5600, lvl: 28, shape: 'sport', body: '#ffd166', roof: '#4a3208', glass: '#fff6d8', acc: '#ff9a3c',
-    boost: 1.30, shieldStart: 22, magnet: 2.10, tag: 'Jon tugasa — bir marta tiriladi', perk: 'revive' },
-  { id: 14, name: 'Miti F1', cost: 35000, pcost: 7000, lvl: 30, shape: 'hyper', body: '#00e5ff', roof: '#06121f', glass: '#bff5ff', acc: '#ff2fb9', wing: 3, nose: 1,
-    boost: 1.85, shieldStart: 12, magnet: 1.85, tag: 'AFSONA — eng kuchlisi', perk: 'ghost' }
+  { id: 0, name: 'Неон', cost: 0, pcost: 0, lvl: 1, shape: 'sport', body: '#00e5ff', roof: '#0b2e46', glass: '#bff5ff', acc: '#7dff9b',
+    boost: 1.00, shieldStart: 0, magnet: 1.0, tag: 'Стартовая машина', perk: 'steady' },
+  { id: 1, name: 'Розовый ветер', cost: 450, pcost: 90, lvl: 2, shape: 'sport', body: '#ff2fb9', roof: '#3a0d2c', glass: '#ffd9f2', acc: '#ffd166',
+    boost: 1.25, shieldStart: 0, magnet: 1.10, tag: 'Мощное нитро', perk: 'drain' },
+  { id: 2, name: 'Золотой шанс', cost: 900, pcost: 180, lvl: 3, shape: 'muscle', body: '#ffd166', roof: '#3b2e10', glass: '#fff6d8', acc: '#fff3c4',
+    boost: 1.15, shieldStart: 6, magnet: 1.30, tag: 'Больше очков со старта', perk: 'score' },
+  { id: 3, name: 'Жёлтое такси', cost: 1400, pcost: 280, lvl: 4, shape: 'sport', body: '#ffc21a', roof: '#2b2205', glass: '#fff4cf', acc: '#1a1a1a', sign: 1,
+    boost: 1.20, shieldStart: 3, magnet: 1.45, tag: 'Собирает больше монет', perk: 'coin' },
+  { id: 4, name: 'Зелёный фантом', cost: 2200, pcost: 440, lvl: 6, shape: 'sport', body: '#7dff9b', roof: '#0e3320', glass: '#dcffe4', acc: '#00e5ff',
+    boost: 1.10, shieldStart: 8, magnet: 1.60, tag: 'Магнит работает дольше', perk: 'magnetup' },
+  { id: 5, name: 'Молния', cost: 3400, pcost: 680, lvl: 8, shape: 'racer', body: '#c8d6ff', roof: '#16204a', glass: '#8ef9ff', acc: '#ff2fb9',
+    boost: 1.60, shieldStart: 0, magnet: 1.20, tag: 'Самая быстрая машина', perk: 'turbo' },
+  { id: 6, name: 'Крепость GT', cost: 4800, pcost: 960, lvl: 11, shape: 'muscle', body: '#9fb4ff', roof: '#1b2352', glass: '#e6eeff', acc: '#ffd166',
+    boost: 1.05, shieldStart: 16, magnet: 1.35, tag: 'Тяжёлая броня: +1 жизнь', perk: 'armor' },
+  { id: 7, name: 'Патрульный', cost: 6500, pcost: 1300, lvl: 14, shape: 'sport', body: '#f2f6ff', roof: '#10131f', glass: '#cfe9ff', acc: '#0b1020', bar: 1,
+    boost: 1.40, shieldStart: 10, magnet: 1.70, tag: 'Хранитель порядка', perk: 'luck' },
+  { id: 8, name: 'Титан', cost: 9000, pcost: 1800, lvl: 18, shape: 'muscle', body: '#ff6d2f', roof: '#3a1200', glass: '#ffd9c2', acc: '#ffe066',
+    boost: 1.55, shieldStart: 12, magnet: 1.95, tag: 'Мощный двигатель', perk: 'combo' },
+  { id: 9, name: 'Синий GT', cost: 12000, pcost: 2400, lvl: 20, shape: 'hyper', body: '#3b8cff', roof: '#0a1b3a', glass: '#cfe4ff', acc: '#7dff9b',
+    boost: 1.25, shieldStart: 10, magnet: 1.50, tag: 'Тараньте препятствия ради очков', perk: 'smash' },
+  { id: 10, name: 'Серебряная молния', cost: 15000, pcost: 3000, lvl: 22, shape: 'racer', body: '#dfe8ff', roof: '#2b3550', glass: '#9fe8ff', acc: '#00e5ff',
+    boost: 1.70, shieldStart: 4, magnet: 1.30, tag: 'Быстрая смена полосы', perk: 'brakes' },
+  { id: 11, name: 'Огненный щит', cost: 18500, pcost: 3700, lvl: 24, shape: 'muscle', body: '#ff3b30', roof: '#3a0a06', glass: '#ffd7c2', acc: '#ffb02e', scoop: 1,
+    boost: 1.45, shieldStart: 18, magnet: 1.60, tag: 'Восстанавливающийся щит', perk: 'sregen' },
+  { id: 12, name: 'Ветер', cost: 23000, pcost: 4600, lvl: 26, shape: 'hyper', body: '#7dff9b', roof: '#04140c', glass: '#e6fff2', acc: '#00e5ff', wing: 2,
+    boost: 1.65, shieldStart: 8, magnet: 1.75, tag: 'Двойной прыжок в воздухе', perk: 'djump' },
+  { id: 13, name: 'Золотой GT', cost: 28000, pcost: 5600, lvl: 28, shape: 'sport', body: '#ffd166', roof: '#4a3208', glass: '#fff6d8', acc: '#ff9a3c',
+    boost: 1.30, shieldStart: 22, magnet: 2.10, tag: 'Одно воскрешение после потери жизней', perk: 'revive' },
+  { id: 14, name: 'Легенда F1', cost: 35000, pcost: 7000, lvl: 30, shape: 'hyper', body: '#00e5ff', roof: '#06121f', glass: '#bff5ff', acc: '#ff2fb9', wing: 3, nose: 1,
+    boost: 1.85, shieldStart: 12, magnet: 1.85, tag: 'ЛЕГЕНДА — самая мощная машина', perk: 'ghost' }
 ];
 /* --------------------------- SKINLAR ---------------------------
    Ko'rinish rang uslubi. lvl = akkaunt darajasi talabi (tekin ochiladi). */
 const SKINS = [
-  { id: 'stock', name: 'Zavod', lvl: 1, pal: null },
-  { id: 'cyan', name: 'Neon koʼk', lvl: 1, pal: { body: '#00e5ff', roof: '#0b2e46', glass: '#bff5ff', acc: '#7dff9b' } },
-  { id: 'pink', name: 'Pushti', lvl: 2, pal: { body: '#ff2fb9', roof: '#3a0d2c', glass: '#ffd9f2', acc: '#ffd166' } },
-  { id: 'gold', name: 'Oltin', lvl: 3, pal: { body: '#ffd166', roof: '#3b2e10', glass: '#fff6d8', acc: '#fff3c4' } },
-  { id: 'lime', name: 'Kislota', lvl: 4, pal: { body: '#7dff9b', roof: '#0e3320', glass: '#dcffe4', acc: '#00e5ff' } },
-  { id: 'violet', name: 'Binafsha', lvl: 5, pal: { body: '#a97bff', roof: '#231248', glass: '#e3d6ff', acc: '#ff7ab8' } },
-  { id: 'ruby', name: 'Rubin', lvl: 6, pal: { body: '#e01776', roof: '#3a0624', glass: '#ffd0e8', acc: '#ff6ec7' } },
-  { id: 'ice', name: 'Muz', lvl: 8, pal: { body: '#dff3ff', roof: '#22384f', glass: '#8ef9ff', acc: '#4fb8ff' } },
-  { id: 'shadow', name: 'Soya', lvl: 10, pal: { body: '#2b3350', roof: '#0c0f1c', glass: '#6f86ff', acc: '#00e5ff' } },
-  { id: 'candy', name: 'Konfet', lvl: 13, pal: { body: '#ff9ad5', roof: '#4a1030', glass: '#fff0fa', acc: '#7dffd0' } }
+  { id: 'stock', name: 'Заводской', lvl: 1, pal: null },
+  { id: 'cyan', name: 'Неоновый', lvl: 1, pal: { body: '#00e5ff', roof: '#0b2e46', glass: '#bff5ff', acc: '#7dff9b' } },
+  { id: 'pink', name: 'Розовый', lvl: 2, pal: { body: '#ff2fb9', roof: '#3a0d2c', glass: '#ffd9f2', acc: '#ffd166' } },
+  { id: 'gold', name: 'Золотой', lvl: 3, pal: { body: '#ffd166', roof: '#3b2e10', glass: '#fff6d8', acc: '#fff3c4' } },
+  { id: 'lime', name: 'Лаймовый', lvl: 4, pal: { body: '#7dff9b', roof: '#0e3320', glass: '#dcffe4', acc: '#00e5ff' } },
+  { id: 'violet', name: 'Фиолетовый', lvl: 5, pal: { body: '#a97bff', roof: '#231248', glass: '#e3d6ff', acc: '#ff7ab8' } },
+  { id: 'ruby', name: 'Рубиновый', lvl: 6, pal: { body: '#e01776', roof: '#3a0624', glass: '#ffd0e8', acc: '#ff6ec7' } },
+  { id: 'ice', name: 'Ледяной', lvl: 8, pal: { body: '#dff3ff', roof: '#22384f', glass: '#8ef9ff', acc: '#4fb8ff' } },
+  { id: 'shadow', name: 'Теневой', lvl: 10, pal: { body: '#2b3350', roof: '#0c0f1c', glass: '#6f86ff', acc: '#00e5ff' } },
+  { id: 'candy', name: 'Карамельный', lvl: 13, pal: { body: '#ff9ad5', roof: '#4a1030', glass: '#fff0fa', acc: '#7dffd0' } }
 ];
 const skinKey = (id) => 'skin' + id;
 /** Saqlangan skin akkaunt darajasiga mos bo'lmasa "Zavod" (0) ga qaytadi */
@@ -969,15 +969,15 @@ function applyPerk(p) {
 /* --------------------------- DOIMIY KUCHLAR ---------------------------
    pc = ⭐ ochko narxi (1-rank), pl = akkaunt darajasi talabi, max = rank soni */
 const UPGRADES = [
-  { k: 'speed', ic: '⚡', name: 'Motor kuchi', p: 'Bazaviy tezlik oshadi', amt: '+7%', rare: 0, pc: 120, pl: 1, max: 5, fn: () => { G.baseSpeed += 1.2; } },
-  { k: 'tank', ic: '🛢', name: 'Katta bak', p: 'Nitro zapasi kengayadi', amt: '+25', rare: 0, pc: 100, pl: 1, max: 5, fn: () => { G.energonMax += 25; } },
-  { k: 'magnet', ic: '🧲', name: 'Kuchli magnit', p: 'Magnit uzoqroq ishlaydi', amt: '+2 s', rare: 0, pc: 110, pl: 2, max: 4, fn: () => { G.magnetMax += 2; } },
-  { k: 'jump', ic: '🦘', name: 'Sport prujina', p: 'Sakrash balandroq', amt: '+18%', rare: 0, pc: 140, pl: 2, max: 4, fn: () => { G.jumpV *= 1.18; } },
-  { k: 'brake', ic: '🛑', name: 'Disli tormoz', p: 'Qator almashish chaqqonlashadi', amt: '+3', rare: 0, pc: 90, pl: 3, max: 3, fn: () => { G.brakePow += .5; } },
-  { k: 'smash', ic: '💥', name: 'Bufer kuchi', p: 'Nitroda tosiqni urib ochko', amt: '+200', rare: 0, pc: 150, pl: 4, max: 3, fn: () => { G.smashBonus += 200; } },
-  { k: 'shield', ic: '🛡', name: 'Qalqon generatori', p: 'Qalqon uzoqroq turadi', amt: '+6 s', rare: 1, pc: 220, pl: 5, max: 4, fn: () => { G.shieldMax += 6; G.shield = Math.max(G.shield, 6); } },
-  { k: 'coin', ic: '🪙', name: 'Tanga mulki', p: 'Har tanga koʼproq beradi', amt: '+30%', rare: 1, pc: 260, pl: 6, max: 4, fn: () => { G.coinMult += .3; G.comboHold += 1.2; } },
-  { k: 'life', ic: '❤', name: 'Zaxira jon', p: 'Maksimal jon oshadi', amt: '+1', rare: 1, pc: 340, pl: 7, max: 3, fn: () => { G.maxLives++; G.lives = Math.min(G.lives + 1, G.maxLives); renderLives(); } }
+  { k: 'speed', ic: '⚡', name: 'Мощный двигатель', p: 'Увеличивает базовую скорость', amt: '+7%', rare: 0, pc: 120, pl: 1, max: 5, fn: () => { G.baseSpeed += 1.2; } },
+  { k: 'tank', ic: '🛢', name: 'Большой бак', p: 'Увеличивает запас нитро', amt: '+25', rare: 0, pc: 100, pl: 1, max: 5, fn: () => { G.energonMax += 25; } },
+  { k: 'magnet', ic: '🧲', name: 'Сильный магнит', p: 'Магнит работает дольше', amt: '+2 с', rare: 0, pc: 110, pl: 2, max: 4, fn: () => { G.magnetMax += 2; } },
+  { k: 'jump', ic: '🦘', name: 'Спортивная подвеска', p: 'Увеличивает высоту прыжка', amt: '+18%', rare: 0, pc: 140, pl: 2, max: 4, fn: () => { G.jumpV *= 1.18; } },
+  { k: 'brake', ic: '🛑', name: 'Дисковые тормоза', p: 'Ускоряет смену полосы', amt: '+3', rare: 0, pc: 90, pl: 3, max: 3, fn: () => { G.brakePow += .5; } },
+  { k: 'smash', ic: '💥', name: 'Мощный бампер', p: 'Тараньте препятствия на нитро и получайте очки', amt: '+200', rare: 0, pc: 150, pl: 4, max: 3, fn: () => { G.smashBonus += 200; } },
+  { k: 'shield', ic: '🛡', name: 'Генератор щита', p: 'Увеличивает время действия щита', amt: '+6 с', rare: 1, pc: 220, pl: 5, max: 4, fn: () => { G.shieldMax += 6; G.shield = Math.max(G.shield, 6); } },
+  { k: 'coin', ic: '🪙', name: 'Монетный запас', p: 'Каждая монета приносит больше', amt: '+30%', rare: 1, pc: 260, pl: 6, max: 4, fn: () => { G.coinMult += .3; G.comboHold += 1.2; } },
+  { k: 'life', ic: '❤', name: 'Запасная жизнь', p: 'Увеличивает максимум жизней', amt: '+1', rare: 1, pc: 340, pl: 7, max: 3, fn: () => { G.maxLives++; G.lives = Math.min(G.lives + 1, G.maxLives); renderLives(); } }
 ];
 
 MESHES.car = buildCar('#ff2b43', '#2a0710', '#ffd7dd', '#ff8ea0');
@@ -1009,11 +1009,11 @@ function renderLives() {
 
 /* --------------------------- O'QITISH (LESSONS) --------------------------- */
 const LESSONS = [
-  { ev: 'lane', txt: '<b>◀ ▶</b> tugmalarini bosing — mashinani yon yoʼlakka koʼchiring. Telefonda: ekranning chap yoki oʼng yarimiga bosing.' },
-  { ev: 'coin', txt: '<b class="go">Sariq halqa</b> = OCHKO. Halqa ustidan yuring — tanga yigʼasiz.' },
-  { ev: 'jump', txt: '<b class="go">SPACE</b> yoki <b>▲</b> — SAKRANG. Qizil barjer ostidan emas, <b>ustidan</b> oʼting!' },
-  { ev: 'avoid', txt: '<b>QIZIL = XAVF</b> (ustida «!» belgisi). Urmang — boʼsh qolgan yoʼlakka chiring.' },
-  { ev: 'nitro', txt: '<b class="go">Koʼk olmos</b> = NITRO. <b>N / ⚡</b> bilan bosib turing — tezlashasiz.' }
+  { ev: 'lane', txt: 'Нажимайте <b>◀ ▶</b>, чтобы перестраиваться. На телефоне нажмите на левую или правую половину экрана.' },
+  { ev: 'coin', txt: '<b class="go">Жёлтое кольцо</b> = ОЧКИ. Проезжайте сквозь кольца, чтобы собирать монеты.' },
+  { ev: 'jump', txt: '<b class="go">SPACE</b> или <b>▲</b> — ПРЫЖОК. Перепрыгивайте красные барьеры, не проезжайте под ними!' },
+  { ev: 'avoid', txt: '<b>КРАСНОЕ = ОПАСНО</b> (отмечено знаком «!»). Не врезайтесь — перестройтесь на свободную полосу.' },
+  { ev: 'nitro', txt: '<b class="go">Синий кристалл</b> = НИТРО. Удерживайте <b>N / ⚡</b>, чтобы ускориться.' }
 ];
 function setHint(i) {
   G.lesson = i; G.lessonT = 0;
@@ -1024,7 +1024,7 @@ function setHint(i) {
 function nextLesson() {
   if (!G.tut) return;
   if (G.lesson + 1 < LESSONS.length) setHint(G.lesson + 1);
-  else { G.tut = false; setHint(-1); el.legend.classList.add('dim'); store.set('tutDone', true); G.tutDone = true; toast('✅ Zoʼr! Endi oʼzingiz — omad!', 1600); }
+  else { G.tut = false; setHint(-1); el.legend.classList.add('dim'); store.set('tutDone', true); G.tutDone = true; toast('✅ Отлично! Теперь вы готовы — удачи!', 1600); }
 }
 function lessonEvent(ev) {
   if (!G.tut) return;
@@ -1050,7 +1050,7 @@ window.addEventListener('keydown', (e) => {
   if (k === ' ' || k === 'w' || k === 'arrowup') jump();
   if (k === 'shift' || k === 'n') G.boostOn = true;
   if (k === 'p' || k === 'escape') togglePause();
-  if (k === 'm') { Sound.set(!Sound.on); $('#btnSnd').textContent = Sound.on ? 'YOQ' : 'OXIRI'; }
+  if (k === 'm') { Sound.set(!Sound.on); $('#btnSnd').textContent = Sound.on ? 'ВКЛ' : 'ВЫКЛ'; }
   if (k === 'r' && G.over) startRun();
 }, { passive: false });
 window.addEventListener('keyup', (e) => {
@@ -1070,7 +1070,7 @@ function jump() {
     G.jumpsLeft--;
     G.vy = 5.2 * (G.jumpV || 1);
     Sound.blip(560, .12, 'triangle', .2);
-    addFloatingText(G.x, G.y + 1.1, 0, '2x SAKRASH!', '#7dffe4');
+    addFloatingText(G.x, G.y + 1.1, 0, 'ДВОЙНОЙ ПРЫЖОК!', '#7dffe4');
     burst(G.x, G.y, 0, 12, '#7dffe4', .55);
   }
 }
@@ -1182,17 +1182,17 @@ function burst(x, y, z, n, col, pow) {
    poyga qiyinligiga bog'liq (daraja + masofa). hz — tosiqlar zichligi koeffitsienti,
    diff — yulduzlar soni (banner va garajda ko'rsatiladi). props — yon manzara turi. */
 const BIOMES = [
-  { band: 0, diff: 1, hz: .78, name: 'NEON SHAHAR', props: 'city', sky0: '#070a20', sky1: '#180b3c', sky2: '#40104a', sun0: '#ffe08a', sun1: '#ff2fb9', sun2: '#6d1fa0', road: 'rgba(21,23,43,0.85)', roadAlt: 'rgba(28,31,56,0.85)', neon: '#00e5ff', curbc: '#00e5ff', sil: '#060714', gnd0: '#100a26', gnd1: '#03030a', star: '#dfeaff' },
-  { band: 0, diff: 1, hz: .86, name: 'PALM SOHIL', props: 'palm', sky0: '#031a33', sky1: '#0a3f6b', sky2: '#1f8fb8', sun0: '#fff3c4', sun1: '#ffd166', sun2: '#ff8a3c', road: 'rgba(16,38,52,0.85)', roadAlt: 'rgba(22,48,64,0.85)', neon: '#7dffd0', curbc: '#4fe0ff', sil: '#04202c', gnd0: '#0a3a4a', gnd1: '#02121c', star: '#dff6ff' },
-  { band: 1, diff: 2, hz: .95, name: 'QIZIL SAHRO', props: 'cactus', sky0: '#2a1004', sky1: '#5c2408', sky2: '#a8471a', sun0: '#fff6d8', sun1: '#ffb02e', sun2: '#a83a06', road: 'rgba(58,33,22,0.85)', roadAlt: 'rgba(74,44,28,0.85)', neon: '#ffb02e', curbc: '#ff7a2f', sil: '#2a1206', gnd0: '#4a2a12', gnd1: '#180a04', star: '#ffe6c2' },
-  { band: 1, diff: 2, hz: 1.02, name: 'KIBER MATRITSA', props: 'grid', sky0: '#02181a', sky1: '#052b2f', sky2: '#083e35', sun0: '#7dff9b', sun1: '#00e5ff', sun2: '#052e3b', road: 'rgba(14,31,36,0.85)', roadAlt: 'rgba(20,42,48,0.85)', neon: '#7dff9b', curbc: '#7dff9b', sil: '#04141a', gnd0: '#062018', gnd1: '#01080a', star: '#b9ffe4' },
-  { band: 2, diff: 3, hz: 1.12, name: 'MUZ TOGʼLARI', props: 'mesa', sky0: '#0a1030', sky1: '#1b2f66', sky2: '#4a79c4', sun0: '#ffffff', sun1: '#cfe9ff', sun2: '#5b8fd6', road: 'rgba(30,40,66,0.85)', roadAlt: 'rgba(40,52,82,0.85)', neon: '#bfe6ff', curbc: '#8ec9ff', sil: '#141f3d', gnd0: '#243456', gnd1: '#070c18', star: '#ffffff' },
-  { band: 2, diff: 3, hz: 1.18, name: 'QADIMY PIRAMIDA', props: 'pyramid', sky0: '#1c1204', sky1: '#4a3208', sky2: '#8a6414', sun0: '#fff8d0', sun1: '#ffe08a', sun2: '#b07a10', road: 'rgba(46,36,20,0.85)', roadAlt: 'rgba(60,48,28,0.85)', neon: '#ffe08a', curbc: '#d9a441', sil: '#241a08', gnd0: '#3a2c14', gnd1: '#0e0a04', star: '#fff0c8' },
-  { band: 2, diff: 3, hz: 1.22, name: 'OY BAZASI', props: 'moon', sky0: '#080d22', sky1: '#172344', sky2: '#3b4262', sun0: '#e8f3ff', sun1: '#9db8de', sun2: '#465a82', road: 'rgba(24,31,48,0.88)', roadAlt: 'rgba(34,43,64,0.88)', neon: '#8de7ff', curbc: '#b6cfff', sil: '#101a30', gnd0: '#18243a', gnd1: '#060914', star: '#e4f2ff' },
-  { band: 3, diff: 4, hz: 1.26, name: 'KRISTAL VODIY', props: 'crystal', sky0: '#0a0322', sky1: '#26064f', sky2: '#5c1290', sun0: '#ffd6fa', sun1: '#c08cff', sun2: '#2d0a5e', road: 'rgba(26,15,48,0.85)', roadAlt: 'rgba(38,22,66,0.85)', neon: '#c08cff', curbc: '#ff2fb9', sil: '#150636', gnd0: '#251044', gnd1: '#05010f', star: '#f0d9ff' },
-  { band: 3, diff: 4, hz: 1.34, name: 'VULQON HALQASI', props: 'volcano', sky0: '#140509', sky1: '#2c0a12', sky2: '#5c1a10', sun0: '#ffd9a0', sun1: '#ff8a3c', sun2: '#7a1e08', road: 'rgba(18,14,16,0.88)', roadAlt: 'rgba(28,20,22,0.88)', neon: '#ff9a3c', curbc: '#ffb02e', sil: '#180a0a', gnd0: '#241016', gnd1: '#060203', star: '#ffe4cf' }
+  { band: 0, diff: 1, hz: .78, name: 'НЕОНОВЫЙ ГОРОД', props: 'city', sky0: '#070a20', sky1: '#180b3c', sky2: '#40104a', sun0: '#ffe08a', sun1: '#ff2fb9', sun2: '#6d1fa0', road: 'rgba(21,23,43,0.85)', roadAlt: 'rgba(28,31,56,0.85)', neon: '#00e5ff', curbc: '#00e5ff', sil: '#060714', gnd0: '#100a26', gnd1: '#03030a', star: '#dfeaff' },
+  { band: 0, diff: 1, hz: .86, name: 'ПАЛЬМОВОЕ ПОБЕРЕЖЬЕ', props: 'palm', sky0: '#031a33', sky1: '#0a3f6b', sky2: '#1f8fb8', sun0: '#fff3c4', sun1: '#ffd166', sun2: '#ff8a3c', road: 'rgba(16,38,52,0.85)', roadAlt: 'rgba(22,48,64,0.85)', neon: '#7dffd0', curbc: '#4fe0ff', sil: '#04202c', gnd0: '#0a3a4a', gnd1: '#02121c', star: '#dff6ff' },
+  { band: 1, diff: 2, hz: .95, name: 'КРАСНАЯ ПУСТЫНЯ', props: 'cactus', sky0: '#2a1004', sky1: '#5c2408', sky2: '#a8471a', sun0: '#fff6d8', sun1: '#ffb02e', sun2: '#a83a06', road: 'rgba(58,33,22,0.85)', roadAlt: 'rgba(74,44,28,0.85)', neon: '#ffb02e', curbc: '#ff7a2f', sil: '#2a1206', gnd0: '#4a2a12', gnd1: '#180a04', star: '#ffe6c2' },
+  { band: 1, diff: 2, hz: 1.02, name: 'КИБЕРМАТРИЦА', props: 'grid', sky0: '#02181a', sky1: '#052b2f', sky2: '#083e35', sun0: '#7dff9b', sun1: '#00e5ff', sun2: '#052e3b', road: 'rgba(14,31,36,0.85)', roadAlt: 'rgba(20,42,48,0.85)', neon: '#7dff9b', curbc: '#7dff9b', sil: '#04141a', gnd0: '#062018', gnd1: '#01080a', star: '#b9ffe4' },
+  { band: 2, diff: 3, hz: 1.12, name: 'ЛЕДЯНЫЕ ГОРЫ', props: 'mesa', sky0: '#0a1030', sky1: '#1b2f66', sky2: '#4a79c4', sun0: '#ffffff', sun1: '#cfe9ff', sun2: '#5b8fd6', road: 'rgba(30,40,66,0.85)', roadAlt: 'rgba(40,52,82,0.85)', neon: '#bfe6ff', curbc: '#8ec9ff', sil: '#141f3d', gnd0: '#243456', gnd1: '#070c18', star: '#ffffff' },
+  { band: 2, diff: 3, hz: 1.18, name: 'ДРЕВНЯЯ ПИРАМИДА', props: 'pyramid', sky0: '#1c1204', sky1: '#4a3208', sky2: '#8a6414', sun0: '#fff8d0', sun1: '#ffe08a', sun2: '#b07a10', road: 'rgba(46,36,20,0.85)', roadAlt: 'rgba(60,48,28,0.85)', neon: '#ffe08a', curbc: '#d9a441', sil: '#241a08', gnd0: '#3a2c14', gnd1: '#0e0a04', star: '#fff0c8' },
+  { band: 2, diff: 3, hz: 1.22, name: 'ЛУННАЯ БАЗА', props: 'moon', sky0: '#080d22', sky1: '#172344', sky2: '#3b4262', sun0: '#e8f3ff', sun1: '#9db8de', sun2: '#465a82', road: 'rgba(24,31,48,0.88)', roadAlt: 'rgba(34,43,64,0.88)', neon: '#8de7ff', curbc: '#b6cfff', sil: '#101a30', gnd0: '#18243a', gnd1: '#060914', star: '#e4f2ff' },
+  { band: 3, diff: 4, hz: 1.26, name: 'ХРУСТАЛЬНАЯ ДОЛИНА', props: 'crystal', sky0: '#0a0322', sky1: '#26064f', sky2: '#5c1290', sun0: '#ffd6fa', sun1: '#c08cff', sun2: '#2d0a5e', road: 'rgba(26,15,48,0.85)', roadAlt: 'rgba(38,22,66,0.85)', neon: '#c08cff', curbc: '#ff2fb9', sil: '#150636', gnd0: '#251044', gnd1: '#05010f', star: '#f0d9ff' },
+  { band: 3, diff: 4, hz: 1.34, name: 'ВУЛКАНИЧЕСКОЕ КОЛЬЦО', props: 'volcano', sky0: '#140509', sky1: '#2c0a12', sky2: '#5c1a10', sun0: '#ffd9a0', sun1: '#ff8a3c', sun2: '#7a1e08', road: 'rgba(18,14,16,0.88)', roadAlt: 'rgba(28,20,22,0.88)', neon: '#ff9a3c', curbc: '#ffb02e', sil: '#180a0a', gnd0: '#241016', gnd1: '#060203', star: '#ffe4cf' }
 ];
-const BAND_NAME = ['OSON', 'OʼRTA', 'QIYIN', 'EKSTREMAL'];
+const BAND_NAME = ['ЛЁГКАЯ', 'СРЕДНЯЯ', 'СЛОЖНАЯ', 'ЭКСТРЕМАЛЬНАЯ'];
 const TRACK_SEC = 45;           // Biomlar 45 soniyada bir almashadi
 const TRANS_DUR = 1.7;          // biom almashish animatsiyasi (soniya)
 const CHECKPOINT_TRACK_GAP = 18;
@@ -1208,7 +1208,7 @@ function diff01() { return Math.max(0, Math.min(1, (((G && G.dist) || 0) - 250) 
 /* Masofani o'qiladigan ko'rinishda: 850 m · 2.4 km · 12.5 km */
 function km(m) {
   m = Math.max(0, m || 0);
-  return m < 1000 ? Math.round(m) + ' m' : (Math.round(m / 100) / 10) + ' km';
+  return m < 1000 ? Math.round(m) + ' м' : (Math.round(m / 100) / 10) + ' км';
 }
 /* Sonlarni bo'shliq bilan guruhlash: 12 480 */
 function num(n) {
@@ -1370,8 +1370,8 @@ function startRun() {
   buildBackdrop(); renderLives(); updateHUD();
   for (let i = 0; i < 8; i++) spawnRow(26 + i * 12);
   el.flash.style.opacity = 0;
-  toast((G.tut ? '🎓 Ekranga qarab boshqaring · ' : '🟢 Qizil = xavf, rangli = ochko · ') +
-    '🛣 ' + currentBiome().name + ' · 45 soniyadan keyin yangi biom', 2600);
+  toast((G.tut ? '🎓 Управление на экране · ' : '🟢 Красное — опасность, цветное — очки · ') +
+    '🛣 ' + currentBiome().name + ' · новая трасса через 45 секунд', 2600);
   G.meta.plays = (G.meta.plays || 0) + 1;
   Sound.ensure(); Sound.startMusic();
 }
@@ -1403,35 +1403,35 @@ function gameOver() {
 /* Poyga oxiridagi akkount paneli */
 function renderOverAcct(pts, rec) {
   $('#oPts').textContent = '+' + pts;
-  $('#oAcctCap').textContent = 'AKKAUNT LVL ' + ACCT.lvl + ' · ⭐' + ACCT.pts + ' OCHKO';
+  $('#oAcctCap').textContent = 'АККАУНТ · УР. ' + ACCT.lvl + ' · ⭐' + ACCT.pts + ' ОЧКОВ';
   const need = ACCT.cost(ACCT.lvl);
   $('#oBar').style.width = Math.min(100, ACCT.pts / need * 100).toFixed(1) + '%';
   const btn = $('#btnOverUp');
-  if (ACCT.lvl >= ACCT.maxLvl) { $('#oAcctMsg').textContent = 'Maksimal daraja ochilgan 🏆'; btn.classList.add('hidden'); }
-  else if (ACCT.canUp()) { $('#oAcctMsg').innerHTML = 'Darajani <b>⭐' + need + '</b> evaziga oshirsa boʼladi!'; btn.classList.remove('hidden'); }
-  else { $('#oAcctMsg').textContent = 'Keyingi darajaga ⭐' + (need - ACCT.pts) + ' ochko qoldi'; btn.classList.add('hidden'); }
-  if (rec) $('#oAcctMsg').innerHTML += ' · <b>yangi rekord +40 ⭐</b>';
+  if (ACCT.lvl >= ACCT.maxLvl) { $('#oAcctMsg').textContent = 'Достигнут максимальный уровень 🏆'; btn.classList.add('hidden'); }
+  else if (ACCT.canUp()) { $('#oAcctMsg').innerHTML = 'Уровень можно повысить за <b>⭐' + need + '</b>!'; btn.classList.remove('hidden'); }
+  else { $('#oAcctMsg').textContent = 'До следующего уровня не хватает ⭐' + (need - ACCT.pts) + ' очков'; btn.classList.add('hidden'); }
+  if (rec) $('#oAcctMsg').innerHTML += ' · <b>новый рекорд +40 ⭐</b>';
 }
 function tip() {
   const T = [
-    'Maslahat: qizil devor (baland) sakrab oʼtilmaydi — faqat yoʼlakni almashtiring.',
-    'Maslahat: qisqa qizil barjer va konusni SPACE bilan sakrab oʼtsa boʼladi.',
-    'Maslahat: N (nitro) bosilganida kichkina toʼsiqlarni urib tashlaysiz.',
-    'Maslahat: yashil qalqon bitta urilishni butunlay yutadi — saqlab qoʼying.',
-    'Maslahat: binafsha magnit tangalarni havoda ham tortadi.',
-    'Maslahat: boʼsh yoʼlak doim topiladi — qizilga bormang, yonga chiring.',
+    'Совет: высокую красную стену нельзя перепрыгнуть — только сменить полосу.',
+    'Совет: низкий красный барьер и конус можно перепрыгнуть клавишей SPACE.',
+    'Совет: на нитро можно таранить небольшие препятствия.',
+    'Совет: зелёный щит полностью защищает от одного удара — берегите его.',
+    'Совет: фиолетовый магнит притягивает монеты даже в воздухе.',
+    'Совет: свободная полоса всегда найдётся — избегайте красных объектов и перестраивайтесь.',
   ];
   return T[Math.floor(Math.random() * T.length)];
 }
 function statHTML() {
   const rows = [
-    ['OCHKO', num(G.score)],
-    ['MASOFA', km(G.dist)],
-    ['DARAJA', 'LVL ' + G.level],
-    ['MAKS SÜRʼAT', Math.round(G.maxSpeed * 3.6) + ' km/h'],
-    ['ENG YAXSHI KOMBO', mul(G.bestCombo || 1)],
-    ['TANGA', '+' + num(G.runCoins || 0) + ' (jami ' + num(G.coins) + ')'],
-    ['KUCHLAR', Object.keys(G.upgrades).length + ' ta olindi']
+    ['ОЧКИ', num(G.score)],
+    ['РАССТОЯНИЕ', km(G.dist)],
+    ['УРОВЕНЬ', 'УР. ' + G.level],
+    ['МАКС. СКОРОСТЬ', Math.round(G.maxSpeed * 3.6) + ' км/ч'],
+    ['ЛУЧШЕЕ КОМБО', mul(G.bestCombo || 1)],
+    ['МОНЕТЫ', '+' + num(G.runCoins || 0) + ' (всего ' + num(G.coins) + ')'],
+    ['УЛУЧШЕНИЯ', 'получено: ' + Object.keys(G.upgrades).length]
   ];
   return rows.map(r => '<div class="gs"><small>' + r[0] + '</small><b>' + r[1] + '</b></div>').join('');
 }
@@ -1450,7 +1450,7 @@ function offerCards() {
   while (picks.length < 3 && bag.length) picks.push(bag.splice(Math.floor(Math.random() * bag.length), 1)[0]);
   $('#cardList').innerHTML = picks.map((u, i) =>
     '<div class="upg ' + (u.rare ? 'rare' : '') + '" data-k="' + u.k + '">' +
-    '<div class="lv">' + (u.rare ? '✦ NOYOB' : 'ODDIY') + '</div>' +
+    '<div class="lv">' + (u.rare ? '✦ РЕДКОЕ' : 'ОБЫЧНОЕ') + '</div>' +
     '<div class="ic">' + u.ic + '</div><b>' + u.name + '</b>' +
     '<div class="amt">' + (u.amt || '') + '</div>' +
     '<p>' + u.p + '</p>' +
@@ -1475,15 +1475,15 @@ function reviveNow(label) {
   for (const o of G.objs) if (o.z < 26) freeObj(o);
   G.objs = G.objs.filter(o => o.z >= 26);
   renderLives();
-  toast(label || '❤ Tirik qoldingiz! Qalqon 8 s', 2000);
+  toast(label || '❤ Вы выжили! Щит на 8 с', 2000);
   Sound.chord([523, 784, 1046], .3, .16);
   return true;
 }
 function maybeRevive() {
   // 🚑 "Tirik qolgich" peri — reklamasiz, avtomatik bir tirilish
   if (G.reviveFree > 0 && !G.revived) {
-    addFloatingText(G.x, 2.1, 0, '🚑 PERK: TIRILISH', '#ff7ab8');
-    return reviveNow('🚑 Mashina kuchi: tirik qoldingiz!');
+    addFloatingText(G.x, 2.1, 0, '🚑 БОНУС: ВОСКРЕШЕНИЕ', '#ff7ab8');
+    return reviveNow('🚑 Бонус машины: вы выжили!');
   }
   if (G.revived) { gameOver(); return false; }
   show(el.scrRevive);
@@ -1495,7 +1495,7 @@ function updateHUD() {
   el.score.textContent = num(G.score);
   el.dist.textContent = km(G.dist);
   el.coins.textContent = num(G.coins);
-  el.speed.innerHTML = Math.round(G.speed * 3.6) + '<i>km/h</i>';
+  el.speed.innerHTML = Math.round(G.speed * 3.6) + '<i>км/ч</i>';
   el.boostBar.style.width = Math.max(0, Math.min(100, G.energon / G.energonMax * 100)) + '%';
   el.magBar.style.width = Math.max(0, Math.min(100, G.magnet / G.magnetMax * 100)) + '%';
   el.shBar.style.width = Math.max(0, Math.min(100, G.shield / Math.max(.001, G.shieldMax) * 100)) + '%';
@@ -1503,13 +1503,13 @@ function updateHUD() {
   const from = G.levelFrom || 0, span = Math.max(1, G.nextLevelAt - from);
   if (el.mileBar) el.mileBar.style.width = (Math.max(0, Math.min(1, (G.dist - from) / span)) * 100).toFixed(1) + '%';
   if (el.lvlNum) el.lvlNum.textContent = G.level;
-  if (el.lvlNext) el.lvlNext.textContent = G.level + ' → ' + (G.level + 1) + ' · ' + num(levelNeed(G.level)) + ' m';
+  if (el.lvlNext) el.lvlNext.textContent = G.level + ' → ' + (G.level + 1) + ' · ' + num(levelNeed(G.level)) + ' м';
 }
 function bumpCombo(d) {
   G.combo = Math.max(1, Math.min(9, G.combo + d));
   G.comboT = G.comboHold;
   if (G.combo > (G.bestCombo || 1)) G.bestCombo = G.combo;
-  el.combo.innerHTML = '<b>' + mul(G.combo) + '</b><i>' + (G.combo >= 9 ? 'MAKSIMUM' : 'KOMBO') + '</i>';
+  el.combo.innerHTML = '<b>' + mul(G.combo) + '</b><i>' + (G.combo >= 9 ? 'МАКСИМУМ' : 'КОМБО') + '</i>';
   el.combo.style.transition = 'none'; el.combo.style.opacity = 1;
   el.combo.style.transform = 'scale(1.08)';
   requestAnimationFrame(() => {
@@ -1546,10 +1546,10 @@ function update(dt) {
     G.trackCheckpointWait = 0;
     G.levelFrom = G.levelAt; G.levelAt = G.nextLevelAt;
     G.level++; G.nextLevelAt += levelNeed(G.level);
-    el.levelTag.innerHTML = '<b>DARAJA ' + G.level + '</b><small>KEYINGI: ' + num(levelNeed(G.level)) + ' m</small>';
+    el.levelTag.innerHTML = '<b>УРОВЕНЬ ' + G.level + '</b><small>ДАЛЕЕ: ' + num(levelNeed(G.level)) + ' м</small>';
     el.levelTag.style.opacity = 1;
     setTimeout(() => { el.levelTag.style.opacity = 0; }, 1700);
-    toast('🏁 ' + G.level + '-darajaga chiqdingiz! Keyingisi ' + Math.round(levelNeed(G.level)) + ' m', 2200);
+    toast('🏁 Достигнут ' + G.level + '-й уровень! Следующий — ' + Math.round(levelNeed(G.level)) + ' м', 2200);
     Sound.chord([523, 659, 784, 1046], .35, .14);
     G.energon = Math.min(G.energonMax, G.energon + 30);
     G.spawnGap = Math.max(11.6, 15 - dp * 2.4 - G.level * .16);
@@ -1580,7 +1580,7 @@ function update(dt) {
       if (G.shieldRt >= 5.5) {
         G.shieldRt = 0;
         G.shield = Math.max(6, G.shieldMax * .6);
-        addFloatingText(G.x, G.y + 1.4, 0, '🛡 QALQON QAYTA TIKLANDI', '#8ef9ff');
+        addFloatingText(G.x, G.y + 1.4, 0, '🛡 ЩИТ ВОССТАНОВЛЕН', '#8ef9ff');
         Sound.blip(720, .16, 'sine', .18);
       }
     } else G.shieldRt = 0;
@@ -1623,7 +1623,7 @@ function update(dt) {
         G.score += nPts * G.combo;
         G.energon = Math.min(G.energonMax, G.energon + 14);
         bumpCombo(0.5);
-        addFloatingText(G.x, 1.8, 0, '⚡ YONIDAN OʼTISH! +' + nPts, '#00e5ff');
+        addFloatingText(G.x, 1.8, 0, '⚡ БЛИЗКИЙ ПРОЛЁТ! +' + nPts, '#00e5ff');
         Sound.whoosh(0.35);
         burst(o.x > G.x ? G.x + 0.8 : G.x - 0.8, 0.4, 0, 7, '#00e5ff', 0.85);
       }
@@ -1639,7 +1639,7 @@ function update(dt) {
             o.jumpedOver = true;
             G.score += 200 * G.combo;
             bumpCombo(0.5);
-            addFloatingText(G.x, 2.2, 0, '🦘 SAKRASH! +200', '#ffd166');
+            addFloatingText(G.x, 2.2, 0, '🦘 ПРЫЖОК! +200', '#ffd166');
             Sound.blip(880, 0.12, 'triangle', 0.22);
           }
           continue;
@@ -1649,7 +1649,7 @@ function update(dt) {
           const smashPts = 150 + G.smashBonus;
           G.score += smashPts; bumpCombo(1);
           burst(o.x, 1, o.z, 20, '#ff2fb9', 1.8); Sound.noise(.2, .35); Sound.blip(200, .12, 'square', .26);
-          addFloatingText(o.x, 1.8, o.z, '💥 YORIB OʼTISH! +' + smashPts, '#ff2fb9');
+          addFloatingText(o.x, 1.8, o.z, '💥 ТАРАН! +' + smashPts, '#ff2fb9');
           G.shake = 0.7;
           lessonEvent('avoid');
           continue;
@@ -1657,21 +1657,21 @@ function update(dt) {
         if (G.ghost && Math.random() < .5) {
           o.dead = true;
           burst(o.x, 1, o.z, 10, '#cfe9ff', 1.1); Sound.blip(980, .1, 'sine', .16);
-          addFloatingText(G.x, 1.9, 0, '👻 ARVOH OʼTIB KETDI', '#cfe9ff');
+          addFloatingText(G.x, 1.9, 0, '👻 ПРИЗРАЧНОЕ СТОЛКНОВЕНИЕ', '#cfe9ff');
           continue;
         }
         if (G.shield > 0) {
           G.shield = 0; o.dead = true; bumpCombo(-1); G.invul = .9;
           burst(o.x, 1, o.z, 14, '#46ff8f', 1.4); Sound.blip(660, .18, 'sine', .26);
-          addFloatingText(G.x, 1.8, 0, '🛡 QALQON SAQLADI', '#46ff8f');
-          toast('🛡 Qalqon urilishni yutdi');
+          addFloatingText(G.x, 1.8, 0, '🛡 ЩИТ СПАС', '#46ff8f');
+          toast('🛡 Щит поглотил удар');
         } else if (G.invul <= 0) {
           o.dead = true; G.lives--; bumpCombo(-1); G.shake = 1.3; G.flash = .9; G.invul = 1.9;
           G.speed = Math.max(9, G.speed * .5);
           burst(o.x, 1, o.z, 18, '#ff2b43', 1.5); Sound.noise(.4, .45);
           renderLives();
           if (G.lives <= 0) { if (!maybeRevive()) G.running = false; }
-          else toast('💥 Urilding! Jon: ' + G.lives + ' — qizilga bormang', 1700);
+          else toast('💥 Столкновение! Жизней: ' + G.lives + ' — избегайте красного', 1700);
         } else lessonEvent('avoid');
       }
     } else if (dx < m.hit) {
@@ -1687,21 +1687,21 @@ function update(dt) {
         lessonEvent('coin');
       } else if (o.kind === KIND.NITRO) {
         G.energon = Math.min(G.energonMax, G.energon + 55); G.nitroT = Math.max(G.nitroT, 2.4);
-        burst(o.x, 1, o.z, 12, '#00e5ff', 1.2); Sound.chord([700, 1000], .22, .16); toast('⚡ NITRO!');
-        addFloatingText(o.x, 1.4, o.z, '⚡ NITRO BOOST', '#00e5ff');
+        burst(o.x, 1, o.z, 12, '#00e5ff', 1.2); Sound.chord([700, 1000], .22, .16); toast('⚡ НИТРО!');
+        addFloatingText(o.x, 1.4, o.z, '⚡ УСКОРЕНИЕ НИТРО', '#00e5ff');
         lessonEvent('nitro');
       } else if (o.kind === KIND.SH) {
         G.shield = Math.max(G.shield, 10); G.shieldMax = Math.max(G.shieldMax, 10);
-        Sound.chord([520, 700], .2, .15); toast('🟢 Qalqon 10 s');
-        addFloatingText(o.x, 1.4, o.z, '🛡 QALQON +10s', '#46ff8f');
+        Sound.chord([520, 700], .2, .15); toast('🟢 Щит на 10 с');
+        addFloatingText(o.x, 1.4, o.z, '🛡 ЩИТ +10 с', '#46ff8f');
       } else if (o.kind === KIND.MAG) {
         G.magnet = Math.max(G.magnet, G.magnetMax);
-        Sound.chord([420, 620], .2, .14); toast('🟣 Magnit ' + Math.round(G.magnetMax) + ' s');
-        addFloatingText(o.x, 1.4, o.z, '🧲 MAGNIT', '#c08cff');
+        Sound.chord([420, 620], .2, .14); toast('🟣 Магнит на ' + Math.round(G.magnetMax) + ' с');
+        addFloatingText(o.x, 1.4, o.z, '🧲 МАГНИТ', '#c08cff');
       } else if (o.kind === KIND.LIFE) {
         G.lives = Math.min(G.maxLives, G.lives + 1); renderLives();
-        Sound.chord([660, 880, 1100], .3, .18); toast('❤ +1 jon');
-        addFloatingText(o.x, 1.4, o.z, '❤ +1 JON', '#ff7ab8');
+        Sound.chord([660, 880, 1100], .3, .18); toast('❤ +1 жизнь');
+        addFloatingText(o.x, 1.4, o.z, '❤ +1 ЖИЗНЬ', '#ff7ab8');
       }
     }
   }
@@ -2019,7 +2019,7 @@ function drawTrackTransition() {
   const fs = Math.max(16, Math.min(W * .085, H * .085));
   const sm = Math.max(10, fs * .40);
   const name = bm.name;
-  const lab = '🛣  YANGI YOʼL';
+  const lab = '🛣  НОВАЯ ТРАССА';
   const stars = '★'.repeat(bm.diff) + '☆'.repeat(Math.max(0, 4 - bm.diff));
   const sub = BAND_NAME[bm.band] + ' · ' + stars;
   ctx.font = '900 ' + fs + 'px system-ui, "Segoe UI", Arial';
@@ -2137,11 +2137,11 @@ function drawGate(z) {
   ctx.font = '900 ' + fs + 'px ' + UIFONT;
   ctx.fillStyle = '#ffffff';
   ctx.shadowColor = 'rgba(0,229,255,.9)'; ctx.shadowBlur = fs * .7;
-  ctx.fillText('DARAJA ' + (G.level + 1), (_c.x + _d.x) / 2, _c.y + bh * 0.44);
+  ctx.fillText('УРОВЕНЬ ' + (G.level + 1), (_c.x + _d.x) / 2, _c.y + bh * 0.44);
   ctx.shadowBlur = 0;
   ctx.font = '900 ' + Math.max(8, fs * 0.55) + 'px ' + UIFONT;
   ctx.fillStyle = '#ffd166';
-  ctx.fillText('CHECKPOINT · ' + km(G.nextLevelAt), (_c.x + _d.x) / 2, _c.y + bh * 0.80);
+  ctx.fillText('КОНТРОЛЬНАЯ ТОЧКА · ' + km(G.nextLevelAt), (_c.x + _d.x) / 2, _c.y + bh * 0.80);
   ctx.restore();
 }
 
@@ -2437,7 +2437,7 @@ function frame(ts) {
     const ms = performance.now() - t0;
     G.frameMs += (ms - G.frameMs) * .1;
     if (G.frameMs > 22 && G.quality !== 'low') {
-      if (++G.slowFrames > 90) { G.slowFrames = 0; G.quality = 'low'; resize(); buildBackdrop(); toast('⚙ Grafika yengillashtirildi (tezkorlik uchun)', 2000); }
+      if (++G.slowFrames > 90) { G.slowFrames = 0; G.quality = 'low'; resize(); buildBackdrop(); toast('⚙ Качество графики снижено для повышения производительности', 2000); }
     } else G.slowFrames = 0;
   }
   if (G.frame % 30 === 0) G.fps = Math.round(1 / Math.max(.0001, G.dt));
@@ -2450,23 +2450,23 @@ function menuStats() {
   const mc = $('#mCoins'); if (mc) mc.textContent = num(G.coins);
   renderAcctBar();
   $('#statList').innerHTML = [
-    ['Akkaunt darajasi', 'LVL ' + ACCT.lvl + ' / ' + ACCT.maxLvl],
-    ['Hozirgi ochko', '⭐ ' + num(ACCT.pts)],
-    ['Jami yutilgan ochko', '⭐ ' + num(ACCT.total)],
-    ['Sarflangan ochko', '⭐ ' + num(ACCT.spent)],
-    ['Oʼyinlar soni', G.meta.plays || 0],
-    ['Eng yaxshi ochko', num(G.meta.best || 0)],
-    ['Eng uzoq masofa', km(G.meta.farthest || 0)],
-    ['Poyga darajasi (rekord)', 'LVL ' + (G.meta.bestLevel || 1)],
-    ['Tanga', '🪙 ' + num(G.coins)],
-    ['Garajda ochilgan', CARS.filter(ownedOf).length + ' / ' + CARS.length],
-    ['Doimiy kuchlar', UPGRADES.reduce(function (s, u) { return s + PERM.n(u.k); }, 0) + ' / ' +
-      UPGRADES.reduce(function (s, u) { return s + PERM.rankMax(u); }, 0) + ' rank'],
-    ['FPS', G.fps + ' · ' + (G.quality === 'low' ? 'yengil' : 'yuqori')]
+    ['Уровень аккаунта', 'УР. ' + ACCT.lvl + ' / ' + ACCT.maxLvl],
+    ['Текущие очки', '⭐ ' + num(ACCT.pts)],
+    ['Всего заработано очков', '⭐ ' + num(ACCT.total)],
+    ['Потрачено очков', '⭐ ' + num(ACCT.spent)],
+    ['Количество гонок', G.meta.plays || 0],
+    ['Лучший результат', num(G.meta.best || 0)],
+    ['Максимальная дистанция', km(G.meta.farthest || 0)],
+    ['Рекордный уровень гонки', 'УР. ' + (G.meta.bestLevel || 1)],
+    ['Монеты', '🪙 ' + num(G.coins)],
+    ['Машины в гараже', CARS.filter(ownedOf).length + ' / ' + CARS.length],
+    ['Постоянные улучшения', UPGRADES.reduce(function (s, u) { return s + PERM.n(u.k); }, 0) + ' / ' +
+      UPGRADES.reduce(function (s, u) { return s + PERM.rankMax(u); }, 0) + ' уровень'],
+    ['Кадры/с', G.fps + ' · ' + (G.quality === 'low' ? 'низкое качество' : 'высокое качество')]
   ].map(r => '<kbd>' + r[0] + '</kbd><span>' + r[1] + '</span>').join('');
-  $('#btnSnd').textContent = Sound.on ? 'YOQ' : 'OXIRI';
-  $('#btnMus').textContent = Sound.musicOn ? 'YOQ' : 'MUSIQA';
-  $('#btnQual').textContent = G.quality === 'low' ? 'Yengil' : 'Yuqori';
+  $('#btnSnd').textContent = Sound.on ? 'ВКЛ' : 'ВЫКЛ';
+  $('#btnMus').textContent = Sound.musicOn ? 'ВКЛ' : 'ВЫКЛ';
+  $('#btnQual').textContent = G.quality === 'low' ? 'Низкая' : 'Высокая';
   renderAcct();
 }
 /* Menyu tepasidagi akkount chizig'i: LVL, ochko, progress, tugma */
@@ -2475,11 +2475,11 @@ function renderAcctBar() {
   $('#aLvl').textContent = ACCT.lvl;
   $('#aPts').textContent = ACCT.pts;
   $('#aCoins').textContent = G.coins;
-  $('#aNeed').textContent = maxed ? 'MAKSIMAL DARAJA OCHILGAN 🏆'
-    : 'KEYINGI DARAJA (LVL ' + (ACCT.lvl + 1) + '): ⭐' + need + ' OCHKO';
+  $('#aNeed').textContent = maxed ? 'ДОСТИГНУТ МАКСИМАЛЬНЫЙ УРОВЕНЬ 🏆'
+    : 'СЛЕДУЮЩИЙ УРОВЕНЬ (' + (ACCT.lvl + 1) + '): ⭐' + need + ' ОЧКОВ';
   $('#aBar').style.width = Math.min(100, ACCT.pts / need * 100).toFixed(1) + '%';
   const up = $('#btnAcctUp');
-  up.textContent = maxed ? '🏆 MAKS' : '⭐ DARAJANI OSHIRISH · ' + need;
+  up.textContent = maxed ? '🏆 МАКС.' : '⭐ ПОВЫСИТЬ УРОВЕНЬ · ' + need;
   up.classList.toggle('ghost', !maxed && !ACCT.canUp());
 }
 let showcaseCarId = G.car || 0, showcaseRot = -0.6, showcaseDragging = false, showcaseX = 0;
@@ -2555,18 +2555,18 @@ function updateShowcase() {
   const scN = $('#scName'), scT = $('#scTag'), scB = $('#scBst'), scSh = $('#scShd'), scM = $('#scMag');
   if (scN) scN.textContent = c.name;
   if (scT) scT.textContent = c.tag;
-  if (scB) scB.innerHTML = mul(c.boost) + '<i>kuch</i>';
-  if (scSh) scSh.innerHTML = c.shieldStart + '<i>sekund</i>';
-  if (scM) scM.innerHTML = mul(c.magnet) + '<i>radius</i>';
+  if (scB) scB.innerHTML = mul(c.boost) + '<i>мощность</i>';
+  if (scSh) scSh.innerHTML = c.shieldStart + '<i>сек.</i>';
+  if (scM) scM.innerHTML = mul(c.magnet) + '<i>радиус</i>';
   const skN = $('#scSkin'), skO = $('#scOwn');
-  if (skN) skN.innerHTML = '🎨 Skin: <b>' + skinOf(c).name + '</b>';
-  if (skO) skO.textContent = sel ? '✅ TANLANGAN' : owned ? 'OCHILGAN' : lock ? '🔒 LVL ' + c.lvl : '🪙 ' + c.cost + ' / ⭐ ' + (c.pcost || 0);
+  if (skN) skN.innerHTML = '🎨 Цвет: <b>' + skinOf(c).name + '</b>';
+  if (skO) skO.textContent = sel ? '✅ ВЫБРАНА' : owned ? 'ОТКРЫТА' : lock ? '🔒 УР. ' + c.lvl : '🪙 ' + c.cost + ' / ⭐ ' + (c.pcost || 0);
   const pk = $('#scPerk');
   if (pk) {
     const P = c.perk ? PERKS[c.perk] : null;
     pk.innerHTML = P
       ? '<span class="pic">' + P.ic + '</span><b>' + P.name + '</b><em>' + P.desc + '</em>'
-      : '<span class="pic">🔰</span><b>Standart</b><em>Maxsus kuch yoʼq, lekin eng oson mashina</em>';
+      : '<span class="pic">🔰</span><b>Стандарт</b><em>Без особого бонуса, но самая простая машина</em>';
   }
   renderSkinPicker();
 
@@ -2574,23 +2574,23 @@ function updateShowcase() {
   if (btnP) {
     if (!owned && !lock) {
       btnP.classList.remove('hidden');
-      btnP.textContent = '⭐ ' + (c.pcost || 0) + ' OCHKO BILAN OLISH';
+      btnP.textContent = '⭐ КУПИТЬ ЗА ' + (c.pcost || 0) + ' ОЧКОВ';
       btnP.className = 'btn sm' + (ACCT.pts >= (c.pcost || 0) ? ' pink' : ' ghost');
     } else btnP.classList.add('hidden');
   }
   const btn = $('#btnSelectCar');
   if (btn) {
     if (sel) {
-      btn.textContent = '✅ HOZIRGI MASHINA';
+      btn.textContent = '✅ ТЕКУЩАЯ МАШИНА';
       btn.className = 'btn sm ghost';
     } else if (owned) {
-      btn.textContent = '🚗 TANLASH';
+      btn.textContent = '🚗 ВЫБРАТЬ';
       btn.className = 'btn sm';
     } else if (lock) {
-      btn.textContent = '🔒 LVL ' + c.lvl + ' TALAB QILINADI';
+      btn.textContent = '🔒 ТРЕБУЕТСЯ УР. ' + c.lvl;
       btn.className = 'btn sm ghost';
     } else {
-      btn.textContent = '🪙 ' + c.cost + ' TANGA BILAN OLISH';
+      btn.textContent = '🪙 КУПИТЬ ЗА ' + c.cost;
       btn.className = 'btn sm' + (G.coins >= c.cost ? '' : ' ghost');
     }
   }
@@ -2600,12 +2600,12 @@ function renderSkinPicker() {
   const box = $('#skinPicker'); if (!box) return;
   const c = CARS[showcaseCarId] || CARS[0];
   const cur = skinIdx(c);
-  let h = '<span class="skin-title">SKIN</span>';
+  let h = '<span class="skin-title">ЦВЕТ</span>';
   for (let i = 0; i < SKINS.length; i++) {
     const s = SKINS[i], lock = !ACCT.can(s.lvl || 1);
     const sw = s.pal ? s.pal.body : c.body;
     h += '<button class="skin-chip' + (i === cur ? ' active' : '') + (lock ? ' lock' : '') +
-      '" data-sk="' + i + '" title="' + (lock ? 'LVL ' + s.lvl + ' kerak' : s.name) + '">' +
+      '" data-sk="' + i + '" title="' + (lock ? 'Требуется ур. ' + s.lvl : s.name) + '">' +
       '<i class="swatch" style="background:' + sw + '"></i>' + s.name + (lock ? ' 🔒' + s.lvl : '') + '</button>';
   }
   box.innerHTML = h;
@@ -2613,54 +2613,54 @@ function renderSkinPicker() {
 
 function ownedOf(c) { return c.cost === 0 || store.get('owned' + c.id, false); }
 function lvlOk(c) { return ACCT.can(c.lvl || 1); }
-/* --- MASHINA SOTIB OLISH: 🪙 tanga YO KI ⭐ ochko bilan --- */
+/* --- Car purchase: coins or points --- */
 function tryBuy(c, usePts) {
   if (!c || ownedOf(c)) return false;
   if (!lvlOk(c)) {
-    toast('🔒 ' + c.name + ' uchun akkaunt ' + (c.lvl || 1) + '-daraja kerak (hozir ' + ACCT.lvl + ')');
+    toast('🔒 Для машины «' + c.name + '» нужен ' + (c.lvl || 1) + '-й уровень аккаунта (сейчас ' + ACCT.lvl + ')');
     Sound.blip(200, .12, 'sawtooth', .18); return false;
   }
   const coinOk = G.coins >= c.cost, ptOk = ACCT.pts >= (c.pcost || 0);
   if (usePts === undefined) usePts = !coinOk && ptOk;
   if (usePts) {
     if (!ptOk) {
-      toast(((c.pcost || 0) - ACCT.pts) + ' ⭐ ochko yetishmaydi — 🪙 tanga bilan ham olish mumkin');
+      toast('Не хватает ' + ((c.pcost || 0) - ACCT.pts) + ' ⭐ очков — можно купить за 🪙 монеты');
       Sound.blip(200, .12, 'sawtooth', .18); return false;
     }
     ACCT.pts -= (c.pcost || 0); ACCT.spent += (c.pcost || 0); ACCT.save();
   } else {
     if (!coinOk) {
-      toast((c.cost - G.coins) + ' 🪙 tanga yetishmaydi — ⭐ ochko bilan oling');
+      toast('Не хватает ' + (c.cost - G.coins) + ' 🪙 монет — можно купить за ⭐ очки');
       Sound.blip(200, .12, 'sawtooth', .18); return false;
     }
     G.coins -= c.cost; store.set('coins', G.coins);
   }
   store.set('owned' + c.id, true);
   G.car = c.id; store.set('car', c.id); G.ship = c.id;
-  toast('🔓 ' + c.name + ' garajga qoʼshildi!', 2200);
+  toast('🔓 «' + c.name + '» добавлена в гараж!', 2200);
   Sound.chord([523, 784, 1046], .3, .18);
   return true;
 }
 function takeCar(c) {
   G.car = c.id; store.set('car', c.id); G.ship = c.id;
-  toast(c.name + ' tanlandi'); Sound.blip(700, .08, 'triangle', .18);
+  toast('Выбрана машина «' + c.name + '»'); Sound.blip(700, .08, 'triangle', .18);
 }
 function renderShips() {
   const list = $('#shipList'); if (!list) return;
   list.innerHTML = CARS.map(c => {
     const owned = ownedOf(c), sel = G.car === c.id, lock = !lvlOk(c);
     let status, cls = 'req';
-    if (sel) { status = '✅ TANLANGAN'; cls += ' ok'; }
-    else if (owned) { status = 'OCHILGAN — bosing'; cls += ' ok'; }
-    else if (lock) { status = '🔒 LVL ' + (c.lvl || 1) + ' KERAK'; }
+    if (sel) { status = '✅ ВЫБРАНА'; cls += ' ok'; }
+    else if (owned) { status = 'ОТКРЫТА — нажмите'; cls += ' ok'; }
+    else if (lock) { status = '🔒 НУЖЕН УР. ' + (c.lvl || 1); }
     else { status = '🪙 ' + c.cost + ' · ⭐ ' + (c.pcost || 0); if (G.coins >= c.cost || ACCT.pts >= (c.pcost || 0)) cls += ' ok'; }
     const P = c.perk ? PERKS[c.perk] : null;
     return '<div class="plate ' + (sel ? 'on' : '') + ' ' + (owned && !lock ? '' : 'locked') + '" data-id="' + c.id + '">' +
       '<canvas class="carPrev" data-id="' + c.id + '" width="168" height="116"></canvas>' +
       '<b>' + c.name + '</b>' +
       '<span class="' + cls + '">' + status + '</span>' +
-      '<span class="cstat">⚡' + c.boost.toFixed(2) + ' · 🧲' + c.magnet.toFixed(2) + ' · 🛡' + c.shieldStart + 's</span>' +
-      '<span class="cperk" title="' + (P ? P.desc : '') + '">' + (P ? P.ic + ' ' + P.name + '<small>' + P.desc + '</small>' : '🔰 Standart<small>Maxsus kuch yoʼq</small>') + '</span>' +
+      '<span class="cstat">⚡' + c.boost.toFixed(2) + ' · 🧲' + c.magnet.toFixed(2) + ' · 🛡' + c.shieldStart + ' с</span>' +
+      '<span class="cperk" title="' + (P ? P.desc : '') + '">' + (P ? P.ic + ' ' + P.name + '<small>' + P.desc + '</small>' : '🔰 Стандарт<small>Без особого бонуса</small>') + '</span>' +
       '<span class="cstat">🎨 ' + skinOf(c).name + '</span></div>';
   }).join('');
   const nodes = document.querySelectorAll('.carPrev');
@@ -2671,19 +2671,19 @@ function renderShips() {
 function renderPerks() {
   const n = $('#perkList'); if (!n) return;
   let h = '<div class="money" style="margin:2px 0 10px">⭐ <em>' + ACCT.pts +
-    '</em> ochko bor · akkaunt <b>LVL ' + ACCT.lvl + '</b></div>';
+    '</em> очков · аккаунт <b>УР. ' + ACCT.lvl + '</b></div>';
   for (const u of UPGRADES) {
     const rank = PERM.n(u.k), mx = PERM.rankMax(u), st = PERM.buyable(u), price = PERM.price(u);
     let ranks = '<div class="ranks">';
     for (let i = 0; i < mx; i++) ranks += '<s class="' + (i < rank ? 'on' : '') + '"></s>';
     ranks += '</div>';
-    const priceTxt = st === 'max' ? 'MAKS' : st === 'lvl' ? '🔒 LVL ' + u.pl : '⭐ ' + price;
+    const priceTxt = st === 'max' ? 'МАКС.' : st === 'lvl' ? '🔒 УР. ' + u.pl : '⭐ ' + price;
     h += '<div class="perm ' + (st === 'max' ? 'max' : st === 'ok' ? '' : 'no') + '" data-k="' + u.k + '">' +
       '<div class="ic">' + u.ic + '</div><div class="tx"><b>' + u.name + '</b><small>' + u.p +
-      ' · hozir ' + rank + '/' + mx + '</small>' + ranks + '</div>' +
-      '<div class="price">' + priceTxt + '<em>' + (st === 'max' ? 'toʼlgan' : 'keyingi rank') + '</em></div></div>';
+      ' · уровень ' + rank + '/' + mx + '</small>' + ranks + '</div>' +
+      '<div class="price">' + priceTxt + '<em>' + (st === 'max' ? 'максимум' : 'след. уровень') + '</em></div></div>';
   }
-  h += '<p class="sub" style="margin-top:6px;font-size:11.5px">Ochko poyga oxirida beriladi: ochko/55 + masofa/12 + poyga darajasi×15 + tangalar.</p>';
+  h += '<p class="sub" style="margin-top:6px;font-size:11.5px">Очки начисляются в конце гонки: очки/55 + дистанция/12 + уровень гонки×15 + монеты.</p>';
   n.innerHTML = h;
 }
 /* --- AKKAUNT bo'limi: daraja, bonuslar, keyingi daraja --- */
@@ -2691,15 +2691,15 @@ function renderAcct() {
   const n = $('#acctInfo');
   if (n) {
     const need = ACCT.cost(ACCT.lvl), maxed = ACCT.lvl >= ACCT.maxLvl;
-    let h = '<div class="perkline"><span>⭐ Akkaunt darajasi</span><b>' + ACCT.lvl + ' / ' + ACCT.maxLvl + '</b></div>' +
-      '<div class="perkline"><span>Balandlash narzi</span><b>' + (maxed ? '🏆' : '⭐ ' + need) + '</b></div>';
+    let h = '<div class="perkline"><span>⭐ Уровень аккаунта</span><b>' + ACCT.lvl + ' / ' + ACCT.maxLvl + '</b></div>' +
+      '<div class="perkline"><span>Цена повышения</span><b>' + (maxed ? '🏆' : '⭐ ' + need) + '</b></div>';
     for (const r of ACCT.bonusRows()) h += '<div class="perkline"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>';
-    h += '<div class="perkline next"><span>LVL ' + (maxed ? ACCT.maxLvl : ACCT.lvl + 1) + ' beradi</span><b>' +
-      (maxed ? 'hammasi ochiq' : ACCT.nextBonusText(ACCT.lvl + 1)) + '</b></div>' +
-      '<div class="perkline"><span>Yutilgan / sarflangan</span><b>⭐' + ACCT.total + ' / ⭐' + ACCT.spent + '</b></div>';
+    h += '<div class="perkline next"><span>Бонус за ур. ' + (maxed ? ACCT.maxLvl : ACCT.lvl + 1) + '</span><b>' +
+      (maxed ? 'всё открыто' : ACCT.nextBonusText(ACCT.lvl + 1)) + '</b></div>' +
+      '<div class="perkline"><span>Заработано / потрачено</span><b>⭐' + ACCT.total + ' / ⭐' + ACCT.spent + '</b></div>';
     n.innerHTML = h;
     const b2 = $('#btnAcctUp2');
-    if (b2) b2.textContent = maxed ? '🏆 MAKSIMAL DARAJA' : '⭐ DARAJANI OSHIRISH · ' + need;
+    if (b2) b2.textContent = maxed ? '🏆 МАКСИМАЛЬНЫЙ УРОВЕНЬ' : '⭐ ПОВЫСИТЬ УРОВЕНЬ · ' + need;
   }
   renderPerks();
   renderAcctBar();
@@ -2743,7 +2743,7 @@ $('#shipList').addEventListener('click', (e) => {
   showcaseCarId = c.id;
   updateShowcase();
   if (!lvlOk(c)) {
-    toast('🔒 ' + c.name + ' uchun akkaunt ' + c.lvl + '-daraja kerak (hozir ' + ACCT.lvl + ')');
+    toast('🔒 Для машины «' + c.name + '» нужен ' + c.lvl + '-й уровень аккаунта (сейчас ' + ACCT.lvl + ')');
     Sound.blip(200, .12, 'sawtooth', .18); return;
   }
   if (!ownedOf(c)) tryBuy(c, undefined);
@@ -2796,13 +2796,13 @@ if (skinBox) {
     if (!c || !s) return;
     Sound.ensure(); Sound.resume();
     if (!ACCT.can(s.lvl || 1)) {
-      toast('🔒 "' + s.name + '" skini akkaunt LVL ' + s.lvl + ' da ochiladi (hozir ' + ACCT.lvl + ')');
+      toast('🔒 Цвет «' + s.name + '» откроется на ' + s.lvl + '-м уровне аккаунта (сейчас ' + ACCT.lvl + ')');
       Sound.blip(200, .12, 'sawtooth', .18); return;
     }
     if (skinIdx(c) === i) return;
     store.set(skinKey(c.id), i); applySkin(c);
     Sound.blip(880, .08, 'triangle', .18);
-    toast('🎨 ' + c.name + ' → ' + s.name + ' skini');
+    toast('🎨 «' + c.name + '» → цвет «' + s.name + '»');
     renderShips();
   });
 }
@@ -2839,13 +2839,13 @@ $('#btnQual').addEventListener('click', () => {
   resize(); buildBackdrop(); renderShips(); menuStats();
 });
 $('#btnCtl').addEventListener('click', () => { document.body.classList.toggle('touch'); menuStats(); });
-$('#btnTut').addEventListener('click', () => { G.tutDone = false; store.set('tutDone', false); toast('🎓 Keyingi oʼyinda oʼqitish qayta boshlanadi'); });
+$('#btnTut').addEventListener('click', () => { G.tutDone = false; store.set('tutDone', false); toast('🎓 Обучение начнётся в следующей гонке'); });
 $('#btnReviveNo').addEventListener('click', () => { hide(el.scrRevive); gameOver(); });
 $('#btnReviveAd').addEventListener('click', async () => {
   hide(el.scrRevive);
   let ok = true;
   if (YA.ready) ok = await YA.rewarded();
-  if (!ok) { toast("Reklama koʼrinmadi — oʼyin tugadi"); gameOver(); return; }
+  if (!ok) { toast('Реклама не загрузилась — гонка окончена'); gameOver(); return; }
   reviveNow();
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden && G.running && !G.paused) togglePause(); });

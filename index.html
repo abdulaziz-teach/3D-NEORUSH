@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#05060f">
-<title>NEON YARISH 3D — Mashina Poygasi</title>
+<title>NEON RACE 3D — Гонки на машинах</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -22,10 +22,11 @@ html,body{
   color:#eaf6ff;
   user-select:none;
   -webkit-user-select:none;
-  touch-action:none;
+  touch-action:pan-y;
+  overscroll-behavior:none;
 }
 #stage{position:fixed;inset:0;overflow:hidden}
-canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #fx{position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(ellipse at 50% 46%,transparent 44%,rgba(0,0,0,.52) 100%),
   repeating-linear-gradient(0deg,rgba(255,255,255,.022) 0 1px,transparent 1px 3px);
@@ -68,7 +69,7 @@ canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
   background:rgba(255,209,102,.2);font-size:9px;font-weight:1000;letter-spacing:0;color:#fff8dc;
   opacity:1;white-space:nowrap;text-shadow:0 1px 3px #000,0 0 8px rgba(255,209,102,.55);
   box-shadow:0 0 10px rgba(255,209,102,.16)}
-.stat.lvstat b::before{content:'LVL ';font-size:.5em;letter-spacing:.12em;color:#7fe9ff;opacity:.8;vertical-align:top;margin-right:2px}
+.stat.lvstat b::before{content:'УР. ';font-size:.5em;letter-spacing:.12em;color:#7fe9ff;opacity:.8;vertical-align:top;margin-right:2px}
 .stat.speedo{
   text-align:center;
   border-color:rgba(255,209,102,.45);
@@ -138,9 +139,9 @@ canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
 #legend{position:absolute;left:50%;transform:translateX(-50%);bottom:10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;
   transition:opacity .6s;pointer-events:none;width:max-content;max-width:96vw}
 #legend.dim{opacity:.25}
-/* Tugmalar ko'rinadigan rejimda legenda ularning ustiga chiqadi */
+/* Keep the legend above the touch controls. */
 body.touch #legend{bottom:calc(env(safe-area-inset-bottom,0px) + 94px)}
-/* Tugmalar bilan ustma-ust tushmasin */
+/* Keep the legend clear of the touch controls. */
 body.touch #legend{bottom:calc(env(safe-area-inset-bottom,0px) + 96px);max-width:62vw}
 .chip{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.04em;
   padding:6px 11px;border-radius:99px;background:rgba(6,10,24,.75);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(4px)}
@@ -165,8 +166,9 @@ body.touch #legend{bottom:calc(env(safe-area-inset-bottom,0px) + 96px);max-width
   background:radial-gradient(ellipse at 50% 20%, rgba(14,24,54,.94), rgba(4,5,15,.96) 75%);
   backdrop-filter:blur(16px);pointer-events:auto;text-align:center;z-index:5;
   overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
 }
-/* Kontent sig'isa — markazda, sig'isa — yuqoridan siljiydi (klipping bo'lmaydi) */
+/* Center short screens while keeping long content scrollable. */
 .screen>.first-auto{margin-top:auto}
 .screen>*:first-child{margin-top:auto}
 .screen>*:last-child{margin-bottom:auto}
@@ -175,7 +177,7 @@ body.touch #legend{bottom:calc(env(safe-area-inset-bottom,0px) + 96px);max-width
 .screen::-webkit-scrollbar-thumb{background:rgba(0,229,255,.3);border-radius:99px}
 .screen::-webkit-scrollbar-thumb:hover{background:rgba(0,229,255,.6)}
 .screen.hidden{display:none}
-/* Sig'ishda yuqori qism kesilib qolmasligi uchun: bo'sh joy avtomargin orqali taqsimlanadi */
+/* Auto margins preserve the top of content when a screen must scroll. */
 .screen{justify-content:flex-start}
 .screen>*:first-child{margin-top:auto}
 .screen>*:last-child{margin-bottom:auto}
@@ -222,6 +224,7 @@ h1.logo span{display:block;font-size:.34em;letter-spacing:.38em;color:#8df5ff;-w
   -webkit-overflow-scrolling:touch;scrollbar-width:none;
   position:sticky;top:0;z-index:6;border-radius:99px;border:1px solid rgba(0,229,255,.16);
   background:rgba(6,9,22,.92);backdrop-filter:blur(10px);box-shadow:0 8px 22px rgba(0,0,0,.45);
+  touch-action:pan-x;
 }
 .tabs::-webkit-scrollbar{display:none}
 .tab{
@@ -269,7 +272,7 @@ h1.logo span{display:block;font-size:.34em;letter-spacing:.38em;color:#8df5ff;-w
 .plate.locked{opacity:.55}
 .plate.on{border-color:#00e5ff;box-shadow:0 0 0 1px #00e5ff inset,0 12px 30px rgba(0,229,255,.25);background:rgba(0,229,255,.12)}
 
-/* --- Skin Customization Chips --- */
+/* --- Car color chips --- */
 .skin-selector{
   display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;
   margin:8px 0 4px;padding:7px 11px;border-radius:14px;background:rgba(8,12,28,.7);
@@ -287,7 +290,7 @@ h1.logo span{display:block;font-size:.34em;letter-spacing:.38em;color:#8df5ff;-w
 .skin-chip.lock{opacity:.5;filter:grayscale(.45)}
 .skin-chip.lock:hover{transform:none;border-color:rgba(255,255,255,.14);background:rgba(255,255,255,.05)}
 
-/* --- Garaj vitrinasi (showcase) --- */
+/* --- Garage showcase --- */
 .showcase{display:flex;flex-direction:column;align-items:center;gap:9px;margin-bottom:14px;
   padding:13px;border-radius:18px;background:linear-gradient(180deg,rgba(6,10,26,.85),rgba(4,6,18,.7));
   border:1px solid rgba(0,229,255,.25);box-shadow:0 14px 34px rgba(0,0,0,.5), inset 0 0 22px rgba(0,229,255,.05)}
@@ -374,42 +377,19 @@ body.touch #touch{display:block}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 .ad-note{font-size:11px;color:#6fb9d6;letter-spacing:.05em}
 
-/* --- Responsive: telefon / planshet / desktop --- */
-/* --- Online duel --- */
-#scrDuel .duel-form{width:min(440px,94vw);display:grid;gap:12px}
-#scrDuel input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
-  background:rgba(6,10,26,.88);color:#eaf6ff;font:700 15px var(--f);outline:none}
-#scrDuel input:focus{border-color:var(--c1);box-shadow:0 0 14px rgba(0,229,255,.18)}
-#duelStatus{min-height:22px;color:#9feaff;font-size:13px;text-align:center}
-#duelArena{position:absolute;inset:0;z-index:7;background:#050713}
-#duelArena.hidden{display:none}
-#duelCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.duel-bar{position:absolute;top:max(12px,env(safe-area-inset-top));left:0;right:0;display:flex;
-  justify-content:center;align-items:flex-start;gap:10px;padding:0 12px;pointer-events:none}
-.duel-player,.duel-center{border:1px solid rgba(0,229,255,.35);border-radius:13px;background:rgba(5,9,25,.88);
-  box-shadow:0 6px 20px #0008;padding:8px 12px;text-align:center;min-width:105px}
-.duel-player b,.duel-center b{display:block;font-size:14px}
-.duel-player small,.duel-center small{color:#8feaff;font-size:10px;letter-spacing:.1em}
-.duel-player.opponent{border-color:rgba(255,47,185,.48)}
-.duel-center{min-width:125px}
-#duelExit{position:absolute;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));
-  pointer-events:auto;padding:8px 12px;border-radius:11px;background:#15152a;color:#fff;border:1px solid var(--line);font-weight:800}
-#duelTouch{position:absolute;left:0;right:0;bottom:max(18px,env(safe-area-inset-bottom));
-  display:flex;justify-content:center;gap:clamp(70px,25vw,170px);pointer-events:none}
-#duelTouch button{pointer-events:auto;width:64px;height:64px;border-radius:19px;border:1px solid var(--line);
-  color:#eaf6ff;background:rgba(8,15,38,.8);font-size:27px;font-weight:900;touch-action:manipulation}
-#duelResult{position:absolute;inset:0;display:grid;place-content:center;gap:16px;text-align:center;
-  background:rgba(4,5,15,.82);padding:24px}
-#duelResult.hidden{display:none}
-#duelResult h2{font-size:clamp(30px,8vw,56px);color:#ffd166}
-#duelResult p{color:#c8e9ff}
-#duelResult .btn{justify-self:center}
+/* --- Responsive: phone / tablet / desktop --- */
 @media(max-width:700px){
   .card-plate{border-radius:16px}
   .grid-stats{grid-template-columns:repeat(2,minmax(96px,1fr))}
   .upg{width:min(200px,45vw);padding:14px 12px}
 }
 @media(max-width:540px){
+  .screen{padding:max(12px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+  .row{gap:8px}
+  .row>.btn{flex:1 1 138px;min-height:44px}
+  .acct-bar{width:100%;gap:8px}
+  .acct-bar .col{flex:1 1 100%;min-width:0}
+  .acct-bar>.btn{width:100%}
   .stat{min-width:58px;padding:5px 7px;border-radius:12px}
   .stat small{font-size:8.5px;letter-spacing:.09em}
   .stat b{font-size:13.5px}
@@ -443,7 +423,7 @@ body.touch #touch{display:block}
   .plate{min-width:calc(50% - 6px)}
   .grid-stats{grid-template-columns:repeat(2,minmax(84px,1fr))}
 }
-/* Qisqa gorizontal rejim (telefonni yonga tutganda) */
+/* Short landscape screens. */
 @media(max-height:560px){
   .screen{gap:8px;padding:10px 14px}
   h1.logo{font-size:clamp(20px,4.4vw,36px)}
@@ -458,7 +438,7 @@ body.touch #touch{display:block}
   body.touch #legend{bottom:calc(env(safe-area-inset-bottom,0px) + 66px)}
   #levelTag{top:13%}
   .card-plate{border-radius:15px;padding:11px 13px}
-  /* Boshqaruv tugmalari kichrayadi — o'yin maydoni ko'proq qolsin */
+  /* Smaller controls leave more room for the game. */
   .tbtn{width:clamp(46px,12vh,60px);height:clamp(46px,12vh,60px);font-size:clamp(18px,5vh,23px);border-radius:16px}
   #tR{left:calc(max(10px, env(safe-area-inset-left)) + clamp(54px, 13vh, 70px))}
   #tB{right:calc(max(10px, env(safe-area-inset-right)) + clamp(54px, 13vh, 70px))}
@@ -485,7 +465,7 @@ body.touch #touch{display:block}
   #btnSelectCar{grid-area:btn;justify-self:center}
 }
 
-/* ---------------- AKKAUNT · GARAJ · KUCHLAR ---------------- */
+/* ---------------- ACCOUNT · GARAGE · UPGRADES ---------------- */
 .buy-row{grid-area:btn;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}
 .buy-row .btn{flex:0 0 auto}
 .sc-perk{grid-area:perk;display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;
@@ -542,33 +522,33 @@ body.touch #touch{display:block}
     <div class="hud-top">
       <div class="stat-cluster left">
         <div class="stat-stack">
-          <div class="stat"><small>MASOFA</small><b id="dist">0 m</b></div>
-          <div class="stat"><small>OCHKO</small><b id="score">0</b></div>
+          <div class="stat"><small>РАССТОЯНИЕ</small><b id="dist">0 м</b></div>
+            <div class="stat"><small>ОЧКИ</small><b id="score">0</b></div>
         </div>
-        <div class="stat lvstat"><small>DARAJA</small><b id="lvlNum">1</b><span id="lvlNext">1 → 2 · 1 000 m</span></div>
+        <div class="stat lvstat"><small>УРОВЕНЬ</small><b id="lvlNum">1</b><span id="lvlNext">1 → 2 · 1 000 м</span></div>
       </div>
       <div class="stat-cluster center">
-        <div class="stat speedo"><small>SÜRʼAT</small><b id="speed">0 km/h</b></div>
+        <div class="stat speedo"><small>СКОРОСТЬ</small><b id="speed">0 км/ч</b></div>
       </div>
       <div class="stat-cluster right">
         <div class="stat-col">
-          <div id="lives" title="Jonlar"></div>
-          <div class="stat right"><small>TANGA</small><b id="coins">0</b></div>
-          <button class="tbtn" id="tP" type="button" aria-label="Pauza" title="Pauza">❚❚</button>
+          <div id="lives" title="Жизни"></div>
+          <div class="stat right"><small>МОНЕТЫ</small><b id="coins">0</b></div>
+          <button class="tbtn" id="tP" type="button" aria-label="Пауза" title="Пауза">❚❚</button>
           <div id="perkTag" class="hidden"></div>
         </div>
       </div>
     </div>
     <div id="powerRow">
       <div class="pw boost"><span class="p-ic">⚡</span><span>NITRO</span><div class="bar"><i id="boostBar"></i></div></div>
-      <div class="pw mag"><span class="p-ic">🧲</span><span>MAGNIT</span><div class="bar"><i id="magBar"></i></div></div>
-      <div class="pw sh"><span class="p-ic">🛡</span><span>QALQON</span><div class="bar"><i id="shBar"></i></div></div>
+      <div class="pw mag"><span class="p-ic">🧲</span><span>МАГНИТ</span><div class="bar"><i id="magBar"></i></div></div>
+      <div class="pw sh"><span class="p-ic">🛡</span><span>ЩИТ</span><div class="bar"><i id="shBar"></i></div></div>
     </div>
     <div id="combo"></div>
     <div id="levelTag"></div>
     <div id="legend">
-      <span class="chip bad"><s></s>QIZIL = XAVF · urmang</span>
-      <span class="chip good"><s></s>RANGLI = OCHKO · oling</span>
+      <span class="chip bad"><s></s>КРАСНЫЙ = ОПАСНОСТЬ · избегайте</span>
+      <span class="chip good"><s></s>ЦВЕТНОЕ = ОЧКИ · собирайте</span>
     </div>
     <div id="hint"></div>
   </div>
@@ -581,242 +561,201 @@ body.touch #touch{display:block}
   </div>
 
   <section class="screen" id="scrMenu">
-    <h1 class="logo">NEON YARISH<span>3D MASHINA POYGASI</span></h1>
-    <p class="sub"><b>QIZIL</b> narsalarga (mashina, barjer, devor) urilmang — ular jon oladi.
-      <b>Sariq / koʼk / yashil / binafsha</b> narsalarni yigʼing — ular ochko va kuch beradi.
-      Yoʼlda har doim bir yoʼlak boʼsh qoladi: oʼsha yoʼlakka chiring.</p>
-    <div class="row"><button class="btn pulse" id="btnPlay">▶ POYGANI BOSHLASH</button><button class="btn" id="btnDuel">⚔ DUEL</button><button class="btn ghost" id="btnHow">Qanday oʼynaladi</button></div>
+    <h1 class="logo">NEON RACE<span>3D-ГОНКИ</span></h1>
+    <p class="sub">Избегайте <b>КРАСНЫХ</b> объектов (машин, барьеров и стен) — они отнимают жизнь.
+      Собирайте <b>жёлтые, синие, зелёные и фиолетовые</b> предметы — они дают очки и бонусы.
+      На дороге всегда остаётся свободная полоса: перестройтесь в неё.</p>
+    <div class="row"><button class="btn pulse" id="btnPlay">▶ НАЧАТЬ ГОНКУ</button><button class="btn ghost" id="btnHow">Как играть</button></div>
     <div class="best">
-      <span class="pill">REKORD <b id="mBest">0</b></span>
-      <span class="pill">POYGA DARAJASI <b id="mLevel">1</b></span>
-      <span class="pill gold">TANGA 🪙 <b id="mCoins">0</b></span>
+      <span class="pill">РЕКОРД <b id="mBest">0</b></span>
+      <span class="pill">УРОВЕНЬ ГОНКИ <b id="mLevel">1</b></span>
+      <span class="pill gold">МОНЕТЫ 🪙 <b id="mCoins">0</b></span>
     </div>
     <div class="best" style="margin-top:-4px">
-      <span class="pill">🛣 <b>8 TA YOʼL</b> · 2 daqiqada + qiyinlikka qarab</span>
-      <span class="pill">🚗 <b>15 TA MASHINA</b> · 🪙 yoki ⭐ bilan</span>
-      <span class="pill">🎯 <b>15 TA NOYUB KUCH</b> · har mashinaga bittasi</span>
+      <span class="pill">🛣 <b>8 ТРАСС</b> · сложность растёт со временем</span>
+      <span class="pill">🚗 <b>15 МАШИН</b> · за 🪙 или ⭐</span>
+      <span class="pill">🎯 <b>15 УНИКАЛЬНЫХ БОНУСОВ</b></span>
     </div>
     <div class="acct-bar" id="acctBar">
-      <div class="lvbox"><span class="cap">AKKAUNT</span><b id="aLvl">1</b></div>
+      <div class="lvbox"><span class="cap">АККАУНТ</span><b id="aLvl">1</b></div>
       <div class="col">
-        <span class="cap" id="aNeed">KEYINGI DARAJA: ⭐100 OCHKO</span>
+        <span class="cap" id="aNeed">СЛЕДУЮЩИЙ УРОВЕНЬ: ⭐100 ОЧКОВ</span>
         <div class="xpbar"><i id="aBar"></i></div>
-        <div class="money">⭐ <em id="aPts">0</em> ochko <span>·</span> 🪙 <em id="aCoins">0</em> tanga</div>
+        <div class="money">⭐ <em id="aPts">0</em> очков <span>·</span> 🪙 <em id="aCoins">0</em> монет</div>
       </div>
-      <button class="btn sm pink" id="btnAcctUp">⭐ DARAJANI OSHIRISH</button>
+      <button class="btn sm pink" id="btnAcctUp">⭐ ПОВЫСИТЬ УРОВЕНЬ</button>
     </div>
     <div class="tabs">
-      <button class="tab on" data-tab="ships">🚗 GARAJ</button>
-      <button class="tab" data-tab="perk">⭐ KUCHLAR</button>
-      <button class="tab" data-tab="acct">AKKAUNT</button>
-      <button class="tab" data-tab="stat">STATISTIKA</button>
-      <button class="tab" data-tab="set">SOZLAMALAR</button>
+      <button class="tab on" data-tab="ships">🚗 ГАРАЖ</button>
+      <button class="tab" data-tab="perk">⭐ УЛУЧШЕНИЯ</button>
+      <button class="tab" data-tab="acct">АККАУНТ</button>
+      <button class="tab" data-tab="stat">СТАТИСТИКА</button>
+      <button class="tab" data-tab="set">НАСТРОЙКИ</button>
     </div>
     <div class="card-plate" id="tabShips">
       <div class="showcase" id="garageShowcase">
         <div class="sc-stage">
           <canvas id="cvShowcase" width="380" height="184"></canvas>
-          <div class="sc-drag">↔ Mashinani aylantirish uchun suring</div>
+          <div class="sc-drag">↔ Проведите, чтобы повернуть машину</div>
         </div>
         <div class="sc-info">
           <b class="sc-name" id="scName">Neon Skor</b>
-          <small class="sc-tag" id="scTag">Boshlangʼich mashina</small>
-          <div class="sc-meta"><span id="scSkin">Skin: Zavod</span><span id="scOwn"></span></div>
+          <small class="sc-tag" id="scTag">Стартовая машина</small>
+          <div class="sc-meta"><span id="scSkin">Цвет: заводской</span><span id="scOwn"></span></div>
         </div>
         <div class="skin-selector" id="skinPicker"></div>
         <div class="grid-stats sc-stats">
-          <div class="gs"><small>NITRO KUCHI</small><b id="scBst">×1</b></div>
-          <div class="gs"><small>QALQON START</small><b id="scShd">0</b></div>
-          <div class="gs"><small>MAGNIT RADIUS</small><b id="scMag">×1</b></div>
+          <div class="gs"><small>МОЩНОСТЬ НИТРО</small><b id="scBst">×1</b></div>
+          <div class="gs"><small>СТАРТОВЫЙ ЩИТ</small><b id="scShd">0</b></div>
+          <div class="gs"><small>РАДИУС МАГНИТА</small><b id="scMag">×1</b></div>
         </div>
         <div class="sc-perk" id="scPerk"></div>
         <div class="buy-row">
-          <button class="btn sm" id="btnSelectCar">🚗 TANLASH</button>
-          <button class="btn sm pink hidden" id="btnSelectCarPts">⭐ OCHKO BILAN OLISH</button>
+          <button class="btn sm" id="btnSelectCar">🚗 ВЫБРАТЬ</button>
+          <button class="btn sm pink hidden" id="btnSelectCarPts">⭐ КУПИТЬ ЗА ОЧКИ</button>
         </div>
       </div>
       <div class="plates" id="shipList"></div>
       <p class="sub" style="text-align:center;margin-top:10px;font-size:12px">
-        Har bir mashinani <b>🪙 tanga</b> <i>yo</i> <b>⭐ ochko</b> bilan sotib olish mumkin (ochko arzonroq).
-        Ustunlar — mashinaning oʼz kuchlari. Akkaunt darajasi ham talab qilinadi.</p>
+        Машины можно купить за <b>🪙 монеты</b> или <b>⭐ очки</b> (за очки дешевле).
+        Характеристики показывают особенности машины. Для некоторых нужен определённый уровень аккаунта.</p>
     </div>
     <div class="card-plate hidden" id="tabPerk" style="min-width:min(520px,94vw)">
       <div id="perkList"></div>
-      <p class="sub" style="margin-top:8px;font-size:12px">Bu kuchlar <b>doimiy</b> — oʼchirilmaydi va har poygada avtomatik ishlaydi. Narxi: <b>⭐ ochko</b>.</p>
+      <p class="sub" style="margin-top:8px;font-size:12px">Эти бонусы <b>постоянные</b> — они автоматически действуют в каждой гонке. Цена: <b>⭐ очки</b>.</p>
     </div>
     <div class="card-plate hidden" id="tabAcct">
       <div id="acctInfo"></div>
       <div class="row" style="margin-top:11px;justify-content:flex-start">
-        <button class="btn sm pink" id="btnAcctUp2">⭐ DARAJANI OSHIRISH</button>
+        <button class="btn sm pink" id="btnAcctUp2">⭐ ПОВЫСИТЬ УРОВЕНЬ</button>
       </div>
-      <p class="sub" style="margin-top:8px;font-size:12px">Daraja har poyga oxirida beriladigan <b>⭐ ochko</b> evaziga oshiriladi.</p>
+      <p class="sub" style="margin-top:8px;font-size:12px">Уровень повышается за <b>⭐ очки</b>, полученные в конце гонки.</p>
     </div>
     <div class="card-plate hidden" id="tabStat"><div class="keys" id="statList"></div></div>
     <div class="card-plate hidden" id="tabSet">
       <div class="row" style="justify-content:space-between">
-        <span style="font-size:13px;color:#a9d9ef">Ovoz / musiqa</span>
-        <div class="row"><button class="btn sm ghost" id="btnSnd">YOQ</button><button class="btn sm ghost" id="btnMus">MUSIQA</button></div>
+        <span style="font-size:13px;color:#a9d9ef">Звук / музыка</span>
+        <div class="row"><button class="btn sm ghost" id="btnSnd">ЗВУК</button><button class="btn sm ghost" id="btnMus">МУЗЫКА</button></div>
       </div>
       <div class="row" style="justify-content:space-between;margin-top:10px">
-        <span style="font-size:13px;color:#a9d9ef">Grafika</span>
-        <div class="row"><button class="btn sm ghost" id="btnQual">Yuqori</button></div>
+        <span style="font-size:13px;color:#a9d9ef">Графика</span>
+        <div class="row"><button class="btn sm ghost" id="btnQual">Высокая</button></div>
       </div>
       <div class="row" style="justify-content:space-between;margin-top:10px">
-        <span style="font-size:13px;color:#a9d9ef">Telefon boshqaruvi</span>
-        <div class="row"><button class="btn sm ghost" id="btnCtl">Tugmalar + surish</button></div>
+        <span style="font-size:13px;color:#a9d9ef">Управление на телефоне</span>
+        <div class="row"><button class="btn sm ghost" id="btnCtl">Кнопки + свайпы</button></div>
       </div>
-      <div class="row" style="margin-top:10px"><button class="btn sm ghost" id="btnTut">▶ OʼQITISHNI QAYTA KORISH</button></div>
-      <p class="sub" style="text-align:center;margin-top:10px;font-size:12px">Yandex Games: SDK topilmasa oʼyin toʼliq avtonom ishlaydi.</p>
+      <div class="row" style="margin-top:10px"><button class="btn sm ghost" id="btnTut">▶ ПОВТОРИТЬ ОБУЧЕНИЕ</button></div>
+      <p class="sub" style="text-align:center;margin-top:10px;font-size:12px">Yandex Games: без SDK игра работает автономно.</p>
     </div>
   </section>
-
-  <section class="screen hidden" id="scrDuel">
-    <h1 class="logo" style="font-size:clamp(26px,6vw,52px)">⚔ ONLAYN DUEL<span>2 OʼYINCHI · 3 TADAN JON · GʼOLIBGA 250 TANGA</span></h1>
-    <p class="sub">Bir xil yoʼlda bellashing. Qizil toʼsiqlardan boshqa yoʼlakka oʼtib qoching; 3 marta urilgan oʼyinchi yutqazadi.</p>
-    <div class="duel-form">
-      <label class="sub">Server WebSocket manzili
-        <input id="duelServer" type="url" value="ws://localhost:3000/duel" autocomplete="url">
-      </label>
-      <label class="sub">Oʼyinchi nomi
-        <input id="duelName" maxlength="18" placeholder="Oʼyinchi" autocomplete="nickname">
-      </label>
-      <button class="btn pulse" id="btnDuelCreate">XONA OCHISH</button>
-      <label class="sub">Doʼstingiz bergan xona kodi
-        <input id="duelCode" maxlength="6" placeholder="6 belgili kod" autocomplete="off">
-      </label>
-      <button class="btn" id="btnDuelJoin">KOD BILAN KIRISH</button>
-      <p id="duelStatus" role="status"></p>
-      <button class="btn ghost" id="btnDuelBack">◀ MENUGA</button>
-    </div>
-  </section>
-
-  <div id="duelArena" class="hidden">
-    <canvas id="duelCanvas"></canvas>
-    <div class="duel-bar">
-      <div class="duel-player" id="duelP1"><small>1-OʼYINCHI</small><b>—</b><span>❤️❤️❤️</span></div>
-      <div class="duel-center"><small id="duelRoom">DUEL</small><b id="duelRound">Ulanmoqda…</b></div>
-      <div class="duel-player opponent" id="duelP2"><small>2-OʼYINCHI</small><b>—</b><span>❤️❤️❤️</span></div>
-    </div>
-    <button id="duelExit" type="button">✕ Chiqish</button>
-    <div id="duelTouch" aria-label="Duel boshqaruvi">
-      <button type="button" data-duel-move="-1" aria-label="Chapga">◀</button>
-      <button type="button" data-duel-move="1" aria-label="Oʼngga">▶</button>
-    </div>
-    <div id="duelResult" class="hidden">
-      <h2 id="duelResultTitle">DUEL</h2>
-      <p id="duelResultText"></p>
-      <button class="btn" id="btnDuelResult">MENUGA QAYTISH</button>
-    </div>
-  </div>
 
   <section class="screen hidden" id="scrHow">
-    <h1 class="logo" style="font-size:clamp(22px,5.6vw,42px)">QANDAY OʼYNALADI</h1>
+    <h1 class="logo" style="font-size:clamp(22px,5.6vw,42px)">КАК ИГРАТЬ</h1>
     <div class="card-plate" style="min-width:min(520px,94vw)">
       <div class="keys">
-        <kbd>◀ ▶ / A D</kbd><span>Mashinani qatorga koʼchirish (telefonda: ekranni chap/oʼng yarimiga bosing yoki suring)</span>
-        <kbd>SPACE / W / ▲</kbd><span>Sakrash — past qizil barjer va konusdan oʼtish uchun</span>
-        <kbd>N / ⚡</kbd><span>Nitro — bosib turing, tezlashish va ochko koʼpayishi</span>
-        <kbd>S</kbd><span>Tormoz — aniqroq boshqaruv</span>
-        <kbd>P / ESC</kbd><span>Pause · <kbd style="padding:1px 6px">M</kbd> ovoz</span>
+        <kbd>◀ ▶ / A D</kbd><span>Смена полосы (на телефоне: нажмите на левую или правую половину экрана либо проведите по нему)</span>
+        <kbd>SPACE / W / ▲</kbd><span>Прыжок — перепрыгивайте низкие красные барьеры и конусы</span>
+        <kbd>N / ⚡</kbd><span>Нитро — удерживайте, чтобы ускориться и увеличить число очков</span>
+        <kbd>S</kbd><span>Тормоз — для более точного управления</span>
+        <kbd>P / ESC</kbd><span>Пауза · <kbd style="padding:1px 6px">M</kbd> звук</span>
       </div>
       <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">
-        <b style="color:#ff8ea0;letter-spacing:.1em;font-size:12.5px">XAVF — QIZIL · URMA (jon ketadi)</b>
+        <b style="color:#ff8ea0;letter-spacing:.1em;font-size:12.5px">ОПАСНОСТЬ — КРАСНОЕ · НЕ ВРЕЗАЙТЕСЬ (теряется жизнь)</b>
         <div class="legend-table">
-          <div class="lrow bad"><span class="sw" style="background:#ff2b43">🚗</span><b>Qizil mashina</b><i>QATORNI ALMASHTIR</i></div>
-          <div class="lrow bad"><span class="sw" style="background:#c81f38">🚚</span><b>Qizil yuk mashinasi</b><i>QATORNI ALMASHTIR</i></div>
-          <div class="lrow bad"><span class="sw" style="background:#ff2b43">▬</span><b>Qizil-op barjer</b><i>SAKRANG yoki qator</i></div>
-          <div class="lrow bad"><span class="sw" style="background:#ff5a3c">▲</span><b>Toʼsqon konusi</b><i>SAKRANG yoki qator</i></div>
-          <div class="lrow bad"><span class="sw" style="background:#ff2b43">▮</span><b>Baland qizil devor</b><i>SAKRASH ISHLAMAYDI</i></div>
+          <div class="lrow bad"><span class="sw" style="background:#ff2b43">🚗</span><b>Красная машина</b><i>СМЕНИТЕ ПОЛОСУ</i></div>
+          <div class="lrow bad"><span class="sw" style="background:#c81f38">🚚</span><b>Красный грузовик</b><i>СМЕНИТЕ ПОЛОСУ</i></div>
+          <div class="lrow bad"><span class="sw" style="background:#ff2b43">▬</span><b>Низкий красный барьер</b><i>ПРЫЖОК ИЛИ СМЕНА ПОЛОСЫ</i></div>
+          <div class="lrow bad"><span class="sw" style="background:#ff5a3c">▲</span><b>Красный конус</b><i>ПРЫЖОК ИЛИ СМЕНА ПОЛОСЫ</i></div>
+          <div class="lrow bad"><span class="sw" style="background:#ff2b43">▮</span><b>Высокая красная стена</b><i>ПРЫЖОК НЕ ПОМОЖЕТ</i></div>
         </div>
       </div>
       <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">
-        <b style="color:#a6ffbf;letter-spacing:.1em;font-size:12.5px">FOYDA · RANGLI · YIGʼING (ochko beradi)</b>
+        <b style="color:#a6ffbf;letter-spacing:.1em;font-size:12.5px">ПОЛЬЗА · ЦВЕТНОЕ · СОБИРАЙТЕ (даёт очки)</b>
         <div class="legend-table">
-          <div class="lrow good"><span class="sw" style="background:#ffd166">◎</span><b>Sariq halqa — tanga</b><i>+OCHKO</i></div>
-          <div class="lrow good"><span class="sw" style="background:#00e5ff">◆</span><b>Koʼk olmos — nitro</b><i>TEZLIK</i></div>
-          <div class="lrow good"><span class="sw" style="background:#46ff8f">⬡</span><b>Yashil qalqon</b><i>1 URISHNI YUTADI</i></div>
-          <div class="lrow good"><span class="sw" style="background:#c08cff">∪</span><b>Binafsha magnit</b><i>TANGANI TORTADI</i></div>
-          <div class="lrow good"><span class="sw" style="background:#ff7ab8">+</span><b>Pushti + belgisi</b><i>+1 JON</i></div>
+          <div class="lrow good"><span class="sw" style="background:#ffd166">◎</span><b>Жёлтое кольцо — монета</b><i>+ОЧКИ</i></div>
+          <div class="lrow good"><span class="sw" style="background:#00e5ff">◆</span><b>Синий кристалл — нитро</b><i>УСКОРЕНИЕ</i></div>
+          <div class="lrow good"><span class="sw" style="background:#46ff8f">⬡</span><b>Зелёный щит</b><i>ЗАЩИТА ОТ 1 УДАРА</i></div>
+          <div class="lrow good"><span class="sw" style="background:#c08cff">∪</span><b>Фиолетовый магнит</b><i>ПРИТЯГИВАЕТ МОНЕТЫ</i></div>
+          <div class="lrow good"><span class="sw" style="background:#ff7ab8">+</span><b>Розовый плюс</b><i>+1 ЖИЗНЬ</i></div>
         </div>
       </div>
       <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">
-        <b style="color:#ffe6a8;letter-spacing:.1em;font-size:12.5px">PROGRESSIYA · AKKAUNT VA GARAJ</b>
+        <b style="color:#ffe6a8;letter-spacing:.1em;font-size:12.5px">ПРОГРЕСС · АККАУНТ И ГАРАЖ</b>
         <div class="legend-table">
-          <div class="lrow good"><span class="sw" style="background:#ffd166">🪙</span><b>Tanga — poygada yigʼiladi</b><i>MASHINA OLISH (arzon yoʼl)</i></div>
-          <div class="lrow good"><span class="sw" style="background:#7dff9b">⭐</span><b>Ochko — poyga oxirida beriladi</b><i>MASHINA · DARAJA · KUCH</i></div>
-          <div class="lrow good"><span class="sw" style="background:#00e5ff">LVL</span><b>Akkaunt darajasi</b><i>HAR LEVEL = DOIMIY KUCH</i></div>
-          <div class="lrow good"><span class="sw" style="background:#ff2fb9">🚗</span><b>15 ta mashina</b><i>HAR BIRIDA OʼZ KUCHI (perk)</i></div>
-          <div class="lrow good"><span class="sw" style="background:#8ef9ff">🛣</span><b>8 ta yoʼl (trassa)</b><i>2 DAQIQADA · QIYINLIKKA QARAB</i></div>
+          <div class="lrow good"><span class="sw" style="background:#ffd166">🪙</span><b>Монеты — собираются в гонке</b><i>ПОКУПКА МАШИНЫ</i></div>
+          <div class="lrow good"><span class="sw" style="background:#7dff9b">⭐</span><b>Очки — начисляются после гонки</b><i>МАШИНЫ · УРОВНИ · БОНУСЫ</i></div>
+          <div class="lrow good"><span class="sw" style="background:#00e5ff">УР.</span><b>Уровень аккаунта</b><i>КАЖДЫЙ УРОВЕНЬ = ПОСТОЯННЫЙ БОНУС</i></div>
+          <div class="lrow good"><span class="sw" style="background:#ff2fb9">🚗</span><b>15 машин</b><i>У КАЖДОЙ СВОЙ БОНУС</i></div>
+          <div class="lrow good"><span class="sw" style="background:#8ef9ff">🛣</span><b>8 трасс</b><i>СЛОЖНОСТЬ РАСТЁТ СО ВРЕМЕНЕМ</i></div>
         </div>
         <p class="sub" style="margin-top:9px;font-size:12.5px;text-align:left">
-          Poyga tugaganda <b>⭐ ochko</b> yozib boriladi. <b>🚗 GARAJ</b> boʼlimidagi 15 ta mashinaning istalganini
-          <b>🪙 tanga</b> yoki <b>⭐ ochko</b> bilan sotib olish mumkin — ochko bilan narx 5 barobar arzonroq.
-          Har bir mashinaning oʼz maxsus kuchi bor — <b>15 ta mashina, 15 ta noyub kuch, hech biri takrorlanmaydi</b>:
-          🌱 tezlik sekinroq oshadi, ⚡ energiya tejaladi, 🏆 har metr koʼp ochko, 🧲 magnit uzoq ishlaydi,
-          🦘 havoda ikki marta sakrash, 🛑 qatorga chaqqon oʼtish, 💥 tosiqni urib ochko, 🚑 jon tugasa bir marta tiriladi,
-          ♻ qalqon oʼz-oʼzidan tiklanadi, 👻 baʼzi urilishni sezmaydi, 🍀 yoʼlda kuchlar koʼproq chiqadi.
-          <b>⭐ KUCHLAR</b> boʼlimidan doimiy kuchlar, <b>AKKAUNT</b> boʼlimidan daraja oshiriladi —
-          daraja yangi mashinalarni ham ochadi. Bu kuchlar oʼyinlar orasida <b>hech qachon yoʼqolmaydi</b>.
+          После гонки начисляются <b>⭐ очки</b>. Любую из 15 машин в разделе <b>🚗 ГАРАЖ</b> можно купить
+          за <b>🪙 монеты</b> или <b>⭐ очки</b> — за очки цена в пять раз ниже.
+          У каждой машины свой бонус — <b>15 машин, 15 уникальных бонусов</b>:
+          🌱 более плавный разгон, ⚡ экономия энергии, 🏆 больше очков за каждый метр, 🧲 дольше работает магнит,
+          🦘 двойной прыжок, 🛑 быстрая смена полосы, 💥 таран препятствий за очки, 🚑 однократное воскрешение,
+          ♻ восстановление щита, 👻 шанс избежать столкновения, 🍀 больше бонусов на трассе.
+          Постоянные бонусы можно улучшать в разделе <b>⭐ УЛУЧШЕНИЯ</b>, а уровень — в разделе <b>АККАУНТ</b>.
+          Новый уровень также открывает машины. Прогресс <b>сохраняется между гонками</b>.
         </p>
         <p class="sub" style="margin-top:8px;font-size:12.5px;text-align:left">
-          <b style="color:#8ef9ff">Poyga darajalari:</b> masofa har safar 500 m ga oshadi —
-          1 → 2: 1 000 m, 2 → 3: 1 500 m, 9 → 10: 5 000 m.
-          10-darajadan keyin ham keyingi bosqich uchun 5 000 m kerak boʼladi.
+          <b style="color:#8ef9ff">Уровни гонки:</b> требуемая дистанция каждый раз увеличивается на 500 м —
+          1 → 2: 1 000 м, 2 → 3: 1 500 м, 9 → 10: 5 000 м.
+          Начиная с 10-го уровня для следующего этапа нужно проехать 5 000 м.
         </p>
       </div>
       <p class="sub" style="margin-top:12px;text-align:center;font-size:13px">
-        Har bir xavfli narsaning <b style="color:#ff8ea0">ustida qizil «!» belgisi</b> va ostida <b style="color:#ff8ea0">qizil yoʼl dogʼi</b> boʼladi.
-        Ochko beradigan narsaning ustida <b style="color:#a6ffbf">yuqoriga qaragan strelka</b> va rangli dogʼ boʼladi.
-        Oʼzingizdagi mashina doim <b style="color:#7dffe4">koʼk halqa + chet belgilari</b> bilan boʼladi — bu «SIZ».
-        Keyingi darajagacha kerakli masofa ekranning yuqorisida koʼrsatiladi. Ekranning yuqorisidagi <b style="color:#8ef9ff">🛣 yoʼl belgisi</b>
-        qaysi trassada ekanningizni va keyingi yoʼlga qancha qolganini koʼrsatadi.
+        Над каждым опасным объектом есть <b style="color:#ff8ea0">красный знак «!»</b> и <b style="color:#ff8ea0">красная отметка на дороге</b>.
+        Предметы с очками отмечены <b style="color:#a6ffbf">стрелкой вверх</b> и цветной отметкой.
+        Ваша машина всегда обозначена <b style="color:#7dffe4">синим кольцом и метками по краям</b>.
+        Дистанция до следующего уровня показана вверху экрана.
       </p>
     </div>
-    <div class="row"><button class="btn" id="btnHowBack">◀ Orqaga</button><button class="btn ghost" id="btnHowPlay">▶ OʼYNASH</button></div>
+    <div class="row"><button class="btn" id="btnHowBack">◀ НАЗАД</button><button class="btn ghost" id="btnHowPlay">▶ ИГРАТЬ</button></div>
     <p class="ad-note" id="sdkNote"></p>
   </section>
 
   <section class="screen hidden" id="scrCards">
-    <h1 class="logo" style="font-size:clamp(20px,5vw,38px)">KUCHAYTIRISH TANLANG</h1>
-    <p class="sub" style="font-size:13px">Birini tanlang — bu poyga tugaguncha saqlanadi.</p>
+    <h1 class="logo" style="font-size:clamp(20px,5vw,38px)">ВЫБЕРИТЕ УЛУЧШЕНИЕ</h1>
+    <p class="sub" style="font-size:13px">Выберите одно улучшение — оно действует до конца гонки.</p>
     <div class="cards" id="cardList"></div>
   </section>
 
   <section class="screen hidden" id="scrPause">
-    <h1 class="logo" style="font-size:clamp(24px,6.6vw,52px)">PAUSE</h1>
+    <h1 class="logo" style="font-size:clamp(24px,6.6vw,52px)">ПАУЗА</h1>
     <div class="grid-stats" id="pauseStats"></div>
-    <div class="row"><button class="btn" id="btnResume">▶ Davom etish</button><button class="btn ghost" id="btnQuit">✕ Menyuga</button></div>
-    <p class="sub" style="font-size:12px">Qizil = xavf, rangli = ochko.</p>
+    <div class="row"><button class="btn" id="btnResume">▶ ПРОДОЛЖИТЬ</button><button class="btn ghost" id="btnQuit">✕ В МЕНЮ</button></div>
+    <p class="sub" style="font-size:12px">Красное — опасность, цветное — очки.</p>
   </section>
 
   <section class="screen hidden" id="scrOver">
-    <h1 class="logo" id="overTitle" style="font-size:clamp(26px,6.6vw,54px)">POYGA TUGADI</h1>
-    <div class="newbest hidden" id="newBest">🏆 YANGI REKORD!</div>
+    <h1 class="logo" id="overTitle" style="font-size:clamp(26px,6.6vw,54px)">ГОНКА ОКОНЧЕНА</h1>
+    <div class="newbest hidden" id="newBest">🏆 НОВЫЙ РЕКОРД!</div>
     <div class="grid-stats" id="overStats"></div>
     <div class="acct-bar" id="overAcct" style="padding:9px 13px">
-      <div class="lvbox"><span class="cap">YUTILDI</span><b id="oPts">+0</b></div>
+      <div class="lvbox"><span class="cap">ПОЛУЧЕНО</span><b id="oPts">+0</b></div>
       <div class="col">
-        <span class="cap" id="oAcctCap">AKKAUNT LVL 1 · ⭐0 ochko</span>
+        <span class="cap" id="oAcctCap">АККАУНТ · УР. 1 · ⭐0 ОЧКОВ</span>
         <div class="xpbar"><i id="oBar"></i></div>
-        <div class="money" id="oAcctMsg">Ochko — akkaunt kuchlariga sarflanadi</div>
+        <div class="money" id="oAcctMsg">Очки можно потратить на улучшения аккаунта</div>
       </div>
-      <button class="btn sm pink hidden" id="btnOverUp">⭐ KUCHAYTIRISH</button>
+      <button class="btn sm pink hidden" id="btnOverUp">⭐ УЛУЧШИТЬ</button>
     </div>
-    <div class="row"><button class="btn" id="btnAgain">↻ YANA</button><button class="btn ghost" id="btnMenu">MENU</button></div>
+    <div class="row"><button class="btn" id="btnAgain">↻ ЕЩЁ РАЗ</button><button class="btn ghost" id="btnMenu">В МЕНЮ</button></div>
     <p class="sub" style="font-size:12.5px" id="overHint"></p>
   </section>
 
   <section class="screen hidden" id="scrRevive">
-    <h1 class="logo" style="font-size:clamp(22px,5.6vw,44px)">TIRIK QOLAMIZMI?</h1>
-    <p class="sub">Reklama koʼrib 1 jon + qalqon bilan joyidan davom etasiz.</p>
-    <div class="row"><button class="btn pink" id="btnReviveAd">📺 Reklama — tiriltir</button><button class="btn ghost" id="btnReviveNo">Yoʼq, tugasin</button></div>
+    <h1 class="logo" style="font-size:clamp(22px,5.6vw,44px)">ВОСКРЕСНУТЬ?</h1>
+    <p class="sub">Посмотрите рекламу, чтобы продолжить гонку с 1 жизнью и щитом.</p>
+    <div class="row"><button class="btn pink" id="btnReviveAd">📺 Воскреснуть за рекламу</button><button class="btn ghost" id="btnReviveNo">Нет, закончить</button></div>
     <p class="ad-note" id="reviveNote"></p>
   </section>
 
-  <div id="load"><div class="ring"></div><p>YUKLANMOQDA…</p></div>
+  <div id="load"><div class="ring"></div><p>ЗАГРУЗКА…</p></div>
   <div id="toast"></div>
 </div>
 <script src="game.js"></script>
-<script src="duel.js"></script>
 </body>
 </html>
