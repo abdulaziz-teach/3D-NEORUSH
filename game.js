@@ -1045,6 +1045,15 @@ window.addEventListener('keydown', (e) => {
   if ([' ', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(k)) e.preventDefault();
   if (keys[k]) return; keys[k] = true;
   Sound.ensure(); Sound.resume();
+  if (!G.running && !el.scrMenu.classList.contains('hidden') && menuView === 'home' &&
+      (k === 'arrowleft' || k === 'arrowright')) {
+    cycleHomeCar(k === 'arrowleft' ? -1 : 1);
+    return;
+  }
+  if (k === 'escape' && !$('#menuDropdown').classList.contains('hidden')) {
+    setMenuDropdown(false);
+    return;
+  }
   if (k === 'arrowleft' || k === 'a') moveLane(-1);
   if (k === 'arrowright' || k === 'd') moveLane(1);
   if (k === ' ' || k === 'w' || k === 'arrowup') jump();
@@ -2426,7 +2435,9 @@ function frame(ts) {
       // Garaj vitrinasi sekin aylanadi (menyu + GARAJ ochiq bo'lsa)
       const sh = $('#tabShips');
       if (!showcaseDragging && G.frame % 4 === 0 && el.scrMenu && !el.scrMenu.classList.contains('hidden') &&
-        sh && !sh.classList.contains('hidden')) { showcaseRot += .012; updateShowcase(); }
+          ((typeof menuView !== 'undefined' && menuView === 'home') || (sh && !sh.classList.contains('hidden')))) {
+          showcaseRot += .012; updateShowcase();
+        }
     }
     render(); return;
   }
@@ -2448,6 +2459,16 @@ function menuStats() {
   $('#mBest').textContent = num(G.meta.best || 0);
   $('#mLevel').textContent = G.meta.bestLevel || 1;
   const mc = $('#mCoins'); if (mc) mc.textContent = num(G.coins);
+  const homeLevel = $('#homeLevel'), homeXpText = $('#homeXpText'), homeXpBar = $('#homeXpBar');
+  const homeBest = $('#homeBest'), homeCoins = $('#homeCoins'), homePoints = $('#homePoints');
+  const nextCost = ACCT.cost(ACCT.lvl);
+  if (homeLevel) homeLevel.textContent = ACCT.lvl;
+  if (homeXpText) homeXpText.textContent = ACCT.lvl >= ACCT.maxLvl ? 'МАКС. УРОВЕНЬ' : num(ACCT.pts) + ' / ' + num(nextCost) + ' ⭐';
+  if (homeXpBar) homeXpBar.style.width = ACCT.lvl >= ACCT.maxLvl ? '100%' : Math.min(100, ACCT.pts / nextCost * 100).toFixed(1) + '%';
+  if (homeBest) homeBest.textContent = num(G.meta.best || 0);
+  if (homeCoins) homeCoins.textContent = num(G.coins);
+  if (homePoints) homePoints.textContent = num(ACCT.pts);
+  const homeRecord = $('#mBest'); if (homeRecord) homeRecord.textContent = num(G.meta.best || 0);
   renderAcctBar();
   $('#statList').innerHTML = [
     ['Уровень аккаунта', 'УР. ' + ACCT.lvl + ' / ' + ACCT.maxLvl],
@@ -2468,6 +2489,7 @@ function menuStats() {
   $('#btnMus').textContent = Sound.musicOn ? 'ВКЛ' : 'ВЫКЛ';
   $('#btnQual').textContent = G.quality === 'low' ? 'Низкая' : 'Высокая';
   renderAcct();
+  updateHomeCar();
 }
 /* Menyu tepasidagi akkount chizig'i: LVL, ochko, progress, tugma */
 function renderAcctBar() {
@@ -2482,6 +2504,7 @@ function renderAcctBar() {
   up.textContent = maxed ? '🏆 МАКС.' : '⭐ ПОВЫСИТЬ УРОВЕНЬ · ' + need;
   up.classList.toggle('ghost', !maxed && !ACCT.canUp());
 }
+let menuView = 'home';
 let showcaseCarId = G.car || 0, showcaseRot = -0.6, showcaseDragging = false, showcaseX = 0;
 /** Vitrina canvas'ini konteyner kengligiga qarab o'lchaymiz (responsiv) */
 function fitShowcase(cv) {
@@ -2513,10 +2536,8 @@ function frameMesh(mesh, w, h, dist, camY, pad) {
     cy: Math.round(h * .5 + ((yTop + yBot) / 2 - camY) * sMid)
   };
 }
-function updateShowcase() {
-  const cv = document.getElementById('cvShowcase');
+function drawCarShowcase(cv, c, rot, pad, platformScale) {
   if (!cv || !cv.getContext) return;
-  const c = CARS[showcaseCarId] || CARS[0];
   const c2 = cv.getContext('2d');
   if (!c2) return;
   const p = c.pal || c;
@@ -2526,41 +2547,74 @@ function updateShowcase() {
   const saveCam = { x: CAM.x, y: CAM.y, z: CAM.z, fov: CAM.fov };
   const oldCtx = ctx, oldCx = cx, oldCy = cy, oldW = W, oldH = H;
   CAM.x = 0; CAM.y = .82; CAM.z = -5.0;
-  const fr = frameMesh(c.mesh, box.w, box.h, -CAM.z, CAM.y, .84);
+  const fr = frameMesh(c.mesh, box.w, box.h, -CAM.z, CAM.y, pad);
   CAM.fov = fr.fov; cx = box.w / 2; cy = fr.cy; W = box.w; H = box.h;
   ctx = c2;
 
-  // Turntable platformasi
   proj([0, 0, 0], _b);
   if (_b.vis) {
     c2.save();
-    const platGrad = c2.createRadialGradient(_b.x, _b.y, 0, _b.x, _b.y, 1.8 * _b.s);
+    const platGrad = c2.createRadialGradient(_b.x, _b.y, 0, _b.x, _b.y, platformScale * .82 * _b.s);
     platGrad.addColorStop(0, rgba(p.body, 0.45));
     platGrad.addColorStop(0.7, rgba(p.acc || '#00e5ff', 0.2));
     platGrad.addColorStop(1, 'rgba(0,0,0,0)');
     c2.fillStyle = platGrad;
-    c2.beginPath(); c2.ellipse(_b.x, _b.y, 2.2 * _b.s, 0.8 * _b.s, 0, 0, 6.283); c2.fill();
-    c2.strokeStyle = p.acc || '#00e5ff'; c2.lineWidth = 1.8;
+    c2.beginPath(); c2.ellipse(_b.x, _b.y, platformScale * _b.s, platformScale * .36 * _b.s, 0, 0, 6.283); c2.fill();
+    c2.strokeStyle = p.acc || '#00e5ff'; c2.lineWidth = Math.max(1.5, box.w / 360);
     c2.stroke();
     c2.restore();
   }
-
-  const faces = facesOf(c.mesh, [0, 0, 0], showcaseRot, 1);
+  const faces = facesOf(c.mesh, [0, 0, 0], rot, 1);
   faces.sort((a, b) => b.z - a.z);
   for (const f of faces) drawFace(f);
   ctx = oldCtx; cx = oldCx; cy = oldCy; W = oldW; H = oldH;
   Object.assign(CAM, saveCam);
+}
+function updateHomeCar() {
+  const c = CARS[showcaseCarId] || CARS[0];
+  const status = $('#homeCarStatus');
+  const owned = ownedOf(c), selected = G.car === c.id;
+  const label = $('#homeCarLabel');
+  if (label) label.textContent = selected ? 'ВАША МАШИНА' : 'ПРЕДПРОСМОТР МОДЕЛИ';
+  if ($('#homeCarName')) $('#homeCarName').textContent = c.name.toUpperCase();
+  if (status) status.textContent = selected ? 'ВЫБРАНА' : owned ? 'ОТКРЫТА В ГАРАЖЕ' : !lvlOk(c) ? '🔒 УРОВЕНЬ ' + c.lvl : 'КУПИТЬ В ГАРАЖЕ';
+  if ($('#homeCarBoost')) $('#homeCarBoost').textContent = mul(c.boost);
+  if ($('#homeCarShield')) $('#homeCarShield').textContent = carStartingShield(c) + ' с';
+  if ($('#homeCarMagnet')) $('#homeCarMagnet').textContent = (5 * c.magnet).toFixed(1).replace(/\.0$/, '') + ' с';
+  if ($('#homeCarCount')) $('#homeCarCount').textContent = String(c.id + 1).padStart(2, '0') + ' / ' + String(CARS.length).padStart(2, '0');
+}
+function updateShowcase() {
+  const cv = document.getElementById('cvShowcase');
+  const c = CARS[showcaseCarId] || CARS[0];
+  const garageContent = $('#garageContent');
+  const garageTab = $('#tabShips');
+  if (cv && garageContent && !garageContent.classList.contains('hidden') &&
+      garageTab && !garageTab.classList.contains('hidden')) drawCarShowcase(cv, c, showcaseRot, .84, 2.2);
+  drawCarShowcase($('#cvHeroCar'), c, showcaseRot, .84, 1.9);
+  updateHomeCar();
 
   const owned = ownedOf(c), sel = G.car === c.id, lock = !lvlOk(c);
   const scN = $('#scName'), scT = $('#scTag'), scB = $('#scBst'), scSh = $('#scShd'), scM = $('#scMag');
   if (scN) scN.textContent = c.name;
   if (scT) scT.textContent = c.tag;
-  if (scB) scB.innerHTML = mul(c.boost) + '<i>мощность</i>';
-  if (scSh) scSh.innerHTML = c.shieldStart + '<i>сек.</i>';
-  if (scM) scM.innerHTML = mul(c.magnet) + '<i>радиус</i>';
+  if (scB) scB.innerHTML = mul(c.boost) + '<i>экономия энергии</i>';
+  if (scSh) scSh.innerHTML = carStartingShield(c) + '<i>сек.</i>';
+  if (scM) scM.innerHTML = (5 * c.magnet).toFixed(1).replace(/\.0$/, '') + '<i>сек.</i>';
   const skN = $('#scSkin'), skO = $('#scOwn');
   if (skN) skN.innerHTML = '🎨 Цвет: <b>' + skinOf(c).name + '</b>';
-  if (skO) skO.textContent = sel ? '✅ ВЫБРАНА' : owned ? 'ОТКРЫТА' : lock ? '🔒 УР. ' + c.lvl : '🪙 ' + c.cost + ' / ⭐ ' + (c.pcost || 0);
+  if (skO) skO.textContent = sel ? '✅ ВЫБРАНА' : owned ? 'ОТКРЫТА' : lock ? '🔒 УР. ' + c.lvl : '🪙 ' + num(c.cost) + ' / ⭐ ' + num(c.pcost || 0);
+  const detailStatus = $('#detailStatus');
+  if (detailStatus) {
+    const statusText = sel ? 'ВЫБРАНА' : owned ? 'ОТКРЫТА' : lock ? 'ЗАКРЫТА' : carAffordable(c) ? 'ДОСТУПНА К ПОКУПКЕ' : 'МОЖНО ОТКРЫТЬ';
+    detailStatus.innerHTML = '<span class="' + (sel ? 'status-selected' : lock ? 'status-locked' : !owned && carAffordable(c) ? 'status-available' : '') + '">' +
+      statusText + '</span><span>АККАУНТ УР. ' + ACCT.lvl + '</span>';
+  }
+  const detailUnlock = $('#detailUnlock');
+  if (detailUnlock) {
+    if (lock) detailUnlock.innerHTML = 'Откроется на <strong>' + (c.lvl || 1) + '-м уровне аккаунта</strong>';
+    else if (!owned) detailUnlock.innerHTML = 'Цена: <strong>🪙 ' + num(c.cost) + '</strong> или <strong>⭐ ' + num(c.pcost || 0) + '</strong>';
+    else detailUnlock.textContent = c.tag;
+  }
   const pk = $('#scPerk');
   if (pk) {
     const P = c.perk ? PERKS[c.perk] : null;
@@ -2610,6 +2664,36 @@ function renderSkinPicker() {
   }
   box.innerHTML = h;
 }
+function renderSkinGallery() {
+  const gallery = $('#skinGallery');
+  if (!gallery) return;
+  const c = CARS[G.car] || CARS[0];
+  $('#skinCarName').textContent = c.name;
+  const current = skinIdx(c);
+  gallery.innerHTML = SKINS.map((skin, index) => {
+    const locked = !ACCT.can(skin.lvl || 1);
+    const color = skin.pal ? skin.pal.body : c.body;
+    const label = locked ? 'УР. ' + skin.lvl : index === current ? 'АКТИВЕН' : 'ВЫБРАТЬ';
+    return '<button class="skin-option' + (index === current ? ' active' : '') + (locked ? ' locked' : '') +
+      '" type="button" data-skin-index="' + index + '" aria-label="' + skin.name + (locked ? ', требуется уровень ' + skin.lvl : '') + '">' +
+      '<i class="skin-swatch" style="--skin-color:' + color + '"></i><span>' + skin.name + '<small>' + label + '</small></span></button>';
+  }).join('');
+}
+function chooseSkin(index, c) {
+  const skin = SKINS[index];
+  if (!skin || !c) return false;
+  if (!ACCT.can(skin.lvl || 1)) {
+    toast('🔒 Цвет «' + skin.name + '» откроется на ' + skin.lvl + '-м уровне аккаунта (сейчас ' + ACCT.lvl + ')');
+    Sound.blip(200, .12, 'sawtooth', .18); return false;
+  }
+  if (skinIdx(c) === index) return true;
+  store.set(skinKey(c.id), index);
+  applySkin(c);
+  Sound.blip(880, .08, 'triangle', .18);
+  toast('🎨 «' + c.name + '» → цвет «' + skin.name + '»');
+  renderSkinGallery();
+  return true;
+}
 
 function ownedOf(c) { return c.cost === 0 || store.get('owned' + c.id, false); }
 function lvlOk(c) { return ACCT.can(c.lvl || 1); }
@@ -2645,26 +2729,45 @@ function takeCar(c) {
   G.car = c.id; store.set('car', c.id); G.ship = c.id;
   toast('Выбрана машина «' + c.name + '»'); Sound.blip(700, .08, 'triangle', .18);
 }
+let garageDetailOpen = false;
+function carAffordable(c) {
+  return G.coins >= c.cost || ACCT.pts >= (c.pcost || 0);
+}
+function carStartingShield(c) {
+  const accountShield = ACCT.extraShield();
+  const permanentShield = PERM.n('shield') > 0 ? 6 : 0;
+  return Math.max(c.shieldStart + accountShield, permanentShield);
+}
 function renderShips() {
   const list = $('#shipList'); if (!list) return;
   list.innerHTML = CARS.map(c => {
-    const owned = ownedOf(c), sel = G.car === c.id, lock = !lvlOk(c);
-    let status, cls = 'req';
-    if (sel) { status = '✅ ВЫБРАНА'; cls += ' ok'; }
-    else if (owned) { status = 'ОТКРЫТА — нажмите'; cls += ' ok'; }
-    else if (lock) { status = '🔒 НУЖЕН УР. ' + (c.lvl || 1); }
-    else { status = '🪙 ' + c.cost + ' · ⭐ ' + (c.pcost || 0); if (G.coins >= c.cost || ACCT.pts >= (c.pcost || 0)) cls += ' ok'; }
+    const owned = ownedOf(c), selected = G.car === c.id, locked = !lvlOk(c);
+    const affordable = !owned && !locked && carAffordable(c);
+    let status = 'ОТКРЫТА';
+    if (selected) status = '✓ ВЫБРАНА';
+    else if (locked) status = '🔒 УРОВЕНЬ ' + (c.lvl || 1);
+    else if (affordable) status = 'МОЖНО КУПИТЬ';
+    else if (!owned) status = 'НУЖНА ВАЛЮТА';
     const P = c.perk ? PERKS[c.perk] : null;
-    return '<div class="plate ' + (sel ? 'on' : '') + ' ' + (owned && !lock ? '' : 'locked') + '" data-id="' + c.id + '">' +
-      '<canvas class="carPrev" data-id="' + c.id + '" width="168" height="116"></canvas>' +
-      '<b>' + c.name + '</b>' +
-      '<span class="' + cls + '">' + status + '</span>' +
-      '<span class="cstat">⚡' + c.boost.toFixed(2) + ' · 🧲' + c.magnet.toFixed(2) + ' · 🛡' + c.shieldStart + ' с</span>' +
-      '<span class="cperk" title="' + (P ? P.desc : '') + '">' + (P ? P.ic + ' ' + P.name + '<small>' + P.desc + '</small>' : '🔰 Стандарт<small>Без особого бонуса</small>') + '</span>' +
-      '<span class="cstat">🎨 ' + skinOf(c).name + '</span></div>';
+    const cls = ['car-card', selected ? 'selected' : '', locked ? 'locked' : 'unlocked',
+      owned ? 'owned' : affordable ? 'available' : ''].filter(Boolean).join(' ');
+    const description = P ? P.ic + ' ' + P.name : c.tag;
+    return '<button class="' + cls + '" data-id="' + c.id + '" type="button" aria-pressed="' + selected + '" aria-label="' + c.name + ' — ' + status + '">' +
+      '<canvas class="carPrev car-card-preview" data-id="' + c.id + '" width="336" height="184"></canvas>' +
+      '<span class="car-card-name">' + c.name + '</span>' +
+      '<span class="car-card-description">' + description + '</span>' +
+      (!owned && !locked ? '<span class="car-card-price">🪙 ' + num(c.cost) + ' · ⭐ ' + num(c.pcost || 0) + '</span>' : '') +
+      '<span class="car-card-meta"><span class="car-card-level">УР. ' + (c.lvl || 1) + '</span><span class="car-card-state">' + status + '</span></span>' +
+      '<span class="car-card-stats"><span>⚡ ' + mul(c.boost) + '</span><span>🧲 ' + (5 * c.magnet).toFixed(1).replace(/\.0$/, '') + ' с</span><span>🛡 ' + carStartingShield(c) + ' с</span></span>' +
+      '</button>';
   }).join('');
-  const nodes = document.querySelectorAll('.carPrev');
+  const nodes = list.querySelectorAll('.carPrev');
   for (let i = 0; i < nodes.length; i++) drawPrev(nodes[i]);
+  $('#carOwnedCount').textContent = CARS.filter(ownedOf).length;
+  $('#garageInventory').classList.toggle('hidden', garageDetailOpen);
+  $('#garageShowcase').classList.toggle('hidden', !garageDetailOpen);
+  $('#garageShowcase').classList.toggle('detail-open', garageDetailOpen);
+  renderSkinGallery();
   updateShowcase();
 }
 /* --- KUCHLAR bo'limi: doimiy kuchaytirish (⭐ ochko evaziga) --- */
@@ -2723,32 +2826,101 @@ function drawPrev(cv, rotForce) {
   Object.assign(CAM, saveCam);
 }
 
-const TABS = { ships: 'Ships', perk: 'Perk', acct: 'Acct', stat: 'Stat', set: 'Set' };
-function activateTab(name) {
-  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.tab === name));
+const TABS = { ships: 'Ships', perk: 'Perk', skins: 'Skins', acct: 'Acct', stat: 'Stat', set: 'Set' };
+function activateTab(name, selectedFilter) {
+  const filterName = selectedFilter || (name === 'perk' ? 'upgrades' : name);
+  document.querySelectorAll('.garage-filters .tab').forEach(x => {
+    const active = x.dataset.tab === filterName;
+    x.classList.toggle('on', active);
+    x.setAttribute('aria-selected', String(active));
+  });
   for (const k in TABS) hide($('#tab' + TABS[k]));
   show($('#tab' + TABS[name]));
-  if (name === 'ships') renderShips();
+  if (name === 'ships') {
+    if (selectedFilter) garageDetailOpen = false;
+    renderShips();
+  }
   if (name === 'perk' || name === 'acct') renderAcct();
+  if (name === 'skins') renderSkinGallery();
   if (name === 'stat') menuStats();
+}
+function setMenuView(view) {
+  menuView = view;
+  el.scrMenu.classList.toggle('menu-home', view === 'home');
+  el.scrMenu.classList.toggle('menu-garage', view === 'garage');
+  $('#homeLanding').classList.toggle('hidden', view !== 'home');
+  $('#garageContent').classList.toggle('hidden', view !== 'garage');
+  if (view === 'garage') $('#garageContent').scrollTop = 0;
+}
+function setMenuDropdown(open) {
+  const button = $('#btnMenuToggle'), dropdown = $('#menuDropdown');
+  button.setAttribute('aria-expanded', String(open));
+  button.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+  dropdown.classList.toggle('hidden', !open);
+}
+function cycleHomeCar(direction) {
+  showcaseCarId = (showcaseCarId + direction + CARS.length) % CARS.length;
+  const c = CARS[showcaseCarId];
+  if (ownedOf(c)) takeCar(c);
+  updateShowcase();
+  menuStats();
 }
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
   Sound.ensure(); Sound.blip(620, .06, 'triangle', .14);
-  activateTab(t.dataset.tab);
+  const tab = t.dataset.tab;
+  if (tab === 'all' || tab === 'ships') activateTab('ships', tab);
+  else if (tab === 'upgrades') activateTab('perk');
+  else activateTab(tab);
 }));
+$('#btnOpenGarage').addEventListener('click', () => {
+  setMenuDropdown(false);
+  setMenuView('garage');
+  activateTab('ships');
+});
+$('#btnBackHome').addEventListener('click', () => setMenuView('home'));
+$('#btnBrandHome').addEventListener('click', () => setMenuView('home'));
+$('#btnProfile').addEventListener('click', () => {
+  setMenuView('garage');
+  activateTab('acct');
+});
+$('#btnCarPrev').addEventListener('click', () => cycleHomeCar(-1));
+$('#btnCarNext').addEventListener('click', () => cycleHomeCar(1));
+$('#btnCarDetailBack').addEventListener('click', () => {
+  garageDetailOpen = false;
+  renderShips();
+  $('#garageInventory').scrollIntoView({ block: 'start', behavior: 'smooth' });
+});
+$('#btnMenuToggle').addEventListener('click', () => {
+  setMenuDropdown($('#menuDropdown').classList.contains('hidden'));
+});
+$('#menuDropdown').addEventListener('click', (e) => {
+  const button = e.target.closest ? e.target.closest('[data-menu-action]') : null;
+  if (!button) return;
+  setMenuDropdown(false);
+  const action = button.dataset.menuAction;
+  if (action === 'help') {
+    hide(el.scrMenu); show(el.scrHow);
+  } else if (action === 'home') {
+    setMenuView('home');
+  } else if (action === 'stat' || action === 'set') {
+    setMenuView('garage');
+    activateTab(action);
+  }
+});
+document.addEventListener('click', (e) => {
+  const tools = $('.menu-tools');
+  if (!tools.contains(e.target) && !$('#menuDropdown').classList.contains('hidden')) setMenuDropdown(false);
+});
 /* --- Garaj: mashina olish / tanlash --- */
 $('#shipList').addEventListener('click', (e) => {
-  const n = e.target.closest ? e.target.closest('.plate') : null; if (!n) return;
+  const n = e.target.closest ? e.target.closest('.car-card') : null; if (!n) return;
   const c = CARS[+n.dataset.id]; if (!c) return;
   showcaseCarId = c.id;
+  if (ownedOf(c)) takeCar(c);
+  garageDetailOpen = true;
+  renderShips();
   updateShowcase();
-  if (!lvlOk(c)) {
-    toast('🔒 Для машины «' + c.name + '» нужен ' + c.lvl + '-й уровень аккаунта (сейчас ' + ACCT.lvl + ')');
-    Sound.blip(200, .12, 'sawtooth', .18); return;
-  }
-  if (!ownedOf(c)) tryBuy(c, undefined);
-  else takeCar(c);
-  renderShips(); menuStats();
+  menuStats();
 });
 const scBtn = $('#btnSelectCar');
 if (scBtn) {
@@ -2795,17 +2967,18 @@ if (skinBox) {
     const c = CARS[showcaseCarId] || CARS[0], i = +b.dataset.sk, s = SKINS[i];
     if (!c || !s) return;
     Sound.ensure(); Sound.resume();
-    if (!ACCT.can(s.lvl || 1)) {
-      toast('🔒 Цвет «' + s.name + '» откроется на ' + s.lvl + '-м уровне аккаунта (сейчас ' + ACCT.lvl + ')');
-      Sound.blip(200, .12, 'sawtooth', .18); return;
-    }
-    if (skinIdx(c) === i) return;
-    store.set(skinKey(c.id), i); applySkin(c);
-    Sound.blip(880, .08, 'triangle', .18);
-    toast('🎨 «' + c.name + '» → цвет «' + s.name + '»');
-    renderShips();
+    if (chooseSkin(i, c)) renderShips();
   });
 }
+$('#skinGallery').addEventListener('click', (e) => {
+  const button = e.target.closest ? e.target.closest('.skin-option') : null;
+  if (!button) return;
+  Sound.ensure(); Sound.resume();
+  if (chooseSkin(+button.dataset.skinIndex, CARS[G.car] || CARS[0])) {
+    renderShips();
+    renderSkinGallery();
+  }
+});
 /* --- Kuchlar xaridi --- */
 $('#perkList').addEventListener('click', (e) => {
   const n = e.target.closest ? e.target.closest('.perm') : null; if (!n) return;
@@ -2822,16 +2995,15 @@ $('#btnAcctUp').addEventListener('click', acctUp);
 $('#btnAcctUp2').addEventListener('click', acctUp);
 $('#btnOverUp').addEventListener('click', () => {
   hide(el.scrOver); show(el.scrMenu); G.running = false; G.over = false;
-  menuStats(); renderShips(); activateTab('acct');
+  setMenuView('garage'); menuStats(); renderShips(); activateTab('acct');
 });
 $('#btnPlay').addEventListener('click', () => { Sound.ensure(); Sound.resume(); startRun(); });
 $('#btnHowPlay').addEventListener('click', () => { Sound.ensure(); Sound.resume(); startRun(); });
 $('#btnAgain').addEventListener('click', () => startRun());
-$('#btnMenu').addEventListener('click', () => { bankCoins(); hide(el.scrOver); show(el.scrMenu); menuStats(); renderShips(); G.running = false; G.over = false; });
-$('#btnHow').addEventListener('click', () => { hide(el.scrMenu); show(el.scrHow); });
+$('#btnMenu').addEventListener('click', () => { bankCoins(); hide(el.scrOver); show(el.scrMenu); setMenuView('home'); menuStats(); renderShips(); G.running = false; G.over = false; });
 $('#btnHowBack').addEventListener('click', () => { hide(el.scrHow); show(el.scrMenu); menuStats(); });
 $('#btnResume').addEventListener('click', togglePause);
-$('#btnQuit').addEventListener('click', () => { G.paused = false; hide(el.scrPause); G.running = false; setHint(-1); show(el.scrMenu); menuStats(); renderShips(); });
+$('#btnQuit').addEventListener('click', () => { G.paused = false; hide(el.scrPause); G.running = false; setHint(-1); show(el.scrMenu); setMenuView('home'); menuStats(); renderShips(); });
 $('#btnSnd').addEventListener('click', () => { Sound.ensure(); Sound.set(!Sound.on); menuStats(); });
 $('#btnMus').addEventListener('click', () => { Sound.ensure(); Sound.setMusic(!Sound.musicOn); menuStats(); });
 $('#btnQual').addEventListener('click', () => {
@@ -2864,7 +3036,7 @@ function onViewportChange() {
 window.addEventListener('resize', onViewportChange);
 window.addEventListener('orientationchange', function () { setTimeout(onViewportChange, 280); });
 if (window.visualViewport) window.visualViewport.addEventListener('resize', onViewportChange);
-resize(); buildBackdrop(); renderLives(); menuStats(); renderShips();
+resize(); buildBackdrop(); renderLives(); setMenuView('home'); menuStats(); renderShips();
 requestAnimationFrame(frame);
 setTimeout(() => el.load.classList.add('gone'), 600);
 YA.init();

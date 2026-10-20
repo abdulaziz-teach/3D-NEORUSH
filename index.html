@@ -509,6 +509,274 @@ body.touch #touch{display:block}
 .perkline{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:#c6ecff;padding:7px 2px;border-bottom:1px dashed rgba(0,229,255,.16)}
 .perkline b{color:#fff}
 .perkline.next{border-bottom:0;color:#ffe6a8}
+
+/* --- Premium garage home --- */
+#scrMenu{align-items:stretch;justify-content:flex-start;gap:0;padding:0;overflow:hidden;
+  background:radial-gradient(ellipse at 52% 48%,rgba(16,36,76,.42),transparent 48%),
+  linear-gradient(125deg,#050914 0%,#080d1b 48%,#09071b 100%);text-align:left}
+#scrMenu>*{margin-top:0!important;margin-bottom:0!important}
+#scrMenu.menu-garage{overflow-y:auto;-webkit-overflow-scrolling:touch}
+.menu-topbar{position:relative;z-index:12;flex:0 0 auto;min-height:92px;display:grid;
+  grid-template-columns:minmax(220px,1fr) auto minmax(220px,1fr);align-items:center;
+  gap:18px;padding:12px clamp(18px,4vw,58px);border-bottom:1px solid rgba(100,157,255,.14);
+  background:linear-gradient(180deg,rgba(4,8,19,.92),rgba(4,8,19,.64));
+  box-shadow:0 12px 42px rgba(0,0,0,.24);backdrop-filter:blur(18px)}
+.profile-summary{display:flex;align-items:center;gap:12px;width:max-content;max-width:100%;padding:0;
+  color:#f4f8ff;border:0;background:none;text-align:left;cursor:pointer}
+.profile-level{width:48px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:1px solid rgba(255,205,95,.58);border-radius:14px;background:linear-gradient(145deg,rgba(255,196,71,.18),rgba(93,56,15,.2));
+  box-shadow:0 0 24px rgba(255,184,55,.12),inset 0 0 15px rgba(255,221,140,.08)}
+.profile-level small{font-size:8px;font-weight:900;letter-spacing:.15em;color:#ffe19a}
+.profile-level b{font-size:20px;line-height:1.1;color:#fff2c7}
+.profile-progress{display:flex;flex-direction:column;gap:5px;min-width:144px}
+.profile-progress>span{display:flex;justify-content:space-between;gap:10px;font-size:9px;letter-spacing:.08em;color:#91a6c6}
+.profile-progress>span b:first-child{color:#9db1d2}
+.profile-progress>span b:last-child{color:#e6ecfa;font-variant-numeric:tabular-nums}
+.profile-progress .xpbar{width:100%;height:6px;margin:0;border-color:rgba(130,160,213,.24);background:rgba(1,5,15,.8)}
+.profile-progress .xpbar i{display:block;width:0;height:100%;border-radius:99px;background:linear-gradient(90deg,#458eff,#7a5cff);
+  box-shadow:0 0 12px rgba(67,138,255,.75);transition:width .35s ease}
+.profile-record{justify-content:flex-start!important;color:#8294b2!important}
+.profile-record b{color:#f4d77f!important}
+.brand-mark{display:flex;flex-direction:column;align-items:center;justify-self:center;padding:0;border:0;
+  background:none;color:#f4f8ff;text-align:center;cursor:pointer;text-decoration:none}
+.brand-mark>b{font-size:clamp(20px,2.4vw,29px);font-weight:1000;letter-spacing:.13em;line-height:1;
+  text-shadow:0 0 22px rgba(50,151,255,.38)}
+.brand-mark i{font-style:normal;color:#66caff}
+.brand-mark small{margin-top:5px;font-size:8px;font-weight:900;letter-spacing:.34em;color:#8298bc}
+.menu-tools{position:relative;display:flex;align-items:center;justify-content:flex-end;gap:9px}
+.wallet-pill{display:flex;align-items:center;gap:7px;min-width:84px;justify-content:center;padding:10px 12px;
+  border:1px solid rgba(111,146,204,.25);border-radius:12px;background:linear-gradient(145deg,rgba(21,31,54,.88),rgba(9,14,29,.94));
+  box-shadow:inset 0 1px rgba(255,255,255,.05),0 8px 20px rgba(0,0,0,.2);font-size:13px;font-variant-numeric:tabular-nums}
+.wallet-pill>span{font-size:15px;filter:drop-shadow(0 0 8px rgba(255,208,93,.25))}
+.wallet-pill b{color:#f0f5ff}
+.coins-pill{border-color:rgba(255,201,91,.27)}
+.points-pill{border-color:rgba(127,153,255,.24)}
+.menu-toggle{width:42px;height:42px;border:1px solid rgba(108,164,255,.3);border-radius:12px;background:rgba(17,26,48,.92);
+  color:#e7f3ff;font-size:20px;cursor:pointer;transition:.18s;box-shadow:0 6px 18px rgba(0,0,0,.28)}
+.menu-toggle:hover,.menu-toggle[aria-expanded="true"]{border-color:#61caff;background:rgba(27,59,96,.95);box-shadow:0 0 22px rgba(58,171,255,.24)}
+.menu-dropdown{position:absolute;right:0;top:calc(100% + 12px);width:224px;padding:8px;display:flex;flex-direction:column;gap:4px;
+  border:1px solid rgba(113,158,229,.3);border-radius:16px;background:linear-gradient(145deg,rgba(16,25,47,.98),rgba(7,12,27,.99));
+  box-shadow:0 22px 60px rgba(0,0,0,.62),0 0 28px rgba(32,124,255,.12);backdrop-filter:blur(20px)}
+.menu-dropdown button{display:flex;align-items:center;gap:12px;padding:12px;border:0;border-radius:10px;background:transparent;
+  color:#dce8ff;text-align:left;font:800 12px var(--f);letter-spacing:.035em;cursor:pointer;transition:.15s}
+.menu-dropdown button span{display:grid;place-items:center;width:26px;height:26px;border:1px solid rgba(99,154,242,.2);
+  border-radius:8px;background:rgba(53,102,173,.13);color:#75c8ff;font-size:14px}
+.menu-dropdown button:hover{background:rgba(61,120,205,.2);color:#fff}
+.home-landing{position:relative;flex:1;min-height:0;width:100%;overflow:hidden}
+.hero-scene{position:absolute;inset:0;overflow:hidden;isolation:isolate}
+.scene-grid{position:absolute;inset:25% -15% -38%;opacity:.16;transform:perspective(430px) rotateX(60deg) scale(1.3);
+  transform-origin:50% 0;background-image:linear-gradient(rgba(67,143,255,.28) 1px,transparent 1px),linear-gradient(90deg,rgba(67,143,255,.28) 1px,transparent 1px);
+  background-size:58px 58px;mask-image:linear-gradient(transparent,#000 22%,#000 72%,transparent)}
+.scene-light{position:absolute;left:50%;top:43%;width:min(68vw,850px);aspect-ratio:1;transform:translate(-50%,-50%);
+  border-radius:50%;background:radial-gradient(circle,rgba(32,94,194,.16),rgba(51,37,139,.08) 42%,transparent 70%);filter:blur(10px)}
+.hero-stage{position:absolute;inset:3% 9% 7%;display:grid;place-items:center}
+.hero-stage::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 78%,transparent 18%,rgba(6,10,22,.12) 54%,rgba(5,8,17,.62) 100%)}
+.hero-stage canvas{position:relative;z-index:1;width:100%;height:100%;display:block;filter:drop-shadow(0 25px 42px rgba(0,0,0,.55))}
+.scene-label{position:absolute;z-index:2;top:5%;left:50%;transform:translateX(-50%);color:rgba(142,190,248,.5);
+  font-size:9px;font-weight:900;letter-spacing:.3em;white-space:nowrap}
+.scene-label i{color:#66d8ff;font-style:normal}
+.hero-side{position:absolute;z-index:3;left:50%;bottom:23px;transform:translateX(-50%);width:min(360px,38vw);
+  display:flex;flex-direction:column;align-items:center;text-align:center;text-shadow:0 2px 12px #030713}
+.eyebrow{font-size:9px;font-weight:900;letter-spacing:.23em;color:#6bcfff}
+.hero-car-name{margin-top:3px;color:#fff;font-size:clamp(20px,2.5vw,31px);font-weight:1000;letter-spacing:.07em;
+  text-shadow:0 0 22px rgba(86,171,255,.35)}
+.hero-car-status{margin-top:5px;color:#80e0c0;font-size:9px;font-weight:900;letter-spacing:.18em}
+.hero-car-stats{display:flex;gap:8px;margin-top:13px}
+.hero-car-stats span{min-width:74px;display:flex;flex-direction:column;gap:3px;padding:7px 10px;
+  border:1px solid rgba(103,158,233,.2);border-radius:10px;background:rgba(7,12,27,.72);backdrop-filter:blur(10px)}
+.hero-car-stats small{font-size:8px;color:#91a9ce;letter-spacing:.13em}
+.hero-car-stats b{font-size:12px;color:#eef5ff}
+.hero-car-switch{display:flex;align-items:center;gap:16px;margin-top:11px;color:#91a9ce;font-size:10px;font-weight:900;letter-spacing:.1em}
+.hero-car-switch button{width:34px;height:30px;border:1px solid rgba(119,168,239,.28);border-radius:9px;background:rgba(10,19,39,.78);
+  color:#dff4ff;font-size:18px;cursor:pointer;transition:.15s}
+.hero-car-switch button:hover{border-color:#69d5ff;background:rgba(38,98,154,.48);box-shadow:0 0 14px rgba(36,168,255,.24)}
+.hero-garage,.hero-race{position:absolute;z-index:4;bottom:clamp(22px,5vh,54px);min-height:62px;display:flex;align-items:center;
+  border-radius:15px;text-align:left;cursor:pointer;transition:transform .18s,filter .18s,box-shadow .18s}
+.hero-garage{left:clamp(22px,5vw,76px);gap:13px;padding:10px 22px;border:1px solid rgba(111,158,229,.3);
+  background:linear-gradient(145deg,rgba(20,31,56,.94),rgba(8,13,28,.96));color:#edf5ff;box-shadow:0 14px 32px rgba(0,0,0,.35),inset 0 1px rgba(255,255,255,.05)}
+.hero-garage>span{font-size:22px;color:#75cfff}
+.hero-garage b{font-size:13px;letter-spacing:.13em}
+.hero-garage small{font-size:8px;color:#8298b8;letter-spacing:.08em}
+.hero-race{right:clamp(22px,5vw,76px);gap:13px;min-width:238px;justify-content:center;padding:12px 22px;
+  border:1px solid rgba(169,219,255,.75);background:linear-gradient(115deg,#49bdff,#4784ff 55%,#8468ff);color:white;
+  box-shadow:0 0 0 1px rgba(255,255,255,.18) inset,0 12px 34px rgba(46,113,255,.35),0 0 38px rgba(68,144,255,.22)}
+.hero-race>span{font-size:19px;text-shadow:0 2px 8px rgba(0,0,0,.35)}
+.hero-race b{font-size:13px;letter-spacing:.11em}
+.hero-race small{font-size:8px;color:rgba(255,255,255,.76);letter-spacing:.08em}
+.hero-garage:hover,.hero-race:hover{transform:translateY(-3px);filter:brightness(1.1)}
+.hero-garage:active,.hero-race:active{transform:scale(.98)}
+.hero-footnote{position:absolute;z-index:2;top:5%;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;
+  color:#7188aa;font-size:8px;font-weight:900;letter-spacing:.19em;white-space:nowrap}
+.hero-footnote i{width:6px;height:6px;border-radius:50%;background:#7dffb0;box-shadow:0 0 12px #7dffb0}
+.hero-footnote span{color:#4e6080}
+.garage-content{display:flex;width:min(1120px,100%);margin:0 auto;padding:18px clamp(12px,3vw,32px) 28px;
+  flex-direction:column;align-items:center;gap:12px}
+.garage-heading{width:min(920px,100%);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px}
+.garage-heading>div{text-align:center}
+.garage-heading h2{font-size:26px;letter-spacing:.15em}
+.garage-heading>.btn{justify-self:start}
+.garage-record{justify-self:end;color:#92a7c7;font-size:9px;font-weight:900;letter-spacing:.12em}
+.garage-record b{margin-left:5px;color:#f3d77c;font-size:15px}
+.garage-content>.sub{max-width:64ch;text-align:center}
+.garage-facts{margin:0}
+.garage-content>.acct-bar{flex:0 0 auto}
+.garage-content>.card-plate{flex:0 0 auto}
+.menu-garage .menu-topbar{position:sticky;top:0}
+@media(max-width:700px){
+  .menu-topbar{min-height:78px;grid-template-columns:minmax(100px,1fr) auto minmax(116px,1fr);gap:6px;padding:9px 12px}
+  .profile-summary{gap:6px}
+  .profile-level{width:38px;height:40px;border-radius:11px}
+  .profile-level b{font-size:17px}
+  .profile-progress{min-width:0;width:clamp(82px,25vw,128px);gap:4px}
+  .profile-progress>span{font-size:8px;letter-spacing:0}
+  .profile-record{font-size:7px!important}
+  .brand-mark>b{font-size:16px;letter-spacing:.08em}
+  .brand-mark small{font-size:7px;letter-spacing:.12em;margin-top:4px}
+  .menu-tools{gap:5px}
+  .wallet-pill{min-width:0;padding:8px 7px;gap:4px;border-radius:9px;font-size:11px}
+  .wallet-pill>span{font-size:12px}
+  .menu-toggle{width:36px;height:36px;border-radius:10px;font-size:17px}
+  .hero-stage{inset:11% 0 18%}
+  .hero-stage::after{background:radial-gradient(ellipse at 50% 78%,transparent 20%,rgba(5,8,17,.4) 92%)}
+  .hero-side{bottom:max(78px,calc(env(safe-area-inset-bottom) + 68px));width:min(320px,90vw)}
+  .hero-car-name{font-size:20px}
+  .hero-car-stats{gap:5px;margin-top:7px}
+  .hero-car-stats span{min-width:65px;padding:5px 8px}
+  .hero-car-stats small{font-size:7px}
+  .hero-car-stats b{font-size:11px}
+  .hero-car-switch{margin-top:7px}
+  .hero-garage,.hero-race{bottom:max(14px,env(safe-area-inset-bottom));min-height:54px;border-radius:13px}
+  .hero-garage{left:12px;gap:7px;padding:8px 11px}
+  .hero-garage>span{font-size:18px}
+  .hero-garage b{font-size:10px}
+  .hero-garage small{display:none}
+  .hero-race{right:12px;min-width:0;width:58%;gap:8px;padding:9px 11px}
+  .hero-race b{font-size:10px;letter-spacing:.07em}
+  .hero-race small{display:none}
+  .hero-footnote,.scene-label{display:none}
+  .garage-content{padding:14px 10px 22px;gap:10px}
+  .garage-heading{grid-template-columns:1fr auto;gap:8px}
+  .garage-heading>div{grid-column:2;grid-row:1}
+  .garage-heading>.btn{grid-column:1;grid-row:1;padding:8px 9px;font-size:10px}
+  .garage-heading h2{font-size:20px}
+  .garage-record{display:none}
+  .garage-facts{gap:5px}
+  .garage-facts .pill{padding:5px 8px;font-size:9px}
+}
+@media(max-width:390px){
+  .menu-topbar{grid-template-columns:minmax(92px,1fr) auto minmax(105px,1fr);padding-inline:8px}
+  .profile-progress{width:clamp(80px,24vw,94px)}
+  .profile-progress>span{font-size:7px}
+  .brand-mark>b{font-size:14px}
+  .wallet-pill{padding:7px 5px}
+  .points-pill{display:none}
+  .hero-garage{left:9px}
+  .hero-race{right:9px;width:61%}
+}
+@media(max-height:520px) and (min-width:701px){
+  .menu-topbar{min-height:70px}
+  .hero-stage{inset:0 10% 0}
+  .hero-side{bottom:2px}
+  .hero-car-stats{margin-top:5px}
+  .hero-garage,.hero-race{bottom:12px;min-height:48px}
+  .hero-footnote,.scene-label{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero-garage,.hero-race,.hero-car-switch button,.menu-toggle{transition:none}
+}
+.garage-filters{position:relative;top:auto;align-self:center;margin:0 0 12px}
+#tabShips,#tabSkins{width:min(1120px,94vw);max-width:none;min-width:0}
+.garage-inventory{width:100%}
+.inventory-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 15px}
+.inventory-heading h3{margin-top:3px;font-size:clamp(16px,2vw,22px);letter-spacing:.1em;color:#f2f7ff}
+.inventory-count{padding:7px 10px;border:1px solid rgba(102,155,222,.22);border-radius:10px;background:rgba(7,14,29,.72);
+  color:#8ea5c9;font-size:9px;font-weight:900;letter-spacing:.12em;white-space:nowrap}
+.inventory-count b{color:#dcecff}
+.premium-plates{grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:12px}
+.car-card{position:relative;display:flex;min-height:224px;flex-direction:column;align-items:stretch;gap:5px;
+  padding:10px;text-align:left;color:#ecf5ff;font-family:var(--f);border:1px solid rgba(105,143,197,.2);
+  border-radius:15px;background:linear-gradient(155deg,rgba(18,28,50,.94),rgba(7,12,26,.97));
+  box-shadow:0 8px 22px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.035);cursor:pointer;overflow:hidden;
+  transition:transform .16s,border-color .16s,box-shadow .16s}
+.car-card::before{content:"";position:absolute;inset:0 20% auto;height:1px;background:linear-gradient(90deg,transparent,rgba(80,174,255,.55),transparent)}
+.car-card:hover{transform:translateY(-3px);border-color:rgba(60,191,255,.62);box-shadow:0 14px 28px rgba(0,0,0,.35),0 0 22px rgba(37,143,255,.12)}
+.car-card.selected{border-color:rgba(50,210,255,.82);background:linear-gradient(155deg,rgba(13,56,78,.74),rgba(7,15,31,.98));
+  box-shadow:0 0 0 1px rgba(58,196,255,.22) inset,0 0 22px rgba(0,195,255,.16)}
+.car-card.available{border-color:rgba(255,204,97,.4)}
+.car-card.locked{border-color:rgba(110,124,159,.16)}
+.car-card-preview{width:100%;height:112px;display:block;border-radius:10px;
+  background:radial-gradient(ellipse at 50% 64%,rgba(28,113,169,.2),rgba(6,11,24,.7) 74%)}
+.car-card-name{font-size:14px;font-weight:900;letter-spacing:.02em}
+.car-card-description{min-height:27px;color:#90a6c7;font-size:10px;line-height:1.35}
+.car-card-price{color:#d9c486;font-size:9px;font-weight:800;letter-spacing:.02em}
+.car-card-meta{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:auto}
+.car-card-level{color:#8fa8cb;font-size:9px;font-weight:800}
+.car-card-state{width:max-content;max-width:100%;padding:4px 7px;border:1px solid rgba(111,137,175,.2);
+  border-radius:99px;background:rgba(15,25,44,.82);color:#adc1df;font-size:8px;font-weight:900;letter-spacing:.06em}
+.car-card.selected .car-card-state{border-color:rgba(41,207,255,.45);color:#9cecff;background:rgba(12,105,139,.22)}
+.car-card.available .car-card-state{border-color:rgba(255,203,88,.4);color:#ffe09a;background:rgba(132,84,18,.16)}
+.car-card.unlocked:not(.available):not(.owned) .car-card-state{color:#b4c7e4}
+.car-card.locked .car-card-state{color:#9aabc4}
+.car-card-stats{display:flex;gap:8px;color:#c3d5ef;font-size:9px;font-weight:800}
+.car-card-stats span{white-space:nowrap}
+#garageShowcase{width:100%;max-width:940px;margin:0 auto 12px}
+#garageShowcase.detail-open{display:grid}
+#garageShowcase.detail-open{grid-template-areas:"back back" "stage info" "stage skin" "stage stats" "perk perk" "actions actions"}
+#garageShowcase.detail-open{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+#garageShowcase .sc-stage{max-width:none;height:clamp(220px,34vw,370px)}
+#garageShowcase .sc-stage canvas{background:radial-gradient(ellipse at 50% 65%,rgba(28,142,210,.24),rgba(4,8,20,.95) 74%)}
+#garageShowcase .detail-back{grid-area:back;justify-self:start}
+#garageShowcase .sc-stage{grid-area:stage}
+#garageShowcase .sc-info{grid-area:info}
+#garageShowcase .skin-selector{grid-area:skin}
+#garageShowcase .sc-stats{grid-area:stats}
+#garageShowcase .sc-perk{grid-area:perk}
+#garageShowcase .buy-row{grid-area:actions}
+.detail-status{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:8px}
+.detail-status span{padding:5px 9px;border:1px solid rgba(105,155,218,.23);border-radius:99px;background:rgba(5,11,24,.62);
+  color:#a9bfdc;font-size:9px;font-weight:900;letter-spacing:.06em}
+.detail-status .status-selected{color:#9cecff;border-color:rgba(46,201,255,.42)}
+.detail-status .status-available{color:#ffe09a;border-color:rgba(255,203,88,.4)}
+.detail-status .status-locked{color:#ffb4b4;border-color:rgba(255,112,126,.35)}
+.detail-unlock{margin-top:9px;color:#afc2df;font-size:11px;font-weight:800}
+.detail-unlock strong{color:#ffe09a}
+.detail-rarity{display:none}
+.detail-back{align-self:flex-start}
+.skin-intro{margin:0 0 13px;text-align:center}
+.skin-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px}
+.skin-option{display:flex;align-items:center;gap:10px;min-height:58px;padding:9px 11px;border:1px solid rgba(111,143,190,.21);
+  border-radius:12px;background:linear-gradient(145deg,rgba(15,24,45,.9),rgba(7,12,25,.94));color:#e7f1ff;
+  text-align:left;font:800 11px var(--f);cursor:pointer;transition:.16s}
+.skin-option:hover{border-color:rgba(66,196,255,.65);background:rgba(19,57,83,.6)}
+.skin-option.active{border-color:rgba(50,207,255,.72);box-shadow:0 0 16px rgba(40,191,255,.12)}
+.skin-option.locked{opacity:.56}
+.skin-swatch{width:27px;height:27px;flex:0 0 27px;border:2px solid rgba(255,255,255,.4);border-radius:50%;
+  box-shadow:0 0 12px color-mix(in srgb,var(--skin-color) 45%,transparent);background:var(--skin-color)}
+.skin-option small{display:block;margin-top:3px;color:#91a7c8;font-size:9px;font-weight:700}
+.detail-locked .skin-chip.lock{cursor:not-allowed}
+@media(max-width:700px){
+  .garage-filters{align-self:stretch;justify-content:flex-start;border-radius:13px}
+  .garage-filters .tab{padding:8px 13px;font-size:10px}
+  .inventory-heading{margin-bottom:10px}
+  .premium-plates{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .car-card{min-height:196px;padding:8px;border-radius:13px}
+  .car-card-preview{height:92px}
+  .car-card-name{font-size:12px}
+  .car-card-description{font-size:9px}
+  .car-card-stats{gap:5px;font-size:8px}
+  #garageShowcase.detail-open{grid-template-columns:minmax(0,1fr);grid-template-areas:"back" "stage" "info" "skin" "stats" "perk" "actions"}
+  #garageShowcase .sc-stage{height:clamp(205px,58vw,300px)}
+  #garageShowcase .showcase{padding:9px}
+  .skin-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .skin-option{padding:8px;min-height:52px}
+}
+@media(max-width:360px){
+  .premium-plates{grid-template-columns:1fr}
+  .car-card{min-height:180px}
+  .car-card-preview{height:115px}
+  .garage-filters .tab{padding:7px 10px}
+}
 </style>
 </head>
 <body>
@@ -561,21 +829,73 @@ body.touch #touch{display:block}
   </div>
 
   <section class="screen" id="scrMenu">
-    <h1 class="logo">NEON RACE<span>3D-ГОНКИ</span></h1>
-    <p class="sub">Избегайте <b>КРАСНЫХ</b> объектов (машин, барьеров и стен) — они отнимают жизнь.
-      Собирайте <b>жёлтые, синие, зелёные и фиолетовые</b> предметы — они дают очки и бонусы.
-      На дороге всегда остаётся свободная полоса: перестройтесь в неё.</p>
-    <div class="row"><button class="btn pulse" id="btnPlay">▶ НАЧАТЬ ГОНКУ</button><button class="btn ghost" id="btnHow">Как играть</button></div>
-    <div class="best">
-      <span class="pill">РЕКОРД <b id="mBest">0</b></span>
-      <span class="pill">УРОВЕНЬ ГОНКИ <b id="mLevel">1</b></span>
-      <span class="pill gold">МОНЕТЫ 🪙 <b id="mCoins">0</b></span>
+    <header class="menu-topbar">
+      <button class="profile-summary" id="btnProfile" type="button" aria-label="Открыть аккаунт">
+        <span class="profile-level"><small>УР.</small><b id="homeLevel">1</b></span>
+        <span class="profile-progress"><span><b>ПРОГРЕСС</b><b id="homeXpText">0 / 100 ⭐</b></span>
+          <i class="xpbar"><i id="homeXpBar"></i></i>
+          <span class="profile-record">РЕКОРД <b id="homeBest">0</b></span>
+        </span>
+      </button>
+      <button class="brand-mark" id="btnBrandHome" type="button" aria-label="NEON RACE — главный экран">
+        <b>NEON <i>RACE</i></b><small>АРКАДНЫЕ ГОНКИ</small>
+      </button>
+      <div class="menu-tools">
+        <div class="wallet-pill coins-pill"><span>🪙</span><b id="homeCoins">0</b></div>
+        <div class="wallet-pill points-pill"><span>⭐</span><b id="homePoints">0</b></div>
+        <button class="menu-toggle" id="btnMenuToggle" type="button" aria-label="Открыть меню" aria-expanded="false">☰</button>
+        <nav class="menu-dropdown hidden" id="menuDropdown" aria-label="Главное меню">
+          <button type="button" data-menu-action="stat"><span>▤</span> Статистика</button>
+          <button type="button" data-menu-action="set"><span>⚙</span> Настройки</button>
+          <button type="button" data-menu-action="help"><span>?</span> Как играть</button>
+          <button type="button" data-menu-action="home"><span>↩</span> Выйти в главное меню</button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="home-landing" id="homeLanding">
+      <div class="hero-scene">
+        <div class="scene-grid"></div>
+        <div class="scene-light"></div>
+        <div class="hero-stage">
+          <canvas id="cvHeroCar" width="1000" height="620" aria-label="Трёхмерная модель выбранной машины"></canvas>
+          <span class="scene-label">NEON RACE <i>·</i> ГАРАЖ 01</span>
+        </div>
+        <div class="hero-side">
+          <span class="eyebrow" id="homeCarLabel">ВАША МАШИНА</span>
+          <b class="hero-car-name" id="homeCarName">NEON SKOR</b>
+          <span class="hero-car-status" id="homeCarStatus">ВЫБРАНА</span>
+          <div class="hero-car-stats">
+            <span><small>ЭФФЕКТИВНОСТЬ НИТРО</small><b id="homeCarBoost">×1</b></span>
+            <span><small>СТАРТОВЫЙ ЩИТ</small><b id="homeCarShield">0 с</b></span>
+            <span><small>ВРЕМЯ МАГНИТА</small><b id="homeCarMagnet">5 с</b></span>
+          </div>
+          <div class="hero-car-switch">
+            <button id="btnCarPrev" type="button" aria-label="Предыдущая машина">←</button>
+            <span id="homeCarCount">01 / 15</span>
+            <button id="btnCarNext" type="button" aria-label="Следующая машина">→</button>
+          </div>
+        </div>
+      </div>
+      <button class="hero-garage" id="btnOpenGarage" type="button"><span>▦</span><b>ГАРАЖ</b><small>МАШИНЫ И УЛУЧШЕНИЯ</small></button>
+      <button class="hero-race" id="btnPlay" type="button"><span>▶</span><b>НАЧАТЬ ГОНКУ</b><small>ВАШ ЗАЕЗД ЖДЁТ</small></button>
+      <div class="hero-footnote"><i></i> ГОТОВ К ЗАЕЗДУ <span>·</span> NEON CITY</div>
     </div>
-    <div class="best" style="margin-top:-4px">
-      <span class="pill">🛣 <b>8 ТРАСС</b> · сложность растёт со временем</span>
-      <span class="pill">🚗 <b>15 МАШИН</b> · за 🪙 или ⭐</span>
-      <span class="pill">🎯 <b>15 УНИКАЛЬНЫХ БОНУСОВ</b></span>
-    </div>
+
+    <div class="garage-content hidden" id="garageContent">
+      <div class="garage-heading">
+        <button class="btn sm ghost" id="btnBackHome" type="button">← ГЛАВНЫЙ ЭКРАН</button>
+        <div><span class="eyebrow">ВАШ АВТОПАРК</span><h2>ГАРАЖ</h2></div>
+        <span class="garage-record">РЕКОРД <b id="mBest">0</b></span>
+      </div>
+      <p class="sub">Выбирайте машины, открывайте новые модели и настраивайте их перед гонкой.</p>
+      <div class="best garage-facts">
+        <span class="pill">УРОВЕНЬ ГОНКИ <b id="mLevel">1</b></span>
+        <span class="pill gold">МОНЕТЫ 🪙 <b id="mCoins">0</b></span>
+        <span class="pill">🛣 <b>9 ТРАСС</b> · сложность растёт</span>
+        <span class="pill">🚗 <b>15 МАШИН</b> · за 🪙 или ⭐</span>
+        <span class="pill">🎯 <b>15 УНИКАЛЬНЫХ БОНУСОВ</b></span>
+      </div>
     <div class="acct-bar" id="acctBar">
       <div class="lvbox"><span class="cap">АККАУНТ</span><b id="aLvl">1</b></div>
       <div class="col">
@@ -585,15 +905,22 @@ body.touch #touch{display:block}
       </div>
       <button class="btn sm pink" id="btnAcctUp">⭐ ПОВЫСИТЬ УРОВЕНЬ</button>
     </div>
-    <div class="tabs">
-      <button class="tab on" data-tab="ships">🚗 ГАРАЖ</button>
-      <button class="tab" data-tab="perk">⭐ УЛУЧШЕНИЯ</button>
-      <button class="tab" data-tab="acct">АККАУНТ</button>
-      <button class="tab" data-tab="stat">СТАТИСТИКА</button>
-      <button class="tab" data-tab="set">НАСТРОЙКИ</button>
+    <div class="tabs garage-filters" role="tablist" aria-label="Категории гаража">
+      <button class="tab on" data-tab="all" role="tab" aria-selected="true">ВСЁ</button>
+      <button class="tab" data-tab="ships" role="tab" aria-selected="false">🚗 МАШИНЫ</button>
+      <button class="tab" data-tab="upgrades" role="tab" aria-selected="false">⚡ УЛУЧШЕНИЯ</button>
+      <button class="tab" data-tab="skins" role="tab" aria-selected="false">🎨 СКИНЫ</button>
     </div>
     <div class="card-plate" id="tabShips">
-      <div class="showcase" id="garageShowcase">
+      <div class="garage-inventory" id="garageInventory">
+        <div class="inventory-heading">
+          <div><span class="eyebrow">АВТОПАРК NEON RACE</span><h3>ВЫБЕРИТЕ МАШИНУ</h3></div>
+          <span class="inventory-count"><b id="carOwnedCount">1</b> / 15 ОТКРЫТО</span>
+        </div>
+        <div class="plates premium-plates" id="shipList"></div>
+      </div>
+      <div class="showcase hidden" id="garageShowcase">
+        <button class="btn sm ghost detail-back" id="btnCarDetailBack" type="button">← К МАШИНАМ</button>
         <div class="sc-stage">
           <canvas id="cvShowcase" width="380" height="184"></canvas>
           <div class="sc-drag">↔ Проведите, чтобы повернуть машину</div>
@@ -602,12 +929,14 @@ body.touch #touch{display:block}
           <b class="sc-name" id="scName">Neon Skor</b>
           <small class="sc-tag" id="scTag">Стартовая машина</small>
           <div class="sc-meta"><span id="scSkin">Цвет: заводской</span><span id="scOwn"></span></div>
+          <div class="detail-status" id="detailStatus"></div>
+          <div class="detail-unlock" id="detailUnlock"></div>
         </div>
         <div class="skin-selector" id="skinPicker"></div>
         <div class="grid-stats sc-stats">
-          <div class="gs"><small>МОЩНОСТЬ НИТРО</small><b id="scBst">×1</b></div>
+          <div class="gs"><small>ЭФФЕКТИВНОСТЬ НИТРО</small><b id="scBst">×1</b></div>
           <div class="gs"><small>СТАРТОВЫЙ ЩИТ</small><b id="scShd">0</b></div>
-          <div class="gs"><small>РАДИУС МАГНИТА</small><b id="scMag">×1</b></div>
+          <div class="gs"><small>ВРЕМЯ МАГНИТА</small><b id="scMag">5 с</b></div>
         </div>
         <div class="sc-perk" id="scPerk"></div>
         <div class="buy-row">
@@ -615,7 +944,6 @@ body.touch #touch{display:block}
           <button class="btn sm pink hidden" id="btnSelectCarPts">⭐ КУПИТЬ ЗА ОЧКИ</button>
         </div>
       </div>
-      <div class="plates" id="shipList"></div>
       <p class="sub" style="text-align:center;margin-top:10px;font-size:12px">
         Машины можно купить за <b>🪙 монеты</b> или <b>⭐ очки</b> (за очки дешевле).
         Характеристики показывают особенности машины. Для некоторых нужен определённый уровень аккаунта.</p>
@@ -623,6 +951,14 @@ body.touch #touch{display:block}
     <div class="card-plate hidden" id="tabPerk" style="min-width:min(520px,94vw)">
       <div id="perkList"></div>
       <p class="sub" style="margin-top:8px;font-size:12px">Эти бонусы <b>постоянные</b> — они автоматически действуют в каждой гонке. Цена: <b>⭐ очки</b>.</p>
+    </div>
+    <div class="card-plate hidden" id="tabSkins">
+      <div class="inventory-heading">
+        <div><span class="eyebrow">ПЕРСОНАЛИЗАЦИЯ</span><h3>ЦВЕТА И СКИНЫ</h3></div>
+        <span class="inventory-count">МАШИНА: <b id="skinCarName">НЕОН</b></span>
+      </div>
+      <p class="sub skin-intro">Скины открываются за уровень аккаунта. Выберите цвет для активной машины.</p>
+      <div class="skin-gallery" id="skinGallery"></div>
     </div>
     <div class="card-plate hidden" id="tabAcct">
       <div id="acctInfo"></div>
@@ -647,6 +983,7 @@ body.touch #touch{display:block}
       </div>
       <div class="row" style="margin-top:10px"><button class="btn sm ghost" id="btnTut">▶ ПОВТОРИТЬ ОБУЧЕНИЕ</button></div>
       <p class="sub" style="text-align:center;margin-top:10px;font-size:12px">Yandex Games: без SDK игра работает автономно.</p>
+    </div>
     </div>
   </section>
 
