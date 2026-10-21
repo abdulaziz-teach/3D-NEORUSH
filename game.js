@@ -586,22 +586,25 @@ const KIND = { CAR: 'car', TRUCK: 'truck', BAR: 'bar', WALL: 'wall', CONE: 'cone
 
 /* har bir tur uchun: badge balandligi, yo'l dog'i kengligi, rang, urish radiusi */
 const OBJ = {
-  car:    { badY: 1.75, patW: 1.25, patL: 1.5, col: '#ff2b43', hit: 1.15, spin: 0,    y: 0 },
-  truck:  { badY: 2.35, patW: 1.35, patL: 1.9, col: '#ff2b43', hit: 1.25, spin: 0,    y: 0 },
-  bar:    { badY: 1.15, patW: 1.30, patL: 1.1, col: '#ff2b43', hit: 1.20, spin: 0,    y: 0 },
-  wall:   { badY: 3.15, patW: 1.30, patL: 0.9, col: '#ff2b43', hit: 1.25, spin: 0,    y: 0 },
-  cone:   { badY: 1.35, patW: 0.85, patL: 0.9, col: '#ff5a3c', hit: 1.00, spin: 0.4,  y: 0 },
-  coin:   { badY: 1.75, patW: 0.95, patL: 1.0, col: '#ffd166', hit: 1.55, spin: 2.4,  y: 1.0 },
-  nitro:  { badY: 1.85, patW: 0.95, patL: 1.0, col: '#00e5ff', hit: 1.50, spin: 1.7,  y: 1.0 },
-  shield: { badY: 1.85, patW: 0.95, patL: 1.0, col: '#46ff8f', hit: 1.50, spin: 1.1,  y: 0.05 },
-  magnet: { badY: 1.80, patW: 0.95, patL: 1.0, col: '#c08cff', hit: 1.50, spin: 1.3,  y: 0.9 },
-  life:   { badY: 1.85, patW: 0.95, patL: 1.0, col: '#ff7ab8', hit: 1.50, spin: 0.9,  y: 1.0 }
+  car:           { badY: 1.75, patW: 1.25, patL: 1.5, col: '#ff2b43', hit: 1.15, spin: 0,    y: 0 },
+  truck:         { badY: 2.35, patW: 1.35, patL: 1.9, col: '#ff2b43', hit: 1.25, spin: 0,    y: 0 },
+  bar:           { badY: 0.65, patW: 1.20, patL: 0.9, col: '#ff2b43', hit: 1.15, spin: 0,    y: 0 },
+  wall:          { badY: 3.15, patW: 1.30, patL: 0.9, col: '#ff2b43', hit: 1.25, spin: 0,    y: 0 },
+  cone:          { badY: 0.75, patW: 0.85, patL: 0.9, col: '#ff5a3c', hit: 0.95, spin: 0.4,  y: 0 },
+  coin:          { badY: 1.75, patW: 0.95, patL: 1.0, col: '#ffd166', hit: 1.55, spin: 2.4,  y: 1.0 },
+  nitro:         { badY: 1.85, patW: 0.95, patL: 1.0, col: '#00e5ff', hit: 1.50, spin: 1.7,  y: 1.0 },
+  shield:        { badY: 1.85, patW: 0.95, patL: 1.0, col: '#46ff8f', hit: 1.50, spin: 1.1,  y: 0.05 },
+  magnet:        { badY: 1.80, patW: 0.95, patL: 1.0, col: '#c08cff', hit: 1.50, spin: 1.3,  y: 0.9 },
+  life:          { badY: 1.85, patW: 0.95, patL: 1.0, col: '#ff7ab8', hit: 1.50, spin: 0.9,  y: 1.0 },
+  checkpoint:    { badY: 3.40, patW: 3.80, patL: 0.6, col: '#00e5ff', hit: 0,    spin: 0,    y: 0 },
+  portal_active: { badY: 3.20, patW: 1.35, patL: 0.6, col: '#d946ef', hit: 0,    spin: 0,    y: 0 },
+  portal_open:   { badY: 3.00, patW: 1.25, patL: 0.5, col: '#64748b', hit: 0,    spin: 0,    y: 0 }
 };
 
 const G = {
   running: false, paused: false, over: false, menuMusic: true,
   t: 0, last: 0, dt: 0, fps: 60, frame: 0, frameMs: 16, slowFrames: 0,
-  speed: 17, maxSpeed: 17, baseSpeed: 17, dist: 0, score: 0, coins: store.get('coins', 0),
+  speed: 24, maxSpeed: 24, baseSpeed: 24, dist: 0, score: 0, coins: store.get('coins', 0),
   lives: 3, maxLives: 3, level: 1, nextLevelAt: 1000, levelAt: 0, levelFrom: 0, combo: 1, bestCombo: 1, comboT: 0, comboHold: 3.4,
   boost: 0, boostOn: false, energon: 100, energonMax: 100, nitroT: 0,
   magnet: 0, magnetMax: 5, shield: 0, shieldMax: 0, invul: 0, coinMult: 1,
@@ -609,6 +612,8 @@ const G = {
   spawnGap: 15, shake: 0, flash: 0, camRoll: 0, runCoins: 0, brakePow: 0, smashBonus: 0,
   objs: [], parts: [], stars: [], mountains: [], posts: [],
   trackIdx: 0, trackT: 0, prevTrackIdx: null, trans: 99,
+  inDimension: false, dimensionTime: 0, dimensionIdx: 0,
+  nextCheckpointAt: 1300, nextPortalAt: 650, checkpointSpawned: false, portalSpawned: false,
   quality: store.get('qual', 'high'), car: store.get('car', 0), ship: store.get('car', 0),
   meta: store.get('meta', { plays: 0, best: 0, totalCoins: store.get('coins', 0), runs: 0, farthest: 0, bestLevel: 1 }),
   upgrades: {}, tut: false, lesson: 0, lessonT: 0, tutDone: !!store.get('tutDone', false)
@@ -649,7 +654,19 @@ const SHAPES = {
     wh: [.19, .25, .39], wx: .91, wz: .74, wy: .25, bum: [.82, .08, .10], taper: .62, tuck: .25, wing: 1 },
   hyper: { ch: [.89, .17, 1.26], chy: .32, hood: [.82, .08, .59], hody: .41, hoodz: .72,
     cab: [.53, .145, .39], caby: .56, cabz: -.16, gf: [.48, .12], gr: [.46, .10],
-    wh: [.18, .23, .39], wx: .92, wz: .81, wy: .23, bum: [.84, .08, .10], taper: .70, tuck: .30, wing: 2 }
+    wh: [.18, .23, .39], wx: .92, wz: .81, wy: .23, bum: [.84, .08, .10], taper: .70, tuck: .30, wing: 2 },
+  drift: { ch: [.86, .17, 1.22], chy: .30, hood: [.76, .08, .58], hody: .40, hoodz: .64,
+    cab: [.54, .15, .40], caby: .57, cabz: -.22, gf: [.50, .12], gr: [.48, .10],
+    wh: [.18, .23, .38], wx: .91, wz: .74, wy: .23, bum: [.82, .08, .10], taper: .66, tuck: .28, wing: 4 },
+  rally: { ch: [.87, .18, 1.20], chy: .33, hood: [.75, .09, .55], hody: .43, hoodz: .60,
+    cab: [.56, .16, .42], caby: .59, cabz: -.20, gf: [.51, .13], gr: [.49, .11],
+    wh: [.20, .26, .39], wx: .92, wz: .72, wy: .26, bum: [.84, .09, .10], taper: .58, tuck: .25, wing: 2 },
+  speedster: { ch: [.88, .15, 1.24], chy: .28, hood: [.80, .07, .60], hody: .37, hoodz: .68,
+    cab: [.52, .11, .36], caby: .49, cabz: -.18, gf: [.48, .09], gr: [.46, .08],
+    wh: [.18, .22, .38], wx: .91, wz: .78, wy: .22, bum: [.83, .08, .09], taper: .74, tuck: .32, wing: 1 },
+  coupe: { ch: [.87, .18, 1.21], chy: .32, hood: [.77, .09, .59], hody: .42, hoodz: .64,
+    cab: [.55, .15, .39], caby: .58, cabz: -.24, gf: [.50, .12], gr: [.48, .10],
+    wh: [.19, .24, .38], wx: .90, wz: .74, wy: .24, bum: [.82, .08, .10], taper: .64, tuck: .27, wing: 1 }
 };
 
 function buildCar(body, roof, glass, accent, shape, ex) {
@@ -676,6 +693,30 @@ function buildCar(body, roof, glass, accent, shape, ex) {
     hz: S.hood[2] * .60, rr: [.038, .012], fr: [.032, .012], fy: -.05, c: accent, top: accent, em: true });
   B.push({ p: [0, hoodTop + .012, S.hoodz + S.hood[2] * .50], s: [S.hood[0] * .18, .012, .10],
     c: CARB, top: DARK });
+
+  /* --- Poyga chiziqlari (Racing Stripes) --- */
+  if (S.stripe === 1) {
+    const sc = S.stripeColor || accent;
+    B.push({ p: [0, hoodTop + .018, S.hoodz], s: [.12, .014, S.hood[2] * .95], c: sc, top: sc, em: true });
+    B.push({ p: [0, cabTop + .016, S.cabz], s: [.12, .014, S.cab[2] * .92], c: sc, top: sc, em: true });
+  } else if (S.stripe === 2) {
+    const sc = S.stripeColor || accent;
+    for (const sx of [-1, 1]) {
+      B.push({ p: [sx * .12, hoodTop + .018, S.hoodz], s: [.06, .014, S.hood[2] * .95], c: sc, top: sc, em: true });
+      B.push({ p: [sx * .12, cabTop + .016, S.cabz], s: [.06, .014, S.cab[2] * .92], c: sc, top: sc, em: true });
+    }
+  }
+
+  /* --- Supercharger Blower (Muskul kar kompressori) --- */
+  if (S.blower) {
+    const bw = S.blower === 2 ? .26 : .20;
+    B.push({ p: [0, hoodTop + .08, S.hoodz + .05], s: [bw, .08, .22], c: '#1e2433', top: '#8a99b5' });
+    B.push({ p: [0, hoodTop + .14, S.hoodz + .12], s: [bw * .8, .05, .10], c: accent, em: true });
+    for (const bx of [-1, 1]) {
+      B.push({ p: [bx * bw * .45, hoodTop + .13, S.hoodz + .14], s: [.04, .04, .04], c: '#ff3b4e', em: true });
+    }
+  }
+
   if (S.scoop) {
     B.push({ p: [0, hoodTop + .07, S.hoodz - S.hood[2] * .28], s: [.16, .07, .18], c: accent, top: '#f3f7ff' });
   }
@@ -688,7 +729,19 @@ function buildCar(body, roof, glass, accent, shape, ex) {
   /* 5) Salon — yuqoriga torayadi, ustida tom rangi */
   W.push({ p: [0, S.caby, S.cabz], hz: S.cab[2], rr: [S.cab[0], S.cab[1]],
     fr: [S.cab[0] * .99, S.cab[1] * .74], ry: .006, fy: -.03, c: body, top: roof });
-  /* 6) Old oyna (qiyiq stakan): salon oldidan kaput tepasigacha tushadi */
+
+  /* --- Tom usti havo so'rgich (Roof Scoop) --- */
+  if (S.roofScoop) {
+    B.push({ p: [0, cabTop + .06, S.cabz + S.cab[2] * .3], s: [.14, .05, .16], c: accent, top: DARK });
+    B.push({ p: [0, cabTop + .06, S.cabz + S.cab[2] * .38], s: [.10, .035, .04], c: DARK, em: true });
+  }
+
+  /* --- Akula qanoti (Cyber Shark Fin) --- */
+  if (S.cyberFin) {
+    B.push({ p: [0, cabTop + .07, S.cabz - S.cab[2] * .4], s: [.02, .09, .22], c: accent, top: '#ffffff', em: true });
+  }
+
+  /* 6) Old oyna: salon oldidan kaput tepasigacha tushadi */
   const wsLen = .10 + .20 * tp, wsTop = Math.min(hoodTop + .05, cabTop - .12), wsBot = cabBot - .03;
   const wsHr = (cabTop + .004 - wsBot) / 2, wsHf = Math.max(.02, (wsTop - wsBot) / 2);
   W.push({ p: [0, wsBot + wsHr, cabFront + wsLen * .45], hz: wsLen * .55, rr: [S.gf[0], wsHr],
@@ -701,28 +754,74 @@ function buildCar(body, roof, glass, accent, shape, ex) {
   /* 8) Yon oynalar — salon yon panellariga yopishqan shisha lentalari */
   for (const sx of [-1, 1]) B.push({ p: [sx * (S.cab[0] + .012), S.caby + S.cab[1] * .26, S.cabz + S.cab[2] * .08],
     s: [.016, S.cab[1] * .46, S.cab[2] * .42], c: glass, top: glass });
-  /* 9) Yon havo o'tkazgich (faqat o'tkir burunli karlarda) va yon etak */
+
+  /* --- Widebody Fenders (Kengaytirilgan mushakli arkalar) --- */
+  if (S.widebody) {
+    for (const sx of [-1, 1]) {
+      B.push({ p: [sx * (chx + .04), S.chy + .02, S.wz], s: [.05, chh * .7, .36], c: body, top: accent });
+      B.push({ p: [sx * (chx + .04), S.chy + .02, -S.wz], s: [.05, chh * .75, .38], c: body, top: accent });
+    }
+  }
+
+  /* 9) Yon havo o'tkazgich va yon etak */
   if (tp > .28) for (const sx of [-1, 1]) B.push({ p: [sx * (chx + .010), bodyBot + chh * .80, -(chz * .30)],
     s: [.02, chh * .34, chz * .14], c: DARK });
   for (const sx of [-1, 1]) B.push({ p: [sx * (chx * .98), bodyBot + .03, chz * .02],
     s: [.03, .03, chz * .58], c: CARB, top: DARK });
-  /* 10) Old splityer + radyator tory */
-  B.push({ p: [0, bodyBot + .015, chz + .02], s: [chx * .86, .026, .09], c: CARB, top: accent });
-  B.push({ p: [0, S.chy + ffy - chh * .02, chz + .005], s: [chx * .40, chh * .30, .05], c: DARK });
-  /* 11) LED faralar — ingichka gorizontal chiziq + vertikal kunduzgi chiroq */
-  for (const sx of [-1, 1]) {
-    B.push({ p: [sx * chx * .60, bodyTop - chh * .28, chz + .01], s: [.17, .045, .045], c: '#eaf4ff', em: true, front: '#ffffff' });
-    B.push({ p: [sx * chx * .84, bodyTop - chh * .58, chz - .01], s: [.03, .085, .04], c: '#dfe9ff', em: true });
+
+  /* --- Side Exhaust (Yon egzoz quvurlari va olov) --- */
+  if (S.sideExhaust) {
+    for (const sx of [-1, 1]) {
+      B.push({ p: [sx * (chx + .03), bodyBot + .04, -chz * .2], s: [.04, .04, .12], c: '#8fa2b8' });
+      B.push({ p: [sx * (chx + .045), bodyBot + .04, -chz * .2 - .03], s: [.02, .025, .03], c: '#ff6200', em: true });
+    }
   }
-  /* 12) Orqa bufer + to'liq kenglikdagi LED qizil chiziq (orqadan darhol taniladi) */
+
+  /* 10) Old splityer + radyator tory */
+  const splitW = S.splitter === 2 ? chx * 1.05 : chx * .86;
+  const splitL = S.splitter === 2 ? .14 : .09;
+  B.push({ p: [0, bodyBot + .015, chz + .02], s: [splitW, .026, splitL], c: CARB, top: accent });
+  B.push({ p: [0, S.chy + ffy - chh * .02, chz + .005], s: [chx * .40, chh * .30, .05], c: DARK });
+
+  /* --- Old poyga qanotchalari (Aero Canards) --- */
+  if (S.canards) {
+    for (const sx of [-1, 1]) {
+      B.push({ p: [sx * (chx * .92), bodyBot + chh * .6, chz * .8], s: [.10, .018, .12], c: accent, em: true });
+      B.push({ p: [sx * (chx * .88), bodyBot + chh * .9, chz * .7], s: [.09, .018, .10], c: accent, em: true });
+    }
+  }
+
+  /* 11) LED faralar */
+  if (S.headlights === 'laser') {
+    for (const sx of [-1, 1]) {
+      B.push({ p: [sx * chx * .62, bodyTop - chh * .24, chz + .02], s: [.24, .025, .04], c: '#7dffff', em: true, front: '#ffffff' });
+    }
+  } else if (S.headlights === 'quad') {
+    for (const sx of [-1, 1]) {
+      B.push({ p: [sx * chx * .55, bodyTop - chh * .28, chz + .01], s: [.08, .05, .045], c: '#eaf4ff', em: true });
+      B.push({ p: [sx * chx * .75, bodyTop - chh * .28, chz + .01], s: [.08, .05, .045], c: '#ffd166', em: true });
+    }
+  } else {
+    for (const sx of [-1, 1]) {
+      B.push({ p: [sx * chx * .60, bodyTop - chh * .28, chz + .01], s: [.17, .045, .045], c: '#eaf4ff', em: true, front: '#ffffff' });
+      B.push({ p: [sx * chx * .84, bodyTop - chh * .58, chz - .01], s: [.03, .085, .04], c: '#dfe9ff', em: true });
+    }
+  }
+
+  /* 12) Orqa bufer + to'liq kenglikdagi LED chiziq */
   B.push({ p: [0, S.chy - chh * .20, -(chz + .04)], s: S.bum, c: CARB, top: '#28324a' });
   B.push({ p: [0, bodyTop - .02, -(chz + .05)], s: [chx * .80, .035, .03], c: '#ff2b43', em: true, back: '#ff5a5a' });
   for (const sx of [-1, 1]) B.push({ p: [sx * chx * .58, bodyTop - .02, -(chz + .06)],
     s: [.14, .055, .025], c: '#ff2b43', em: true, back: '#ff7a86' });
-  /* 13) Orqa diffyuzor + qanotcha (aero ko'rinish) */
+
+  /* 13) Orqa diffyuzor */
   B.push({ p: [0, bodyBot - .01, -(chz + .01)], s: [chx * .70, .05, .09], c: DARK, bot: DARK });
   for (const fx of [-.44, 0, .44]) B.push({ p: [chx * fx, bodyBot - .02, -(chz + .03)], s: [.025, .05, .08], c: '#242c3d' });
-  /* 14) Spoyler: 1 = oddiy, 2 = katta, 3 = poyga. Qanot deck ustunlariga mahkamlanadi */
+  if (S.diffuser === 2) {
+    for (const fx of [-.6, -.2, .2, .6]) B.push({ p: [chx * fx, bodyBot - .03, -(chz + .06)], s: [.03, .07, .12], c: accent, em: true });
+  }
+
+  /* 14) Spoylerlar (Aero wings) */
   const wingY = Math.min(cabTop + .12, bodyTop + .30);
   if (S.wing === 1 || S.wing === 2) {
     const ww = S.wing === 2 ? .68 : .58, wl = S.wing === 2 ? .18 : .15;
@@ -734,7 +833,21 @@ function buildCar(body, roof, glass, accent, shape, ex) {
     for (const sx of [-1, 1]) B.push({ p: [sx * .54, wingY - .09, -(S.ch[2] + .02)], s: [.03, .09, .20], c: accent });
     for (const sx of [-1, 1]) B.push({ p: [sx * .24, (bodyTop + wingY) / 2, -(S.ch[2] - .02)],
       s: [.05, (wingY - bodyTop) / 2, .05], c: roof });
+  } else if (S.wing === 4) {
+    /* Ducktail / Drag orqa lab qanoti */
+    B.push({ p: [0, bodyTop + .06, -(S.ch[2] + .02)], s: [chx * .82, .06, .12], c: accent, top: '#ffffff' });
+    for (const sx of [-1, 1]) B.push({ p: [sx * chx * .82, bodyTop + .08, -(S.ch[2] + .02)], s: [.02, .08, .12], c: body });
+  } else if (S.wing === 5) {
+    /* Bi-Plane ikki qavatli super qanot */
+    const ww = .72;
+    B.push({ p: [0, wingY, -(S.ch[2] - .02)], s: [ww, .03, .16], c: accent, top: '#ffffff' });
+    B.push({ p: [0, wingY + .12, -(S.ch[2] - .04)], s: [ww * .9, .025, .14], c: body, top: accent });
+    for (const sx of [-1, 1]) {
+      B.push({ p: [sx * ww * .55, (bodyTop + wingY + .12) / 2, -(S.ch[2] - .02)], s: [.04, (wingY + .12 - bodyTop) / 2, .05], c: accent });
+      B.push({ p: [sx * ww, wingY + .06, -(S.ch[2] - .02)], s: [.025, .12, .18], c: accent });
+    }
   }
+
   /* 15) Old qanotcha (poyga) */
   if (S.nose) {
     B.push({ p: [0, .16, S.ch[2] + .16], s: [.60, .03, .16], c: accent });
@@ -753,7 +866,18 @@ function buildCar(body, roof, glass, accent, shape, ex) {
   /* 17) Zerkalolar */
   for (const sx of [-1, 1]) B.push({ p: [sx * (S.cab[0] + .08), cabTop - S.cab[1] * .45, cabFront - .06],
     s: [.05, .028, .035], c: accent, top: body });
-  /* 18) G'ildiraklar: yon yoqlari disk rangida (ligali disklar ko'rinishi) */
+
+  /* --- Neon Underglow (Mashina osti neon ajoyib nuri) --- */
+  if (S.underglow) {
+    const ug = S.underglow;
+    for (const sx of [-1, 1]) {
+      B.push({ p: [sx * (chx * .92), bodyBot - .01, 0], s: [.03, .015, chz * .82], c: ug, em: true });
+    }
+    B.push({ p: [0, bodyBot - .01, -chz * .85], s: [chx * .7, .015, .03], c: ug, em: true });
+    B.push({ p: [0, bodyBot - .01, chz * .85], s: [chx * .7, .015, .03], c: ug, em: true });
+  }
+
+  /* 18) G'ildiraklar: yon yoqlari disk rangida */
   for (const sx of [-1, 1]) for (const sz of [1, -1])
     wheels.push(meshOfSportWheel([sx * S.wx, S.wy, sz * S.wz], S.wh, accent));
   for (const sx of [-1, 1]) B.push({ p: [sx * chx * .44, bodyBot + .05, -(chz + .13)],
@@ -786,13 +910,37 @@ const MESH_TRUCK = meshOfBoxes([
 ]);
 /* Sakradigan to'siq: pastga o'rnatilgan, qizil-op qirralar, orqasida "sakra" strelkasi */
 const MESH_BAR = meshOfBoxes([
-  { p: [-1.05, .34, 0], s: [.10, .40, .16], c: '#e62540' },
-  { p: [1.05, .34, 0], s: [.10, .40, .16], c: '#e62540' },
-  { p: [0, .74, 0], s: [1.16, .12, .15], c: '#ff2b43', top: '#ff6d80' },
-  { p: [0, .48, 0], s: [1.16, .11, .15], c: '#f3f6ff', top: '#ffffff' },
-  { p: [-.55, .74, .02], s: [.20, .125, .16], c: '#f3f6ff' },
-  { p: [.55, .74, .02], s: [.20, .125, .16], c: '#f3f6ff' },
-  { p: [0, .96, 0], s: [.34, .06, .10], c: '#ffd166', em: true }
+  { p: [-1.05, .18, 0], s: [.08, .18, .14], c: '#e62540' },
+  { p: [1.05, .18, 0], s: [.08, .18, .14], c: '#e62540' },
+  { p: [0, .28, 0], s: [1.16, .08, .14], c: '#ff2b43', top: '#ff6d80' },
+  { p: [0, .14, 0], s: [1.16, .08, .14], c: '#f3f6ff', top: '#ffffff' },
+  { p: [-.55, .28, .02], s: [.18, .085, .14], c: '#f3f6ff' },
+  { p: [.55, .28, .02], s: [.18, .085, .14], c: '#f3f6ff' },
+  { p: [0, .38, 0], s: [.28, .04, .08], c: '#ffd166', em: true }
+]);
+/* 3D Checkpoint Arch spanning all 3 lanes */
+const MESH_CHECKPOINT = meshOfBoxes([
+  { p: [-3.6, 1.6, 0], s: [.26, 1.6, .26], c: '#12203d', top: '#00e5ff' },
+  { p: [3.6, 1.6, 0], s: [.26, 1.6, .26], c: '#12203d', top: '#00e5ff' },
+  { p: [0, 3.2, 0], s: [3.9, .25, .32], c: '#0b162c', top: '#00e5ff' },
+  { p: [0, 3.2, .06], s: [3.4, .16, .08], c: '#00e5ff', em: true },
+  { p: [-3.6, 1.6, .08], s: [.06, 1.4, .08], c: '#ff2fb9', em: true },
+  { p: [3.6, 1.6, .08], s: [.06, 1.4, .08], c: '#ff2fb9', em: true }
+]);
+/* Active portal frame on single lane */
+const MESH_PORTAL_ACTIVE = meshOfBoxes([
+  { p: [-1.22, 1.45, 0], s: [.16, 1.45, .22], c: '#3b0d5c', top: '#c084fc' },
+  { p: [1.22, 1.45, 0], s: [.16, 1.45, .22], c: '#3b0d5c', top: '#c084fc' },
+  { p: [0, 2.85, 0], s: [1.36, .16, .22], c: '#4c1d95', top: '#f43f5e' },
+  { p: [0, 1.45, 0], s: [1.02, 1.25, .05], c: '#d946ef', em: true },
+  { p: [0, 1.45, .02], s: [.65, .85, .04], c: '#ffffff', em: true },
+  { p: [0, 3.05, 0], s: [.42, .09, .12], c: '#fbbf24', em: true }
+]);
+/* Open highway arch on non-portal lanes */
+const MESH_PORTAL_OPEN = meshOfBoxes([
+  { p: [-1.2, 1.45, 0], s: [.10, 1.45, .16], c: '#1e293b' },
+  { p: [1.2, 1.45, 0], s: [.10, 1.45, .16], c: '#1e293b' },
+  { p: [0, 2.85, 0], s: [1.30, .10, .16], c: '#334155' }
 ]);
 /* Baland devor — sakrash ishlamaydi: tekis qizil panel + shaxmat chetlari */
 const MESH_WALL = meshOfBoxes([
@@ -844,63 +992,340 @@ const MESH_LIFE = meshOfBoxes([
   { p: [0, .08, 0], s: [.16, .38, .16], c: '#ffd3e6' }
 ]);
 const MESHES = { car: null, truck: MESH_TRUCK, bar: MESH_BAR, wall: MESH_WALL, cone: MESH_CONE,
-  coin: MESH_COIN, nitro: MESH_NITRO, shield: MESH_SHIELD, magnet: MESH_MAGNET, life: MESH_LIFE };
+  coin: MESH_COIN, nitro: MESH_NITRO, shield: MESH_SHIELD, magnet: MESH_MAGNET, life: MESH_LIFE,
+  checkpoint: MESH_CHECKPOINT, portal_active: MESH_PORTAL_ACTIVE, portal_open: MESH_PORTAL_OPEN };
 
-/* --------------------------- GARAJ: 15 MASHINA ---------------------------
-   cost = 🪙 tanga, pcost = ⭐ ochko (ikkala usul ham ishlaydi),
-   lvl = ⭐ akkaunt darajasi talabi, perk = mashinaning maxsus kuchi.
-   DIQQAT: 15 ta mashina va 15 ta noyub perk — hech bir perk takrorlanmaydi,
-   har bir perk o'yin mantig'ida haqiqiy ta'sirga ega (applyPerk + update). */
+/* --------------------------- GARAJ: 30 СПОРТКАРОВ ---------------------------
+   cost = 🪙 монеты, pcost = ⭐ очки, lvl = уровень аккаунта.
+   30 уникальных спорткаров с индивидуальными улучшениями и перками. */
 const PERKS = {
-  steady:   { ic: '🌱', name: 'Плавный старт', desc: 'Скорость растёт на 30% медленнее — проще начать' },
-  drain:    { ic: '⚡', name: 'Экономное нитро', desc: 'Энергия расходуется на 45% медленнее' },
-  score:    { ic: '🏆', name: 'Рекордсмен', desc: 'На 28% больше очков за каждый метр' },
-  coin:     { ic: '🪙', name: 'Золотая жила', desc: 'Каждая монета приносит больше' },
-  magnetup: { ic: '🧲', name: 'Долгий магнит', desc: 'Магнит работает на 6 секунд дольше' },
-  turbo:    { ic: '🚀', name: 'Турбодвигатель', desc: 'Выше базовая скорость и мощнее нитро' },
-  armor:    { ic: '❤', name: 'Броня', desc: 'Начинайте гонку с дополнительной жизнью' },
-  luck:     { ic: '🍀', name: 'Удача', desc: 'На трассе чаще появляются бонусы' },
-  combo:    { ic: '🔥', name: 'Мастер комбо', desc: 'Комбо угасает на 50% медленнее' },
-  smash:    { ic: '💥', name: 'Мощный бампер', desc: 'Тараньте препятствия на нитро и получайте +250 очков' },
-  brakes:   { ic: '🛑', name: 'Точный поворот', desc: 'Быстрее перестраивайтесь между полосами' },
-  sregen:   { ic: '♻', name: 'Восстановление щита', desc: 'Щит восстанавливается после окончания' },
-  djump:    { ic: '🦘', name: 'Двойной прыжок', desc: 'Можно прыгнуть ещё раз в воздухе' },
-  revive:   { ic: '🚑', name: 'Второй шанс', desc: 'Один раз воскресните без рекламы' },
-  ghost:    { ic: '👻', name: 'Призрак', desc: 'Иногда позволяет проскочить сквозь препятствие' }
+  steady:      { ic: '🌱', name: 'Плавный старт', desc: 'Скорость растёт на 30% плавнее — проще маневрировать' },
+  drain:       { ic: '⚡', name: 'Экономное нитро', desc: 'Энергия расходуется на 45% медленнее' },
+  score:       { ic: '🏆', name: 'Рекордсмен', desc: 'На 28% больше очков за каждый метр дистанции' },
+  coin:        { ic: '🪙', name: 'Золотая жила', desc: 'Каждая монета приносит дополнительную ценность' },
+  magnetup:    { ic: '🧲', name: 'Долгий магнит', desc: 'Магнит работает на 6 секунд дольше' },
+  turbo:       { ic: '🚀', name: 'Турбодвигатель', desc: 'Выше базовая скорость и мощнее импульс нитро' },
+  armor:       { ic: '❤', name: 'Броня', desc: 'Начинайте гонку с дополнительной жизнью' },
+  luck:        { ic: '🍀', name: 'Удача', desc: 'На трассе значительно чаще появляются бонусы' },
+  combo:       { ic: '🔥', name: 'Мастер комбо', desc: 'Комбо угасает на 50% медленнее' },
+  smash:       { ic: '💥', name: 'Мощный бампер', desc: 'Тараньте препятствия на нитро и получайте +250 очков' },
+  brakes:      { ic: '🛑', name: 'Точный поворот', desc: 'Быстрее перестраивайтесь между полосами' },
+  sregen:      { ic: '♻', name: 'Восстановление щита', desc: 'Щит автоматически восстанавливается после окончания' },
+  djump:       { ic: '🦘', name: 'Двойной прыжок', desc: 'Возможность совершить второй прыжок в воздухе' },
+  revive:      { ic: '🚑', name: 'Второй шанс', desc: 'Один раз воскресните бесплатно после потери всех жизней' },
+  ghost:       { ic: '👻', name: 'Призрак', desc: 'Шанс проскочить сквозь препятствие без повреждений' },
+  slipstream:  { ic: '💨', name: 'Слипстрим', desc: 'Ускорение на 20% выше при следовании по центральной полосе' },
+  overdrive:   { ic: '⚡', name: 'Овердрайв', desc: 'Взрывной старт с повышенным запасом энергии' },
+  aero:        { ic: '✈', name: 'Аэродинамика', desc: 'Прижимная сила: идеальный контроль на высокой скорости' },
+  shockwave:   { ic: '🌊', name: 'Ударная волна', desc: 'Щит притягивает ближайшие монеты к машине' },
+  goldrush:    { ic: '👑', name: 'Золотая лихорадка', desc: 'Монеты временно ускоряют перезарядку нитро' },
+  warp:        { ic: '🌀', name: 'Варп-мастер', desc: 'Двойные очки в специальных измерениях' },
+  collector:   { ic: '🧲', name: 'Коллекционер', desc: 'Магнит притягивает кристаллы и бонусы издалека' },
+  boostmaster: { ic: '🔥', name: 'Мастер форсажа', desc: 'Нитро расходуется значительно экономнее' },
+  titan:       { ic: '🛡', name: 'Титановый бампер', desc: 'Бронированный корпус снижает силу ударов' },
+  photon:      { ic: '💡', name: 'Фотонный луч', desc: 'Опасные зоны подсвечиваются на большем расстоянии' },
+  energy:      { ic: '🔋', name: 'Энергогенератор', desc: 'Пассивная регенерация энергии в ходе гонки' },
+  hyperdrive:  { ic: '🚀', name: 'Гипердрайв', desc: 'Сверхвысокая предельная скорость на максимальных оборотах' },
+  driftking:   { ic: '🏎', name: 'Король дрифта', desc: 'Мгновенное перестроение между полосами' },
+  specter:     { ic: '👻', name: 'Спектральный щит', desc: 'При потере жизни даётся 3 секунды неуязвимости' },
+  apex:        { ic: '👑', name: 'Апекс-мастер', desc: 'Максимальный множитель очков на рекордных скоростях' }
 };
 const PERK_KEYS = Object.keys(PERKS);
+
 const CARS = [
-  { id: 0, name: 'Неон', cost: 0, pcost: 0, lvl: 1, shape: 'sport', body: '#00e5ff', roof: '#0b2e46', glass: '#bff5ff', acc: '#7dff9b',
-    boost: 1.00, shieldStart: 0, magnet: 1.0, tag: 'Стартовая машина', perk: 'steady' },
-  { id: 1, name: 'Розовый ветер', cost: 450, pcost: 90, lvl: 2, shape: 'sport', body: '#ff2fb9', roof: '#3a0d2c', glass: '#ffd9f2', acc: '#ffd166',
-    boost: 1.25, shieldStart: 0, magnet: 1.10, tag: 'Мощное нитро', perk: 'drain' },
-  { id: 2, name: 'Золотой шанс', cost: 900, pcost: 180, lvl: 3, shape: 'muscle', body: '#ffd166', roof: '#3b2e10', glass: '#fff6d8', acc: '#fff3c4',
-    boost: 1.15, shieldStart: 6, magnet: 1.30, tag: 'Больше очков со старта', perk: 'score' },
-  { id: 3, name: 'Жёлтое такси', cost: 1400, pcost: 280, lvl: 4, shape: 'sport', body: '#ffc21a', roof: '#2b2205', glass: '#fff4cf', acc: '#1a1a1a', sign: 1,
-    boost: 1.20, shieldStart: 3, magnet: 1.45, tag: 'Собирает больше монет', perk: 'coin' },
-  { id: 4, name: 'Зелёный фантом', cost: 2200, pcost: 440, lvl: 6, shape: 'sport', body: '#7dff9b', roof: '#0e3320', glass: '#dcffe4', acc: '#00e5ff',
-    boost: 1.10, shieldStart: 8, magnet: 1.60, tag: 'Магнит работает дольше', perk: 'magnetup' },
-  { id: 5, name: 'Молния', cost: 3400, pcost: 680, lvl: 8, shape: 'racer', body: '#c8d6ff', roof: '#16204a', glass: '#8ef9ff', acc: '#ff2fb9',
-    boost: 1.60, shieldStart: 0, magnet: 1.20, tag: 'Самая быстрая машина', perk: 'turbo' },
-  { id: 6, name: 'Крепость GT', cost: 4800, pcost: 960, lvl: 11, shape: 'muscle', body: '#9fb4ff', roof: '#1b2352', glass: '#e6eeff', acc: '#ffd166',
-    boost: 1.05, shieldStart: 16, magnet: 1.35, tag: 'Тяжёлая броня: +1 жизнь', perk: 'armor' },
-  { id: 7, name: 'Патрульный', cost: 6500, pcost: 1300, lvl: 14, shape: 'sport', body: '#f2f6ff', roof: '#10131f', glass: '#cfe9ff', acc: '#0b1020', bar: 1,
-    boost: 1.40, shieldStart: 10, magnet: 1.70, tag: 'Хранитель порядка', perk: 'luck' },
-  { id: 8, name: 'Титан', cost: 9000, pcost: 1800, lvl: 18, shape: 'muscle', body: '#ff6d2f', roof: '#3a1200', glass: '#ffd9c2', acc: '#ffe066',
-    boost: 1.55, shieldStart: 12, magnet: 1.95, tag: 'Мощный двигатель', perk: 'combo' },
-  { id: 9, name: 'Синий GT', cost: 12000, pcost: 2400, lvl: 20, shape: 'hyper', body: '#3b8cff', roof: '#0a1b3a', glass: '#cfe4ff', acc: '#7dff9b',
-    boost: 1.25, shieldStart: 10, magnet: 1.50, tag: 'Тараньте препятствия ради очков', perk: 'smash' },
-  { id: 10, name: 'Серебряная молния', cost: 15000, pcost: 3000, lvl: 22, shape: 'racer', body: '#dfe8ff', roof: '#2b3550', glass: '#9fe8ff', acc: '#00e5ff',
-    boost: 1.70, shieldStart: 4, magnet: 1.30, tag: 'Быстрая смена полосы', perk: 'brakes' },
-  { id: 11, name: 'Огненный щит', cost: 18500, pcost: 3700, lvl: 24, shape: 'muscle', body: '#ff3b30', roof: '#3a0a06', glass: '#ffd7c2', acc: '#ffb02e', scoop: 1,
-    boost: 1.45, shieldStart: 18, magnet: 1.60, tag: 'Восстанавливающийся щит', perk: 'sregen' },
-  { id: 12, name: 'Ветер', cost: 23000, pcost: 4600, lvl: 26, shape: 'hyper', body: '#7dff9b', roof: '#04140c', glass: '#e6fff2', acc: '#00e5ff', wing: 2,
-    boost: 1.65, shieldStart: 8, magnet: 1.75, tag: 'Двойной прыжок в воздухе', perk: 'djump' },
-  { id: 13, name: 'Золотой GT', cost: 28000, pcost: 5600, lvl: 28, shape: 'sport', body: '#ffd166', roof: '#4a3208', glass: '#fff6d8', acc: '#ff9a3c',
-    boost: 1.30, shieldStart: 22, magnet: 2.10, tag: 'Одно воскрешение после потери жизней', perk: 'revive' },
-  { id: 14, name: 'Легенда F1', cost: 35000, pcost: 7000, lvl: 30, shape: 'hyper', body: '#00e5ff', roof: '#06121f', glass: '#bff5ff', acc: '#ff2fb9', wing: 3, nose: 1,
-    boost: 1.85, shieldStart: 12, magnet: 1.85, tag: 'ЛЕГЕНДА — самая мощная машина', perk: 'ghost' }
+  // 1. Неон Апекс (Обычная, УР. 1)
+  { id: 0, name: 'Неон Апекс', rarity: 'common', cost: 0, pcost: 0, lvl: 1, shape: 'sport',
+    body: '#00e5ff', roof: '#071826', glass: '#bff5ff', acc: '#7dff9b',
+    stripe: 1, stripeColor: '#7dff9b', underglow: '#00e5ff', cyberFin: true, wing: 4, splitter: 1, headlights: 'laser',
+    boost: 1.25, shieldStart: 0, magnet: 1.15, tag: 'Кибер-спорткар: неон + лазер', perk: 'steady' },
+
+  // 2. Розовая Валькирия (Обычная, УР. 2)
+  { id: 1, name: 'Розовая Валькирия', rarity: 'common', cost: 450, pcost: 90, lvl: 2, shape: 'sport',
+    body: '#ff2fb9', roof: '#2c0822', glass: '#ffd9f2', acc: '#ffd166',
+    stripe: 2, stripeColor: '#ffd166', underglow: '#ff2fb9', canards: 1, wing: 2, headlights: 'quad',
+    boost: 1.45, shieldStart: 0, magnet: 1.25, tag: 'Двойные полосы и каналы нитро', perk: 'drain' },
+
+  // 3. Золотой Зверь (Обычная, УР. 3)
+  { id: 2, name: 'Золотой Зверь', rarity: 'common', cost: 900, pcost: 180, lvl: 3, shape: 'muscle',
+    body: '#ffd166', roof: '#2e2107', glass: '#fff6d8', acc: '#ff9a3c',
+    blower: 1, widebody: 1, underglow: '#ffd166', sideExhaust: 1, wing: 1, splitter: 1,
+    boost: 1.40, shieldStart: 6, magnet: 1.40, tag: 'Турбо-компрессор и выхлоп', perk: 'score' },
+
+  // 4. Кибер Такси 2099 (Обычная, УР. 4)
+  { id: 3, name: 'Кибер Такси 2099', rarity: 'common', cost: 1400, pcost: 280, lvl: 4, shape: 'sport',
+    body: '#ffc21a', roof: '#1a1403', glass: '#fff4cf', acc: '#00e5ff', sign: 1, rails: 1,
+    stripe: 1, stripeColor: '#1a1403', underglow: '#ffc21a', widebody: 1,
+    boost: 1.42, shieldStart: 4, magnet: 1.55, tag: 'Светящийся шашечный стиль', perk: 'coin' },
+
+  // 5. Электро Шторм (Обычная, УР. 5)
+  { id: 4, name: 'Электро Шторм', rarity: 'common', cost: 1800, pcost: 360, lvl: 5, shape: 'sport',
+    body: '#38bdf8', roof: '#082f49', glass: '#e0f2fe', acc: '#facc15',
+    stripe: 2, stripeColor: '#facc15', underglow: '#38bdf8', wing: 1,
+    boost: 1.46, shieldStart: 8, magnet: 1.45, tag: 'Электрический форсированный хэтч', perk: 'energy' },
+
+  // 6. Токсичный Вайпер (Редкая, УР. 6)
+  { id: 5, name: 'Токсичный Вайпер', rarity: 'rare', cost: 2400, pcost: 480, lvl: 6, shape: 'sport',
+    body: '#39ff14', roof: '#05220c', glass: '#dcffe4', acc: '#00e5ff',
+    roofScoop: 1, canards: 1, underglow: '#39ff14', wing: 2, splitter: 2, headlights: 'laser',
+    boost: 1.48, shieldStart: 8, magnet: 1.70, tag: 'Аэродинамический яд', perk: 'magnetup' },
+
+  // 7. Квантовый Спектр (Редкая, УР. 7)
+  { id: 6, name: 'Квантовый Спектр', rarity: 'rare', cost: 3000, pcost: 600, lvl: 7, shape: 'sport',
+    body: '#a855f7', roof: '#1f0d38', glass: '#f3e8ff', acc: '#38bdf8',
+    stripe: 1, stripeColor: '#38bdf8', underglow: '#a855f7', wing: 1, headlights: 'laser',
+    boost: 1.55, shieldStart: 6, magnet: 1.60, tag: 'Квантовое излучение и скорость', perk: 'photon' },
+
+  // 8. Гипер Молния (Редкая, УР. 8)
+  { id: 7, name: 'Гипер Молния', rarity: 'rare', cost: 3800, pcost: 760, lvl: 8, shape: 'racer',
+    body: '#d5e4ff', roof: '#0e173b', glass: '#8ef9ff', acc: '#ff2fb9',
+    nose: 1, wing: 3, cyberFin: true, underglow: '#7dffff', stripe: 2, stripeColor: '#ff2fb9',
+    boost: 1.90, shieldStart: 2, magnet: 1.35, tag: 'Сверхзвуковой болид GT', perk: 'turbo' },
+
+  // 9. Турбо Самурай (Редкая, УР. 9)
+  { id: 8, name: 'Турбо Самурай', rarity: 'rare', cost: 4600, pcost: 920, lvl: 9, shape: 'drift',
+    body: '#e11d48', roof: '#26040d', glass: '#ffe4e6', acc: '#fbbf24',
+    wing: 4, canards: 1, underglow: '#e11d48', sideExhaust: 1, splitter: 2,
+    boost: 1.62, shieldStart: 4, magnet: 1.50, tag: 'Мастер точного заноса', perk: 'driftking' },
+
+  // 10. Крепость GT (Редкая, УР. 10)
+  { id: 9, name: 'Крепость GT', rarity: 'rare', cost: 5500, pcost: 1100, lvl: 10, shape: 'muscle',
+    body: '#8ea6db', roof: '#141d3d', glass: '#e6eeff', acc: '#ffd166', rails: 1,
+    widebody: 1, blower: 1, underglow: '#8ea6db', diffuser: 2,
+    boost: 1.35, shieldStart: 18, magnet: 1.45, tag: 'Тяжёлый броневик с защитой', perk: 'armor' },
+
+  // 11. Кибер Патруль (Редкая, УР. 12)
+  { id: 10, name: 'Кибер Патруль', rarity: 'rare', cost: 7000, pcost: 1400, lvl: 12, shape: 'sport',
+    body: '#f4f7ff', roof: '#090d18', glass: '#cfe9ff', acc: '#00e5ff', bar: 1,
+    stripe: 1, stripeColor: '#ff2b43', underglow: '#3b8cff', canards: 1, wing: 1, headlights: 'laser',
+    boost: 1.65, shieldStart: 12, magnet: 1.80, tag: 'Импульсные маячки закона', perk: 'luck' },
+
+  // 12. Теневой Страйкер (Редкая, УР. 13)
+  { id: 11, name: 'Теневой Страйкер', rarity: 'rare', cost: 8200, pcost: 1640, lvl: 13, shape: 'coupe',
+    body: '#1e293b', roof: '#020617', glass: '#94a3b8', acc: '#00e5ff',
+    underglow: '#00e5ff', diffuser: 2, splitter: 1, wing: 4, headlights: 'laser',
+    boost: 1.68, shieldStart: 12, magnet: 1.60, tag: 'Стелс-карбон для ночных гонок', perk: 'slipstream' },
+
+  // 13. Огненный Титан (Редкая, УР. 14)
+  { id: 12, name: 'Огненный Титан', rarity: 'rare', cost: 9500, pcost: 1900, lvl: 14, shape: 'muscle',
+    body: '#ff5500', roof: '#2c0b00', glass: '#ffd9c2', acc: '#ffe066',
+    blower: 2, widebody: 1, sideExhaust: 1, underglow: '#ff5500', wing: 4, splitter: 2,
+    boost: 1.80, shieldStart: 14, magnet: 2.05, tag: 'Двойной нагнетатель и огонь', perk: 'combo' },
+
+  // 14. Вортекс R (Редкая, УР. 15)
+  { id: 13, name: 'Вортекс R', rarity: 'rare', cost: 11000, pcost: 2200, lvl: 15, shape: 'rally',
+    body: '#059669', roof: '#022c22', glass: '#d1fae5', acc: '#fbbf24',
+    widebody: 1, rails: 1, underglow: '#059669', wing: 2, headlights: 'quad',
+    boost: 1.72, shieldStart: 14, magnet: 1.75, tag: 'Раллийный полноприводный зверь', perk: 'titan' },
+
+  // 15. Апекс Сапфир GT (Редкая, УР. 16)
+  { id: 14, name: 'Апекс Сапфир GT', rarity: 'rare', cost: 13000, pcost: 2600, lvl: 16, shape: 'hyper',
+    body: '#1a75ff', roof: '#05122b', glass: '#cfe4ff', acc: '#7dff9b',
+    roofScoop: 1, canards: 1, wing: 5, underglow: '#1a75ff', stripe: 1, stripeColor: '#7dff9b',
+    boost: 1.70, shieldStart: 12, magnet: 1.65, tag: 'Би-план крыло и воздухозаборник', perk: 'smash' },
+
+  // 16. Серебряный Призрак (Эпическая, УР. 18)
+  { id: 15, name: 'Серебряный Призрак', rarity: 'epic', cost: 15500, pcost: 3100, lvl: 18, shape: 'racer',
+    body: '#e8edf7', roof: '#202a42', glass: '#9fe8ff', acc: '#00e5ff',
+    nose: 1, wing: 3, underglow: '#00e5ff', splitter: 2, cyberFin: true,
+    boost: 1.95, shieldStart: 6, magnet: 1.45, tag: 'Стреловидный монокок', perk: 'brakes' },
+
+  // 17. Солнечный Ветер (Эпическая, УР. 19)
+  { id: 16, name: 'Солнечный Ветер', rarity: 'epic', cost: 17500, pcost: 3500, lvl: 19, shape: 'speedster',
+    body: '#f59e0b', roof: '#451a03', glass: '#fef3c7', acc: '#ef4444',
+    roofScoop: 1, cyberFin: true, underglow: '#f59e0b', wing: 2, headlights: 'laser',
+    boost: 1.85, shieldStart: 10, magnet: 1.80, tag: 'Солнечная батарея и ускорение', perk: 'goldrush' },
+
+  // 18. Магма Дестроер (Эпическая, УР. 20)
+  { id: 17, name: 'Магма Дестроер', rarity: 'epic', cost: 19500, pcost: 3900, lvl: 20, shape: 'muscle',
+    body: '#ff1f3a', roof: '#280407', glass: '#ffd7c2', acc: '#ffaa00', scoop: 1,
+    blower: 1, widebody: 1, underglow: '#ff1f3a', wing: 2, sideExhaust: 1, diffuser: 2,
+    boost: 1.75, shieldStart: 20, magnet: 1.70, tag: 'Вулканический термощит', perk: 'sregen' },
+
+  // 19. Ночной Ястреб (Эпическая, УР. 21)
+  { id: 18, name: 'Ночной Ястреб', rarity: 'epic', cost: 21500, pcost: 4300, lvl: 21, shape: 'muscle',
+    body: '#312e81', roof: '#0f0e2a', glass: '#c7d2fe', acc: '#f43f5e',
+    blower: 1, canards: 1, wing: 5, underglow: '#4338ca', sideExhaust: 1,
+    boost: 1.88, shieldStart: 16, magnet: 1.90, tag: 'Тёмный перехватчик с антикрылом', perk: 'overdrive' },
+
+  // 20. Аэро Зефир (Эпическая, УР. 22)
+  { id: 19, name: 'Аэро Зефир', rarity: 'epic', cost: 24000, pcost: 4800, lvl: 22, shape: 'hyper',
+    body: '#00ffaa', roof: '#022115', glass: '#e6fff2', acc: '#00e5ff',
+    wing: 5, canards: 1, roofScoop: 1, underglow: '#00ffaa', splitter: 2,
+    boost: 1.90, shieldStart: 10, magnet: 1.85, tag: 'Двойное антикрыло вихря', perk: 'djump' },
+
+  // 21. Атомный Спринт (Эпическая, УР. 23)
+  { id: 20, name: 'Атомный Спринт', rarity: 'epic', cost: 26500, pcost: 5300, lvl: 23, shape: 'speedster',
+    body: '#06b6d4', roof: '#083344', glass: '#cffafe', acc: '#ec4899',
+    nose: 1, cyberFin: true, underglow: '#06b6d4', splitter: 2, wing: 3,
+    boost: 1.98, shieldStart: 8, magnet: 1.70, tag: 'Ультралёгкий атомный родстер', perk: 'aero' },
+
+  // 22. Королевский GT (Эпическая, УР. 24)
+  { id: 21, name: 'Королевский GT', rarity: 'epic', cost: 29000, pcost: 5800, lvl: 24, shape: 'sport',
+    body: '#ffd700', roof: '#2f2302', glass: '#fff6d8', acc: '#ffffff',
+    widebody: 1, stripe: 2, stripeColor: '#ffffff', underglow: '#ffd700', wing: 2, cyberFin: true,
+    boost: 1.75, shieldStart: 24, magnet: 2.20, tag: 'Императорский золотой суперкар', perk: 'revive' },
+
+  // 23. Громовержец GT (Эпическая, УР. 25)
+  { id: 22, name: 'Громовержец GT', rarity: 'epic', cost: 31500, pcost: 6300, lvl: 25, shape: 'muscle',
+    body: '#4f46e5', roof: '#1e1b4b', glass: '#e0e7ff', acc: '#f59e0b',
+    blower: 2, widebody: 1, underglow: '#6366f1', sideExhaust: 1, diffuser: 2, wing: 4,
+    boost: 1.92, shieldStart: 22, magnet: 2.10, tag: 'Тройной компрессор молнии', perk: 'shockwave' },
+
+  // 24. Зенит F1 Монарх (Легендарная, УР. 26)
+  { id: 23, name: 'Зенит F1 Монарх', rarity: 'legendary', cost: 35000, pcost: 7000, lvl: 26, shape: 'hyper',
+    body: '#00f0ff', roof: '#030b14', glass: '#bff5ff', acc: '#ff00aa',
+    wing: 3, nose: 1, stripe: 1, stripeColor: '#ff00aa', underglow: '#ff00aa', roofScoop: 1, diffuser: 2, splitter: 2,
+    boost: 2.25, shieldStart: 16, magnet: 2.00, tag: 'АБСОЛЮТНАЯ ЛЕГЕНДА ФОРМУЛЫ 1', perk: 'ghost' },
+
+  // 25. Плазменный Форсаж (Эпическая, УР. 27)
+  { id: 24, name: 'Плазменный Форсаж', rarity: 'epic', cost: 34000, pcost: 6800, lvl: 27, shape: 'hyper',
+    body: '#ec4899', roof: '#500724', glass: '#fce7f3', acc: '#06b6d4',
+    roofScoop: 1, canards: 1, wing: 5, underglow: '#ec4899', stripe: 1, stripeColor: '#06b6d4',
+    boost: 2.05, shieldStart: 14, magnet: 2.00, tag: 'Плазменные инжекторы нитро', perk: 'boostmaster' },
+
+  // 26. Кибер Спидстер (Эпическая, УР. 28)
+  { id: 25, name: 'Кибер Спидстер', rarity: 'epic', cost: 37000, pcost: 7400, lvl: 28, shape: 'speedster',
+    body: '#14b8a6', roof: '#042f2e', glass: '#ccfbf1', acc: '#f43f5e',
+    splitter: 2, underglow: '#14b8a6', wing: 2, cyberFin: true, headlights: 'laser',
+    boost: 2.08, shieldStart: 12, magnet: 1.95, tag: 'Аэродинамический открытый болид', perk: 'collector' },
+
+  // 27. Инферно RS (Легендарная, УР. 29)
+  { id: 26, name: 'Инферно RS', rarity: 'legendary', cost: 41000, pcost: 8200, lvl: 29, shape: 'racer',
+    body: '#dc2626', roof: '#450a0a', glass: '#fee2e2', acc: '#fbbf24',
+    nose: 1, wing: 3, sideExhaust: 1, underglow: '#ef4444', diffuser: 2, splitter: 2,
+    boost: 2.30, shieldStart: 18, magnet: 2.15, tag: 'Легенда трека с адским нитро', perk: 'warp' },
+
+  // 28. Галактический Рейсер (Легендарная, УР. 29)
+  { id: 27, name: 'Галактический Рейсер', rarity: 'legendary', cost: 45000, pcost: 9000, lvl: 29, shape: 'hyper',
+    body: '#8b5cf6', roof: '#2e1065', glass: '#ede9fe', acc: '#00f5ff',
+    roofScoop: 1, wing: 5, canards: 1, underglow: '#8b5cf6', cyberFin: true, diffuser: 2,
+    boost: 2.35, shieldStart: 20, magnet: 2.25, tag: 'Антигравитационный корпус будущего', perk: 'hyperdrive' },
+
+  // 29. Хроно Монолит (Легендарная, УР. 30)
+  { id: 28, name: 'Хроно Монолит', rarity: 'legendary', cost: 49000, pcost: 9800, lvl: 30, shape: 'muscle',
+    body: '#64748b', roof: '#0f172a', glass: '#f1f5f9', acc: '#38bdf8',
+    blower: 2, widebody: 1, underglow: '#38bdf8', wing: 4, rails: 1, diffuser: 2,
+    boost: 2.20, shieldStart: 26, magnet: 2.30, tag: 'Титановый монолит времени', perk: 'specter' },
+
+  // 30. Омега Прототип (Легендарная, УР. 30)
+  { id: 29, name: 'Омега Прототип', rarity: 'legendary', cost: 55000, pcost: 11000, lvl: 30, shape: 'hyper',
+    body: '#facc15', roof: '#172554', glass: '#ffffff', acc: '#ec4899',
+    nose: 1, wing: 5, roofScoop: 1, underglow: '#facc15', stripe: 2, stripeColor: '#ec4899', diffuser: 2, splitter: 2,
+    boost: 2.45, shieldStart: 22, magnet: 2.40, tag: 'ВЕРШИНА ИНЖЕНЕРНОЙ МЫСЛИ 2099', perk: 'apex' }
 ];
+
+/* --------------------------- ИНДИВИДУАЛЬНЫЕ УЛУЧШЕНИЯ МАШИН ---------------------------
+   Каждая машина прокачивается отдельно от других.
+   Улучшения: скорость, разгон, нитро, магнит, щит, управляемость. */
+const UPG_DEFS = {
+  speed: {
+    name: 'Макс. скорость',
+    ic: '⚡',
+    desc: 'Повышает базовую и предельную скорость машины (+1.2 м/с за ур.)',
+    unit: 'м/с',
+    val: (c, lvl) => ((24 + (c.boost - 1) * 6) + lvl * 1.2).toFixed(1),
+    effect: '+1.2 м/с'
+  },
+  accel: {
+    name: 'Ускорение',
+    ic: '🚀',
+    desc: 'Увеличивает динамику разгона и отклик на ускорение (+15% за ур.)',
+    unit: '%',
+    val: (c, lvl) => Math.round(100 + lvl * 15),
+    effect: '+15%'
+  },
+  nitro: {
+    name: 'Мощность нитро',
+    ic: '🔥',
+    desc: 'Усиливает множитель форсажа и снижает расход энергии (-8% расхода)',
+    unit: 'x',
+    val: (c, lvl) => (c.boost + lvl * 0.12).toFixed(2),
+    effect: '+0.12x'
+  },
+  magnet: {
+    name: 'Радиус магнита',
+    ic: '🧲',
+    desc: 'Расширяет радиус притяжения монет и продлевает время действия (+1.5 с)',
+    unit: 'с',
+    val: (c, lvl) => (5 * c.magnet + lvl * 1.5).toFixed(1),
+    effect: '+1.5 с'
+  },
+  shield: {
+    name: 'Энергощит',
+    ic: '🛡',
+    desc: 'Увеличивает стартовую длительность щита и поглощение урона (+3 с)',
+    unit: 'с',
+    val: (c, lvl) => (carStartingShield(c) + lvl * 3).toFixed(0),
+    effect: '+3 с'
+  },
+  handling: {
+    name: 'Управляемость',
+    ic: '🏎',
+    desc: 'Ускоряет перестроение между полосами и улучшает торможение (+20%)',
+    unit: '%',
+    val: (c, lvl) => Math.round(100 + lvl * 20),
+    effect: '+20%'
+  }
+};
+const UPG_KEYS = Object.keys(UPG_DEFS);
+
+const CAR_UPG = {
+  get(carId) {
+    return store.get('car_upg_' + carId, { speed: 0, accel: 0, nitro: 0, magnet: 0, shield: 0, handling: 0 });
+  },
+  set(carId, data) {
+    store.set('car_upg_' + carId, data);
+  },
+  lvl(carId, key) {
+    const u = this.get(carId);
+    return (u && u[key] | 0) || 0;
+  },
+  cost(car, key, curLvl) {
+    const base = 120 + curLvl * 90;
+    const tierMul = car.rarity === 'legendary' ? 2.0 : (car.rarity === 'epic' ? 1.5 : (car.rarity === 'rare' ? 1.2 : 1.0));
+    return Math.round(base * tierMul);
+  },
+  ptCost(car, key, curLvl) {
+    return Math.round(this.cost(car, key, curLvl) / 5);
+  },
+  can(car, key, usePts) {
+    const curLvl = this.lvl(car.id, key);
+    if (curLvl >= 5) return 'max';
+    if (!ownedOf(car)) return 'not_owned';
+    const c = usePts ? this.ptCost(car, key, curLvl) : this.cost(car, key, curLvl);
+    if (usePts) {
+      if (ACCT.pts < c) return 'no_pts';
+    } else {
+      if (G.coins < c) return 'no_coins';
+    }
+    return 'ok';
+  },
+  upgrade(car, key, usePts) {
+    const st = this.can(car, key, usePts);
+    if (st === 'max') { toast('Достигнут максимальный уровень улучшения (5/5)!'); return false; }
+    if (st === 'not_owned') { toast('Сначала откройте эту машину в гараже!'); Sound.blip(200, .12, 'sawtooth', .18); return false; }
+    const curLvl = this.lvl(car.id, key);
+    const c = usePts ? this.ptCost(car, key, curLvl) : this.cost(car, key, curLvl);
+    if (st === 'no_pts') { toast('Не хватает ' + (c - ACCT.pts) + ' ⭐ очков!'); Sound.blip(200, .12, 'sawtooth', .18); return false; }
+    if (st === 'no_coins') { toast('Не хватает ' + (c - G.coins) + ' 🪙 монет!'); Sound.blip(200, .12, 'sawtooth', .18); return false; }
+
+    if (usePts) {
+      ACCT.pts -= c; ACCT.spent += c; ACCT.save();
+    } else {
+      G.coins -= c; store.set('coins', G.coins);
+    }
+    const upg = this.get(car.id);
+    upg[key] = (upg[key] || 0) + 1;
+    this.set(car.id, upg);
+
+    G.meta.totalUpgrades = (G.meta.totalUpgrades || 0) + 1;
+    store.set('meta', G.meta);
+
+    Sound.chord([523, 659, 784, 1046], .4, .2);
+    toast('⚡ ' + UPG_DEFS[key].name + ' улучшено до ур. ' + upg[key] + ' / 5!', 2200);
+    return true;
+  }
+};
 /* --------------------------- SKINLAR ---------------------------
    Ko'rinish rang uslubi. lvl = akkaunt darajasi talabi (tekin ochiladi). */
 const SKINS = [
@@ -1074,13 +1499,18 @@ function moveLane(d) {
 }
 function jump() {
   if (!G.running || G.paused) return;
-  if (G.onGround) { G.vy = 5.8 * (G.jumpV || 1); G.onGround = false; G.jumpsLeft = G.extraJumps || 0; Sound.blip(300, .12, 'sine', .18); lessonEvent('jump'); }
-  else if ((G.jumpsLeft || 0) > 0) {
+  if (G.onGround) {
+    G.vy = 3.6 * (G.jumpV || 1);
+    G.onGround = false;
+    G.jumpsLeft = G.extraJumps || 0;
+    Sound.blip(340, .10, 'sine', .18);
+    lessonEvent('jump');
+  } else if ((G.jumpsLeft || 0) > 0) {
     G.jumpsLeft--;
-    G.vy = 5.2 * (G.jumpV || 1);
-    Sound.blip(560, .12, 'triangle', .2);
-    addFloatingText(G.x, G.y + 1.1, 0, 'ДВОЙНОЙ ПРЫЖОК!', '#7dffe4');
-    burst(G.x, G.y, 0, 12, '#7dffe4', .55);
+    G.vy = 3.3 * (G.jumpV || 1);
+    Sound.blip(560, .10, 'triangle', .2);
+    addFloatingText(G.x, G.y + 0.8, 0, 'ДВОЙНОЙ ПРЫЖОК!', '#7dffe4');
+    burst(G.x, G.y, 0, 10, '#7dffe4', .45);
   }
 }
 
@@ -1185,25 +1615,171 @@ function burst(x, y, z, n, col, pow) {
   }
 }
 
-/* --------------------------- YO'LAR (QIYINLIK BO'YICHA) ---------------------------
-   OSON · O'RTA · QIYIN · EKSTREMAL
-   Yo'l har TRACK_SEC soniyada almashadi, QAYSI biomsga o'tish
-   poyga qiyinligiga bog'liq (daraja + masofa). hz — tosiqlar zichligi koeffitsienti,
-   diff — yulduzlar soni (banner va garajda ko'rsatiladi). props — yon manzara turi. */
+/* --------------------------- ТОЧНО 6 БИОМОВ И 6 ИЗМЕРЕНИЙ --------------------------- */
 const BIOMES = [
-  { band: 0, diff: 1, hz: .78, name: 'НЕОНОВЫЙ ГОРОД', props: 'city', sky0: '#070a20', sky1: '#180b3c', sky2: '#40104a', sun0: '#ffe08a', sun1: '#ff2fb9', sun2: '#6d1fa0', road: 'rgba(21,23,43,0.85)', roadAlt: 'rgba(28,31,56,0.85)', neon: '#00e5ff', curbc: '#00e5ff', sil: '#060714', gnd0: '#100a26', gnd1: '#03030a', star: '#dfeaff' },
-  { band: 0, diff: 1, hz: .86, name: 'ПАЛЬМОВОЕ ПОБЕРЕЖЬЕ', props: 'palm', sky0: '#031a33', sky1: '#0a3f6b', sky2: '#1f8fb8', sun0: '#fff3c4', sun1: '#ffd166', sun2: '#ff8a3c', road: 'rgba(16,38,52,0.85)', roadAlt: 'rgba(22,48,64,0.85)', neon: '#7dffd0', curbc: '#4fe0ff', sil: '#04202c', gnd0: '#0a3a4a', gnd1: '#02121c', star: '#dff6ff' },
-  { band: 1, diff: 2, hz: .95, name: 'КРАСНАЯ ПУСТЫНЯ', props: 'cactus', sky0: '#2a1004', sky1: '#5c2408', sky2: '#a8471a', sun0: '#fff6d8', sun1: '#ffb02e', sun2: '#a83a06', road: 'rgba(58,33,22,0.85)', roadAlt: 'rgba(74,44,28,0.85)', neon: '#ffb02e', curbc: '#ff7a2f', sil: '#2a1206', gnd0: '#4a2a12', gnd1: '#180a04', star: '#ffe6c2' },
-  { band: 1, diff: 2, hz: 1.02, name: 'КИБЕРМАТРИЦА', props: 'grid', sky0: '#02181a', sky1: '#052b2f', sky2: '#083e35', sun0: '#7dff9b', sun1: '#00e5ff', sun2: '#052e3b', road: 'rgba(14,31,36,0.85)', roadAlt: 'rgba(20,42,48,0.85)', neon: '#7dff9b', curbc: '#7dff9b', sil: '#04141a', gnd0: '#062018', gnd1: '#01080a', star: '#b9ffe4' },
-  { band: 2, diff: 3, hz: 1.12, name: 'ЛЕДЯНЫЕ ГОРЫ', props: 'mesa', sky0: '#0a1030', sky1: '#1b2f66', sky2: '#4a79c4', sun0: '#ffffff', sun1: '#cfe9ff', sun2: '#5b8fd6', road: 'rgba(30,40,66,0.85)', roadAlt: 'rgba(40,52,82,0.85)', neon: '#bfe6ff', curbc: '#8ec9ff', sil: '#141f3d', gnd0: '#243456', gnd1: '#070c18', star: '#ffffff' },
-  { band: 2, diff: 3, hz: 1.18, name: 'ДРЕВНЯЯ ПИРАМИДА', props: 'pyramid', sky0: '#1c1204', sky1: '#4a3208', sky2: '#8a6414', sun0: '#fff8d0', sun1: '#ffe08a', sun2: '#b07a10', road: 'rgba(46,36,20,0.85)', roadAlt: 'rgba(60,48,28,0.85)', neon: '#ffe08a', curbc: '#d9a441', sil: '#241a08', gnd0: '#3a2c14', gnd1: '#0e0a04', star: '#fff0c8' },
-  { band: 2, diff: 3, hz: 1.22, name: 'ЛУННАЯ БАЗА', props: 'moon', sky0: '#080d22', sky1: '#172344', sky2: '#3b4262', sun0: '#e8f3ff', sun1: '#9db8de', sun2: '#465a82', road: 'rgba(24,31,48,0.88)', roadAlt: 'rgba(34,43,64,0.88)', neon: '#8de7ff', curbc: '#b6cfff', sil: '#101a30', gnd0: '#18243a', gnd1: '#060914', star: '#e4f2ff' },
-  { band: 3, diff: 4, hz: 1.26, name: 'ХРУСТАЛЬНАЯ ДОЛИНА', props: 'crystal', sky0: '#0a0322', sky1: '#26064f', sky2: '#5c1290', sun0: '#ffd6fa', sun1: '#c08cff', sun2: '#2d0a5e', road: 'rgba(26,15,48,0.85)', roadAlt: 'rgba(38,22,66,0.85)', neon: '#c08cff', curbc: '#ff2fb9', sil: '#150636', gnd0: '#251044', gnd1: '#05010f', star: '#f0d9ff' },
-  { band: 3, diff: 4, hz: 1.34, name: 'ВУЛКАНИЧЕСКОЕ КОЛЬЦО', props: 'volcano', sky0: '#140509', sky1: '#2c0a12', sky2: '#5c1a10', sun0: '#ffd9a0', sun1: '#ff8a3c', sun2: '#7a1e08', road: 'rgba(18,14,16,0.88)', roadAlt: 'rgba(28,20,22,0.88)', neon: '#ff9a3c', curbc: '#ffb02e', sil: '#180a0a', gnd0: '#241016', gnd1: '#060203', star: '#ffe4cf' }
+  {
+    id: 0,
+    band: 0,
+    diff: 1,
+    hz: 0.80,
+    name: 'НЕОНОВЫЙ МЕГАПОЛИС',
+    props: 'city',
+    sky0: '#070a20', sky1: '#180b3c', sky2: '#40104a',
+    sun0: '#ffe08a', sun1: '#ff2fb9', sun2: '#6d1fa0',
+    road: 'rgba(21,23,43,0.85)', roadAlt: 'rgba(28,31,56,0.85)',
+    neon: '#00e5ff', curbc: '#ff2fb9', sil: '#060714',
+    gnd0: '#100a26', gnd1: '#03030a', star: '#dfeaff'
+  },
+  {
+    id: 1,
+    band: 1,
+    diff: 2,
+    hz: 0.95,
+    name: 'КРИСТАЛЬНАЯ ПУСТЫНЯ',
+    props: 'crystal',
+    sky0: '#140326', sky1: '#2c0b48', sky2: '#6b147d',
+    sun0: '#ffd6fa', sun1: '#c08cff', sun2: '#4a0b7b',
+    road: 'rgba(32,18,52,0.86)', roadAlt: 'rgba(44,24,68,0.86)',
+    neon: '#d946ef', curbc: '#c084fc', sil: '#120422',
+    gnd0: '#260a40', gnd1: '#090114', star: '#f5d0fe'
+  },
+  {
+    id: 2,
+    band: 2,
+    diff: 3,
+    hz: 1.10,
+    name: 'ЛЕДЯНАЯ ОРБИТА',
+    props: 'ice',
+    sky0: '#031428', sky1: '#072b4f', sky2: '#1b6492',
+    sun0: '#ffffff', sun1: '#a5f3fc', sun2: '#0284c7',
+    road: 'rgba(16,36,60,0.88)', roadAlt: 'rgba(24,48,78,0.88)',
+    neon: '#38bdf8', curbc: '#e0f2fe', sil: '#041524',
+    gnd0: '#0b2e4c', gnd1: '#020d18', star: '#f0f9ff'
+  },
+  {
+    id: 3,
+    band: 2,
+    diff: 3,
+    hz: 1.20,
+    name: 'ЛАВА И МАГМА',
+    props: 'lava',
+    sky0: '#180404', sky1: '#380a0a', sky2: '#68140a',
+    sun0: '#fef08a', sun1: '#f97316', sun2: '#dc2626',
+    road: 'rgba(36,16,16,0.90)', roadAlt: 'rgba(48,22,20,0.90)',
+    neon: '#ff5500', curbc: '#fbbf24', sil: '#140404',
+    gnd0: '#320b0b', gnd1: '#0d0202', star: '#fed7aa'
+  },
+  {
+    id: 4,
+    band: 3,
+    diff: 4,
+    hz: 1.30,
+    name: 'БИОСФЕРА БУДУЩЕГО',
+    props: 'bio',
+    sky0: '#021810', sky1: '#053322', sky2: '#0b583b',
+    sun0: '#ecfdf5', sun1: '#34d399', sun2: '#059669',
+    road: 'rgba(12,38,28,0.88)', roadAlt: 'rgba(18,50,38,0.88)',
+    neon: '#10b981', curbc: '#6ee7b7', sil: '#02160d',
+    gnd0: '#083824', gnd1: '#010f08', star: '#d1fae5'
+  },
+  {
+    id: 5,
+    band: 3,
+    diff: 4,
+    hz: 1.40,
+    name: 'КОСМИЧЕСКАЯ АНОМАЛИЯ',
+    props: 'cosmic',
+    sky0: '#060014', sky1: '#150030', sky2: '#2d0658',
+    sun0: '#ffffff', sun1: '#e879f9', sun2: '#701a75',
+    road: 'rgba(24,14,46,0.92)', roadAlt: 'rgba(36,20,64,0.92)',
+    neon: '#00f5ff', curbc: '#ec4899', sil: '#090118',
+    gnd0: '#1c0836', gnd1: '#04000c', star: '#ffffff'
+  }
+];
+
+const DIMENSIONS = [
+  {
+    id: 0,
+    name: 'КВАНТОВЫЙ РАЗЛОМ',
+    desc: 'Коридор гиперускорения: скорость +40%, удвоение очков (x2)',
+    scoreMul: 2.0,
+    speedBoost: 1.4,
+    props: 'cosmic',
+    sky0: '#001a2c', sky1: '#003e66', sky2: '#0088cc',
+    sun0: '#e0ffff', sun1: '#00ffff', sun2: '#005588',
+    road: 'rgba(0,35,55,0.92)', roadAlt: 'rgba(0,50,80,0.92)',
+    neon: '#00ffff', curbc: '#80ffff', sil: '#001020',
+    gnd0: '#002540', gnd1: '#000810', star: '#e0ffff'
+  },
+  {
+    id: 1,
+    name: 'ЗОЛОТАЯ ТУМАННОСТЬ',
+    desc: 'Золотой каньон: изобилие монет и повышенный сбор (x1.5)',
+    scoreMul: 1.5,
+    speedBoost: 1.15,
+    props: 'crystal',
+    sky0: '#2a1a00', sky1: '#553600', sky2: '#996600',
+    sun0: '#fffbe0', sun1: '#ffd700', sun2: '#b8860b',
+    road: 'rgba(50,35,0,0.92)', roadAlt: 'rgba(70,50,0,0.92)',
+    neon: '#ffd700', curbc: '#fff080', sil: '#1f1400',
+    gnd0: '#3d2b00', gnd1: '#0f0a00', star: '#fffbe0'
+  },
+  {
+    id: 2,
+    name: 'ГИПЕРПРОСТРАНСТВО',
+    desc: 'Антигравитационный варп: неоновые потоки, повышенная скорость (x2.2)',
+    scoreMul: 2.2,
+    speedBoost: 1.5,
+    props: 'cosmic',
+    sky0: '#1a0033', sky1: '#3d0077', sky2: '#7700ee',
+    sun0: '#f7e6ff', sun1: '#bf00ff', sun2: '#5500aa',
+    road: 'rgba(35,0,65,0.92)', roadAlt: 'rgba(50,0,90,0.92)',
+    neon: '#bf00ff', curbc: '#e680ff', sil: '#110022',
+    gnd0: '#28004d', gnd1: '#080014', star: '#f7e6ff'
+  },
+  {
+    id: 3,
+    name: 'КИБЕР-БЕЗДНА',
+    desc: 'Узкий слалом и аномальная гравитация: утроенные очки (x3)',
+    scoreMul: 3.0,
+    speedBoost: 1.25,
+    props: 'city',
+    sky0: '#001a14', sky1: '#003b2c', sky2: '#00664d',
+    sun0: '#e0fff2', sun1: '#00ff88', sun2: '#006633',
+    road: 'rgba(0,35,25,0.92)', roadAlt: 'rgba(0,50,38,0.92)',
+    neon: '#00ff88', curbc: '#80ffc4', sil: '#00120d',
+    gnd0: '#00261b', gnd1: '#000806', star: '#e0fff2'
+  },
+  {
+    id: 4,
+    name: 'СОЛНЕЧНЫЙ ШТОРМ',
+    desc: 'Кинетическая плазменная зона: шторм энергии и ускорения (x2.5)',
+    scoreMul: 2.5,
+    speedBoost: 1.45,
+    props: 'lava',
+    sky0: '#330a00', sky1: '#661a00', sky2: '#bb3300',
+    sun0: '#ffeedd', sun1: '#ff4400', sun2: '#991100',
+    road: 'rgba(55,15,0,0.92)', roadAlt: 'rgba(80,22,0,0.92)',
+    neon: '#ff4400', curbc: '#ffaa00', sil: '#200600',
+    gnd0: '#401200', gnd1: '#100400', star: '#ffeedd'
+  },
+  {
+    id: 5,
+    name: 'ЗЕРКАЛЬНАЯ РЕАЛЬНОСТЬ',
+    desc: 'Инвертированный хроматический спектр: максимальный бонус очков (x3.5)',
+    scoreMul: 3.5,
+    speedBoost: 1.35,
+    props: 'crystal',
+    sky0: '#140026', sky1: '#2e0057', sky2: '#520099',
+    sun0: '#ffe6f7', sun1: '#ff00aa', sun2: '#660044',
+    road: 'rgba(28,0,50,0.92)', roadAlt: 'rgba(42,0,72,0.92)',
+    neon: '#ff00aa', curbc: '#00ffff', sil: '#0e001a',
+    gnd0: '#22003b', gnd1: '#08000f', star: '#ffe6f7'
+  }
 ];
 const BAND_NAME = ['ЛЁГКАЯ', 'СРЕДНЯЯ', 'СЛОЖНАЯ', 'ЭКСТРЕМАЛЬНАЯ'];
-const TRACK_SEC = 45;           // Biomlar 45 soniyada bir almashadi
-const TRANS_DUR = 1.7;          // biom almashish animatsiyasi (soniya)
+const TRACK_SEC = 38;           // Biomlar 38 soniyada bir almashadi
+const TRANS_DUR = 2.4;          // boy va hayajonli biom almashish animatsiyasi (soniya)
 const CHECKPOINT_TRACK_GAP = 18;
 const BM_MIX_KEYS = ['sky0', 'sky1', 'sky2', 'sun0', 'sun1', 'sun2', 'road', 'roadAlt', 'neon', 'curbc', 'sil', 'gnd0', 'gnd1', 'star'];
 
@@ -1258,6 +1834,9 @@ function mixColor(a, b, t) {
 }
 let _bmMix = null, _bmMixKey = '';
 function currentBiome() {
+  if (G && G.inDimension && DIMENSIONS[G.dimensionIdx]) {
+    return DIMENSIONS[G.dimensionIdx];
+  }
   const total = BIOMES.length;
   const i = (((G && G.trackIdx) | 0) % total + total) % total;
   const bm = BIOMES[i];
@@ -1281,20 +1860,24 @@ function trackBiome() {
   return BIOMES[i] || BIOMES[0];
 }
 function nextTrack(auto) {
-  const available = BIOMES.map((bm, i) => i).filter(i => i !== G.trackIdx);
-  const idx = available[Math.floor(Math.random() * available.length)];
+  const nextIdx = (G.trackIdx + 1) % BIOMES.length;
   G.prevTrackIdx = G.trackIdx;
-  G.trackIdx = idx;
+  G.trackIdx = nextIdx;
   G.trackT = 0;
   G.trans = auto ? 0 : TRANS_DUR;
   _bmMixKey = '';
   const nb = trackBiome();
   buildBackdrop();
   if (auto) {
-    G.flash = Math.max(G.flash, .5);
-    toast('🛣 ' + nb.name + ' · ' + BAND_NAME[nb.band] + ' (' + '★'.repeat(nb.diff) + ')', 2800);
-    Sound.chord([392, 523, 659, 784, 1046], .5, .17);
-    for (let i = 0; i < 3; i++) burst((i - 1) * 1.15, .4 + i * .5, 9 + i * 4, 12, nb.neon, 1.5);
+    G.flash = 0.85;
+    G.shake = Math.max(G.shake || 0, .55);
+    toast('⚡ ПЕРЕХОД: ' + nb.name + ' · ' + BAND_NAME[nb.band] + ' (' + '★'.repeat(nb.diff) + ')', 3200);
+    Sound.chord([440, 554, 659, 880, 1108], .6, .22);
+    for (let i = 0; i < 6; i++) {
+      const bx = (i - 2.5) * .85;
+      burst(bx, .5 + (i % 2) * .4, 10 + (i % 3) * 4, 16, nb.neon, 1.8);
+      burst(bx, .3, 14, 10, nb.curbc || '#fff', 1.4);
+    }
   }
   return nb;
 }
@@ -1334,24 +1917,93 @@ function buildBackdrop() {
 
 /* --------------------------- RUN --------------------------- */
 function bankCoins() { store.set('coins', G.coins); }
+
+function enterDimension(dimIdx) {
+  const dim = DIMENSIONS[dimIdx] || DIMENSIONS[0];
+  G.inDimension = true;
+  G.dimensionIdx = dimIdx;
+  G.dimensionTime = 45.0;
+  G.flash = 0.95;
+  G.shake = 0.8;
+  G.meta.portalsEntered = (G.meta.portalsEntered || 0) + 1;
+  store.set('meta', G.meta);
+  Sound.chord([440, 660, 880, 1320], 0.7, 0.28);
+  toast('⚡ ВХОД В ИЗМЕРЕНИЕ: ' + dim.name + ' (45 сек.)', 3500);
+  addFloatingText(G.x, 2.0, 0, '🌀 ' + dim.name, '#d946ef');
+  for (const o of G.objs) {
+    if (o.z > 0 && o.z < 45 && HAZARD[o.kind]) o.dead = true;
+  }
+  buildBackdrop();
+}
+
+function exitDimension() {
+  const dim = DIMENSIONS[G.dimensionIdx] || DIMENSIONS[0];
+  G.inDimension = false;
+  G.dimensionTime = 0;
+  G.meta.dimensionsCleared = (G.meta.dimensionsCleared || 0) + 1;
+  const bonusScore = 10000;
+  const bonusCoins = 50;
+  G.score += bonusScore;
+  G.coins += bonusCoins;
+  G.runCoins += bonusCoins;
+  G.flash = 0.85;
+  G.shake = 0.6;
+  store.set('meta', G.meta);
+  Sound.chord([523, 659, 784, 1046], 0.6, 0.25);
+  toast('✨ ИЗМЕРЕНИЕ ПРОЙДЕНО! Награда: +' + bonusScore + ' очков, +' + bonusCoins + ' 🪙', 4000);
+  addFloatingText(G.x, 2.2, 0, '✨ НАГРАДА: +' + bonusScore, '#ffd166');
+  for (const o of G.objs) {
+    if (o.z > 0 && o.z < 55 && HAZARD[o.kind]) o.dead = true;
+  }
+  G.nextPortalAt = G.dist + 800;
+  G.portalSpawned = false;
+  buildBackdrop();
+}
+
 function startRun() {
   hide(el.scrMenu); hide(el.scrOver); hide(el.scrCards); hide(el.scrPause); hide(el.scrRevive); hide(el.scrHow);
   for (const o of G.objs) freeObj(o);
   Object.assign(G, {
     running: true, paused: false, over: false, t: 0, dist: 0, score: 0, lives: 4, maxLives: 4,
-    level: 1, nextLevelAt: 1000, levelAt: 0, levelFrom: 0, baseSpeed: 15, bestCombo: 1, speed: 15, maxSpeed: 15, boost: 0, boostOn: false,
+    level: 1, nextLevelAt: 1000, levelAt: 0, levelFrom: 0, baseSpeed: 23, bestCombo: 1, speed: 23, maxSpeed: 23, boost: 0, boostOn: false,
     energon: 100, energonMax: 100, nitroT: 0, magnet: 0, magnetMax: 5, shield: 0, shieldMax: 0,
     invul: 1.2, coinMult: 1, comboHold: 3.4, combo: 1, comboT: 0, jumpV: 1, smashBonus: 0, brakePow: 0,
     lane: 1, laneX: 0, x: 0, y: 0, vy: 0, onGround: true, tilt: 0, yaw: 0, runCoins: 0,
     objs: [], parts: [], texts: [], nearMisses: 0, coinStreak: 0, spawnGap: 15, shake: 0, flash: 0, upgrades: {}, revived: false,
     trackIdx: -1, prevTrackIdx: null, trackT: 0, trans: 99,
-    trackCheckpointWait: CHECKPOINT_TRACK_GAP
+    trackCheckpointWait: CHECKPOINT_TRACK_GAP,
+    nextCheckpointAt: 1300,
+    nextPortalAt: 650,
+    checkpointSpawned: false,
+    portalSpawned: false,
+    inDimension: false,
+    dimensionTime: 0,
+    dimensionIdx: 0,
+    carSpeedBonus: 0,
+    carAccelMul: 1,
+    nitroDrainBonus: 1,
+    carHandlingMul: 1,
+    magnetRadiusBonus: 0
   });
   nextTrack(false);
   G.trans = 99;   // poyga boshlanishida almashuv animatsiyasi boʼlmaydi
   const c = car();
-  G.shield = c.shieldStart; G.shieldMax = Math.max(6, c.shieldStart);
-  G.magnetMax = 5 * c.magnet; G.boostRate = c.boost;
+  const upg = CAR_UPG.get(c.id);
+  const upgSpeed = (upg.speed || 0) * 1.2;
+  const upgAccel = 1 + (upg.accel || 0) * 0.15;
+  const upgNitro = (upg.nitro || 0) * 0.12;
+  const upgMagnet = (upg.magnet || 0) * 1.5;
+  const upgShield = (upg.shield || 0) * 3;
+  const upgHandling = 1 + (upg.handling || 0) * 0.20;
+
+  G.carSpeedBonus = upgSpeed;
+  G.carAccelMul = upgAccel;
+  G.nitroDrainBonus = 1 - (upg.nitro || 0) * 0.08;
+  G.carHandlingMul = upgHandling;
+  G.magnetRadiusBonus = (upg.magnet || 0) * 0.35;
+
+  G.shield = c.shieldStart + upgShield; G.shieldMax = Math.max(6, G.shield);
+  G.magnetMax = 5 * c.magnet + upgMagnet; G.boostRate = c.boost + upgNitro;
   /* --- AKKAUNT DARAJASI bonuslari (doimiy) --- */
   G.baseSpeed = Math.round(G.baseSpeed * ACCT.speedMul() * 100) / 100;
   G.coinMult = ACCT.coinMul();
@@ -1394,6 +2046,9 @@ function gameOver() {
   G.meta.farthest = Math.max(G.meta.farthest || 0, Math.floor(G.dist));
   G.meta.bestLevel = Math.max(G.meta.bestLevel || 1, G.level);
   G.meta.runs = (G.meta.runs || 0) + 1;
+  G.meta.totalDist = (G.meta.totalDist || 0) + Math.floor(G.dist);
+  G.meta.totalTime = (G.meta.totalTime || 0) + Math.floor(G.t || 0);
+  G.meta.totalCoins = (G.meta.totalCoins || 0) + Math.floor(G.runCoins || 0);
   store.set('meta', G.meta);
   /* --- ⭐ ochko va 🪙 tanga hisobga olinadi --- */
   const pts = ACCT.runPoints(G);
@@ -1513,6 +2168,16 @@ function updateHUD() {
   if (el.mileBar) el.mileBar.style.width = (Math.max(0, Math.min(1, (G.dist - from) / span)) * 100).toFixed(1) + '%';
   if (el.lvlNum) el.lvlNum.textContent = G.level;
   if (el.lvlNext) el.lvlNext.textContent = G.level + ' → ' + (G.level + 1) + ' · ' + num(levelNeed(G.level)) + ' м';
+  const dimTag = $('#dimHud');
+  if (dimTag) {
+    if (G.inDimension && DIMENSIONS[G.dimensionIdx]) {
+      const dim = DIMENSIONS[G.dimensionIdx];
+      dimTag.classList.remove('hidden');
+      dimTag.innerHTML = '🌀 <b>' + dim.name + '</b> — <span class="dim-sec">' + Math.ceil(G.dimensionTime) + ' СЕК</span> · МНОЖИТЕЛЬ ×' + dim.scoreMul;
+    } else {
+      dimTag.classList.add('hidden');
+    }
+  }
 }
 function bumpCombo(d) {
   G.combo = Math.max(1, Math.min(9, G.combo + d));
@@ -1532,19 +2197,61 @@ function bumpCombo(d) {
 function update(dt) {
   const lv = G.level;
   const dp = diff01();
-  const want = G.baseSpeed + (lv * .5 + dp * 3.2) * (G.rampMul || 1);
+  const want = (G.baseSpeed + (G.carSpeedBonus || 0)) + (lv * .75 + dp * 4.8) * (G.rampMul || 1);
   const brake = (keys['s'] || keys['arrowdown']) ? .58 : 1;
   let target = want * brake;
-  if (G.nitroT > 0) { G.nitroT -= dt; target *= 1.75; }
+  if (G.inDimension && DIMENSIONS[G.dimensionIdx]) target *= (DIMENSIONS[G.dimensionIdx].speedBoost || 1.3);
+  if (G.nitroT > 0) { G.nitroT -= dt; target *= 2.15; }
   if (G.boostOn && G.energon > 0) {
-    target *= 1.45;
-    G.boost = Math.min(1, G.boost + dt * 2.4);
-    G.energon = Math.max(0, G.energon - dt * 15 * (G.drainMul || 1) / (G.boostRate || 1));
-  } else G.boost = Math.max(0, G.boost - dt * 1.9);
+    target *= 1.65;
+    G.boost = Math.min(1, G.boost + dt * 2.8);
+    G.energon = Math.max(0, G.energon - dt * 14 * (G.drainMul || 1) * (G.nitroDrainBonus || 1) / (G.boostRate || 1));
+  } else G.boost = Math.max(0, G.boost - dt * 2.0);
   G.maxSpeed = Math.max(G.maxSpeed, target);
-  G.speed += (target - G.speed) * Math.min(1, dt * 3.2);
+  G.speed += (target - G.speed) * Math.min(1, dt * 4.2 * (G.carAccelMul || 1));
   G.dist += G.speed * dt;
-  G.score += G.speed * dt * 1.1 * G.combo * (G.scoreMul || 1);
+  const dimScoreMul = (G.inDimension && DIMENSIONS[G.dimensionIdx]) ? DIMENSIONS[G.dimensionIdx].scoreMul : 1;
+  G.score += G.speed * dt * 1.15 * G.combo * (G.scoreMul || 1) * dimScoreMul;
+
+  // 500m Checkpoint arch
+  if (!G.inDimension && G.dist >= G.nextCheckpointAt && !G.checkpointSpawned) {
+    G.checkpointSpawned = true;
+    const arch = allocObj('checkpoint', 0, 72);
+    G.objs.push(arch);
+    const nextIdx = (G.trackIdx + 1) % BIOMES.length;
+    const nextBm = BIOMES[nextIdx];
+    toast('🏁 КОНТРОЛЬНАЯ ТОЧКА: 500 М ДО «' + nextBm.name + '»', 3500);
+    Sound.chord([523, 659, 784], .3, .16);
+  }
+
+  // 3-Lane Portal System
+  if (!G.inDimension && G.dist >= G.nextPortalAt && !G.portalSpawned) {
+    G.portalSpawned = true;
+    const activeLane = Math.floor(Math.random() * 3);
+    const targetDim = Math.floor(Math.random() * DIMENSIONS.length);
+    for (let l = 0; l < 3; l++) {
+      if (l === activeLane) {
+        const p = allocObj('portal_active', LANES[l], 72);
+        p.targetDim = targetDim;
+        p.activeLane = activeLane;
+        G.objs.push(p);
+      } else {
+        const p = allocObj('portal_open', LANES[l], 72);
+        G.objs.push(p);
+      }
+    }
+    const laneTitle = activeLane === 0 ? 'ЛЕВАЯ' : (activeLane === 1 ? 'ЦЕНТРАЛЬНАЯ' : 'ПРАВАЯ');
+    toast('🌀 ПОРТАЛ В «' + DIMENSIONS[targetDim].name + '» · Полоса: ' + laneTitle, 3500);
+    Sound.chord([580, 870, 1160], .4, .2);
+  }
+
+  // 45s Dimension Timer
+  if (G.inDimension) {
+    if (!G.paused) {
+      G.dimensionTime = Math.max(0, G.dimensionTime - dt);
+      if (G.dimensionTime <= 0) exitDimension();
+    }
+  }
 
   /* --- YO'L ALMASHINUVI: checkpointdan alohida, reja bo'yicha --- */
   G.trackT += dt;
@@ -1568,14 +2275,15 @@ function update(dt) {
 
   // yon surilish
   const laneTarget = LANES[G.lane];
-  G.laneX += (laneTarget - G.laneX) * Math.min(1, dt * (8 + G.brakePow * 4));
+  const hMul = G.carHandlingMul || 1;
+  G.laneX += (laneTarget - G.laneX) * Math.min(1, dt * ((8 + G.brakePow * 4) * hMul));
   G.x = G.laneX;
   G.tilt += ((laneTarget - G.laneX) * .14 - G.tilt) * Math.min(1, dt * 9);
   G.yaw = G.tilt * .45;
 
   // sakrash
   if (!G.onGround || G.y > 0) {
-    G.vy -= 15.5 * dt;
+    G.vy -= 18.0 * dt;
     G.y += G.vy * dt;
     if (G.y <= 0) { G.y = 0; G.vy = 0; G.onGround = true; burst(G.x, .1, 0, 5, car().acc, .5); }
   }
@@ -1606,7 +2314,8 @@ function update(dt) {
     o.rot += dt * OBJ[o.kind].spin;
     if (G.magnet > 0 && GOOD[o.kind]) {
       const ddx = G.x - o.x, dd = Math.hypot(ddx, o.z);
-      if (dd < 12 && o.z > 0) { o.x += ddx * dt * 5.5; o.z -= dt * 7; }
+      const magRad = 12 + (G.magnetRadiusBonus || 0);
+      if (dd < magRad && o.z > 0) { o.x += ddx * dt * 5.5; o.z -= dt * 7; }
     }
   }
   let far = 0;
@@ -1638,10 +2347,41 @@ function update(dt) {
       }
     }
 
+    if (o.kind === 'checkpoint' && !o.taken && o.z < 1.0 && o.z > -1.2) {
+      o.taken = true;
+      G.checkpointSpawned = false;
+      G.nextCheckpointAt = G.dist + 1500;
+      nextTrack(true);
+      G.speed += 4.5;
+      G.flash = 0.85;
+      addFloatingText(0, 2.5, 0, '⚡ ПЕРЕХОД БИОМА!', '#00e5ff');
+      continue;
+    }
+    if (o.kind === 'portal_active' && !o.taken && o.z < 1.0 && o.z > -1.2) {
+      o.taken = true;
+      G.portalSpawned = false;
+      G.nextPortalAt = G.dist + 750;
+      if (Math.abs(o.x - G.x) < 1.1) {
+        enterDimension(o.targetDim);
+      } else {
+        addFloatingText(G.x, 1.8, 0, 'ПОРТАЛ ПРОПУЩЕН', '#94a3b8');
+      }
+      continue;
+    }
+    if (o.kind === 'portal_open' && !o.taken && o.z < 1.0 && o.z > -1.2) {
+      o.taken = true;
+      G.portalSpawned = false;
+      G.nextPortalAt = G.dist + 750;
+      if (Math.abs(o.x - G.x) < 1.1) {
+        addFloatingText(G.x, 1.8, 0, '🛣 ПРЯМОЙ ПУТЬ', '#94a3b8');
+      }
+      continue;
+    }
+
     if (o.z > 1.15 || o.z < -1.5) continue;
 
     if (HAZARD[o.kind]) {
-      const canJump = JUMPABLE[o.kind] && G.y > (o.kind === 'bar' ? .95 : .8);
+      const canJump = JUMPABLE[o.kind] && G.y > (o.kind === 'bar' ? 0.22 : 0.18);
       if (dx < m.hit) {
         if (canJump) {
           if (!o.jumpedOver) {
@@ -1841,7 +2581,7 @@ function drawSilhouette(bm, horizon, bpar) {
         ctx.stroke();
       }
       ctx.restore();
-    } else if (type === 'mesa') {
+    } else if (type === 'ice' || type === 'mesa') {
       ctx.beginPath();
       ctx.moveTo(x, y); ctx.lineTo(x + w * .22, y - h); ctx.lineTo(x + w * .78, y - h); ctx.lineTo(x + w, y);
       ctx.closePath(); ctx.fill(); ctx.stroke();
@@ -1866,7 +2606,7 @@ function drawSilhouette(bm, horizon, bpar) {
       ctx.strokeStyle = rgba(bm.sun0 || bm.neon, .5);
       ctx.beginPath(); ctx.moveTo(px + pw * .5, y - ph); ctx.lineTo(px + pw * .68, y); ctx.stroke();
       ctx.strokeStyle = rgba(bm.neon, .38);
-    } else if (type === 'volcano') {
+    } else if (type === 'lava' || type === 'volcano') {
       ctx.beginPath();
       ctx.moveTo(x, y); ctx.lineTo(x + w * .3, y - h * .8); ctx.lineTo(x + w * .7, y - h * .8); ctx.lineTo(x + w, y);
       ctx.closePath(); ctx.fill(); ctx.stroke();
@@ -1891,6 +2631,90 @@ function drawSilhouette(bm, horizon, bpar) {
       ctx.lineTo(x + w * .08, baseY - h * .4); ctx.lineTo(x - w * .08, baseY - h * .4);
       ctx.stroke();
       ctx.strokeStyle = rgba(bm.neon, .38);
+    } else if (type === 'nebula') {
+      // Kosmik antennalar va suzuvchi orbital zond
+      const cx0 = x + w * .5;
+      ctx.beginPath();
+      ctx.moveTo(cx0, y); ctx.lineTo(cx0, y - h * 1.2); ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx0, y - h * 1.2, w * .35, Math.PI * .8, Math.PI * 1.8);
+      ctx.stroke();
+      ctx.fillStyle = bm.neon; ctx.globalAlpha = .75;
+      ctx.beginPath(); ctx.arc(cx0, y - h * 1.35, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1; ctx.fillStyle = sil;
+    } else if (type === 'aurora') {
+      // Qutb kiber archasi
+      const cx0 = x + w * .5;
+      ctx.beginPath();
+      ctx.moveTo(cx0, y - h * 1.3); ctx.lineTo(cx0 + w * .4, y); ctx.lineTo(cx0 - w * .4, y);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = rgba(bm.neon, .6);
+      for (let l = 1; l < 4; l++) {
+        const ly = y - h * (1.3 - l * .35);
+        ctx.beginPath(); ctx.moveTo(cx0 - w * .15 * l, ly); ctx.lineTo(cx0 + w * .15 * l, ly); ctx.stroke();
+      }
+      ctx.strokeStyle = rgba(bm.neon, .38);
+    } else if (type === 'sakura') {
+      // Tokio kiber-sakura daraxti
+      const cx0 = x + w * .5;
+      ctx.fillRect(cx0 - 3, y - h * .8, 6, h * .8);
+      ctx.fillStyle = bm.curbc || bm.neon; ctx.globalAlpha = .8;
+      ctx.beginPath(); ctx.arc(cx0 - w * .2, y - h * .85, w * .32, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx0 + w * .2, y - h * .92, w * .35, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx0, y - h * 1.15, w * .38, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1; ctx.fillStyle = sil;
+    } else if (type === 'synth') {
+      // Retro synthwave neon pilon va kiber minoralar
+      ctx.fillRect(x + w * .2, y - h * 1.1, w * .6, h * 1.1);
+      ctx.strokeRect(x + w * .2, y - h * 1.1, w * .6, h * 1.1);
+      ctx.strokeStyle = rgba(bm.sun1 || bm.neon, .65);
+      for (let r = 1; r < 6; r++) {
+        const ry = y - h * 1.1 * (r / 6);
+        ctx.beginPath(); ctx.moveTo(x + w * .2, ry); ctx.lineTo(x + w * .8, ry); ctx.stroke();
+      }
+      ctx.strokeStyle = rgba(bm.neon, .38);
+    } else if (type === 'acid') {
+      // Zaharli reaktor ustuni
+      ctx.fillRect(x + w * .25, y - h * .9, w * .5, h * .9);
+      ctx.strokeRect(x + w * .25, y - h * .9, w * .5, h * .9);
+      ctx.fillStyle = bm.neon; ctx.globalAlpha = .7;
+      ctx.beginPath(); ctx.arc(x + w * .5, y - h * 1.05, w * .2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + w * .5, y - h * 1.25, w * .12, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1; ctx.fillStyle = sil;
+    } else if (type === 'pillar') {
+      // Oltin kiber kolonnalar va obelisk
+      const pw = w * .45, px = x + w * .5 - pw / 2;
+      ctx.fillRect(px, y - h * 1.25, pw, h * 1.25);
+      ctx.strokeRect(px, y - h * 1.25, pw, h * 1.25);
+      ctx.beginPath();
+      ctx.moveTo(px - w * .1, y - h * 1.25); ctx.lineTo(px + pw + w * .1, y - h * 1.25);
+      ctx.lineTo(px + pw * .5, y - h * 1.45); ctx.closePath();
+      ctx.fill(); ctx.stroke();
+    } else if (type === 'lightning') {
+      // Chaqmoq elektr minorasi
+      const cx0 = x + w * .5;
+      ctx.beginPath();
+      ctx.moveTo(cx0 - w * .25, y); ctx.lineTo(cx0, y - h * 1.3); ctx.lineTo(cx0 + w * .25, y);
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff'; ctx.shadowColor = bm.neon; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(cx0, y - h * 1.35, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0; ctx.fillStyle = sil;
+        } else if (type === 'bio') {
+      const cx0 = x + w * .5;
+      ctx.fillRect(cx0 - 3, y - h * .85, 6, h * .85);
+      ctx.fillStyle = bm.neon || '#10b981'; ctx.globalAlpha = .75;
+      ctx.beginPath(); ctx.arc(cx0, y - h * .95, w * .35, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = bm.curbc || '#6ee7b7'; ctx.globalAlpha = .65;
+      ctx.beginPath(); ctx.arc(cx0, y - h * 1.15, w * .22, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1; ctx.fillStyle = sil;
+    } else if (type === 'cosmic' || type === 'chrono') {
+      // Fazoviy gravitatsion portal halqalari
+      const cx0 = x + w * .5, cy0 = y - h * .75;
+      ctx.strokeStyle = rgba(bm.neon, .7); ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.ellipse(cx0, cy0, w * .45, h * .6, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = rgba(bm.curbc || '#ff0055', .8);
+      ctx.beginPath(); ctx.ellipse(cx0, cy0, w * .25, h * .35, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.lineWidth = .9; ctx.strokeStyle = rgba(bm.neon, .38);
     } else {
       ctx.fillRect(x + w * .4, y - h * .7, w * .2, h * .7);
     }
@@ -1991,80 +2815,161 @@ function drawTrackTransition() {
   const t = G.trans;
   if (t == null || t < 0 || t >= TRANS_DUR) return;
   const bm = trackBiome();
-  const inK = _ease(t / .3), outK = _ease((TRANS_DUR - t) / .55);
+  const inK = _ease(t / .35), outK = _ease((TRANS_DUR - t) / .6);
   const hold = Math.min(inK, outK);
   ctx.save();
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
 
-  // 1) Diagonal siyish chiziqlari (yangi yoʼl rangida, chapdan oʼngga)
-  const sweep = _ease(t / .85);
-  const bands = 7;
-  ctx.globalAlpha = .42 * Math.max(0, 1 - t / .95);
+  // 1) Hyper Warp Speedlines — Giper-fazoga sakrash nurlari
+  const warpProg = t / TRANS_DUR;
+  const numRays = 44;
+  ctx.save();
+  ctx.translate(cx, cy);
+  for (let i = 0; i < numRays; i++) {
+    const angle = (i / numRays) * Math.PI * 2 + Math.sin(i * 11) * 0.1;
+    const speedPhase = ((warpProg * 2.8 + i * 0.23) % 1);
+    const r1 = Math.pow(speedPhase, 2.2) * Math.max(W, H) * 0.8;
+    const r2 = r1 + (15 + speedPhase * 120);
+    const cos = Math.cos(angle), sin = Math.sin(angle);
+    ctx.strokeStyle = i % 2 === 0 ? bm.neon : (bm.curbc || '#ffffff');
+    ctx.globalAlpha = Math.sin(speedPhase * Math.PI) * 0.75 * hold;
+    ctx.lineWidth = Math.max(1.2, (1 + speedPhase * 3.5));
+    ctx.beginPath();
+    ctx.moveTo(cos * r1, sin * r1);
+    ctx.lineTo(cos * r2, sin * r2);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // 2) Radial Quantum Shockwave — Ekranni qamrab oluvchi neon to'lqin halqalari
+  for (let w = 0; w < 3; w++) {
+    const swProg = Math.max(0, Math.min(1, (t - w * 0.22) / 1.3));
+    if (swProg > 0 && swProg < 1) {
+      const ringR = Math.pow(swProg, 0.8) * Math.max(W, H) * 0.95;
+      const ringAlpha = Math.sin(swProg * Math.PI) * 0.55 * hold;
+      ctx.strokeStyle = w === 1 ? (bm.curbc || '#fff') : bm.neon;
+      ctx.lineWidth = Math.max(2, (1 - swProg) * 16);
+      ctx.globalAlpha = ringAlpha;
+      ctx.beginPath();
+      ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  // 3) Ekranning 4 cheti bo'ylab Chromatic Pulse Vignette
+  ctx.globalAlpha = 0.55 * hold;
+  const edgeGlow = ctx.createRadialGradient(cx, cy, Math.min(W, H) * 0.35, cx, cy, Math.max(W, H) * 0.75);
+  edgeGlow.addColorStop(0, 'rgba(0,0,0,0)');
+  edgeGlow.addColorStop(0.7, rgba(bm.neon, 0.18 * hold));
+  edgeGlow.addColorStop(1, rgba(bm.curbc || bm.neon, 0.55 * hold));
+  ctx.fillStyle = edgeGlow;
+  ctx.fillRect(0, 0, W, H);
+
+  // 4) Diagonal kiber-nur chiziqlari (zamonaviy neon sweep)
+  const sweep = _ease(Math.min(1, t / 0.9));
+  const bands = 9;
   ctx.fillStyle = bm.neon;
   for (let i = 0; i < bands; i++) {
     const ph = i / bands;
-    const x = (-.45 + sweep * 1.85 - ph * .3) * W;
-    const bw = W * (.11 - ph * .012);
+    const x = (-0.5 + sweep * 2.0 - ph * 0.35) * W;
+    const bw = W * (0.09 - ph * 0.008);
+    ctx.globalAlpha = 0.28 * Math.max(0, 1 - t / 1.2) * (1 - ph * 0.5);
     ctx.beginPath();
-    ctx.moveTo(x, 0); ctx.lineTo(x + bw, 0); ctx.lineTo(x + bw - H * .42, H); ctx.lineTo(x - H * .42, H);
+    ctx.moveTo(x, 0); ctx.lineTo(x + bw, 0); ctx.lineTo(x + bw - H * 0.45, H); ctx.lineTo(x - H * 0.45, H);
     ctx.closePath(); ctx.fill();
   }
 
-  // 2) Yuqori/past karinchalar (gorizontal zaryad)
-  const barY = [H * .5 - (1 - hold) * H * .6, H * .5 + (1 - hold) * H * .6];
-  ctx.globalAlpha = .85 * hold;
-  ctx.fillStyle = rgba(bm.curbc || bm.neon, .85);
-  ctx.fillRect(0, barY[0] - H * .004, W, H * .008);
-  ctx.fillRect(0, barY[1] - H * .004, W, H * .008);
-
-  // 3) Yumshoq vinyetka — banner o'qilishi uchun
-  ctx.globalAlpha = 1;
-  const vg = ctx.createLinearGradient(0, H * .12, 0, H * .58);
-  vg.addColorStop(0, 'rgba(2,3,12,' + (0.72 * hold).toFixed(3) + ')');
-  vg.addColorStop(1, 'rgba(2,3,12,0)');
-  ctx.fillStyle = vg; ctx.fillRect(0, H * .12, W, H * .46);
-
-  // 4) Banner
-  const fs = Math.max(16, Math.min(W * .085, H * .085));
-  const sm = Math.max(10, fs * .40);
+  // 5) 3D Holographic Cyberpunk Banner
+  const fs = Math.max(18, Math.min(W * 0.088, H * 0.088));
+  const sm = Math.max(11, fs * 0.42);
   const name = bm.name;
-  const lab = '🛣  НОВАЯ ТРАССА';
+  const lab = '⚡  НОВЫЙ БИОМ ОБНАРУЖЕН  ⚡';
   const stars = '★'.repeat(bm.diff) + '☆'.repeat(Math.max(0, 4 - bm.diff));
-  const sub = BAND_NAME[bm.band] + ' · ' + stars;
+  const sub = BAND_NAME[bm.band] + ' СЕКТОР  ·  ' + stars;
+
   ctx.font = '900 ' + fs + 'px system-ui, "Segoe UI", Arial';
-  if ('letterSpacing' in ctx) ctx.letterSpacing = Math.round(fs * .06) + 'px';
+  if ('letterSpacing' in ctx) ctx.letterSpacing = Math.round(fs * 0.07) + 'px';
   const wMain = ctx.measureText(name).width;
   ctx.font = '900 ' + sm + 'px system-ui, "Segoe UI", Arial';
   const wSub = Math.max(ctx.measureText(sub).width, ctx.measureText(lab).width);
-  const pw = Math.min(W * .94, Math.max(wMain, wSub) + fs * 2.1);
-  const ph2 = fs * 2.5;
-  const slide = (1 - _ease(t / .42)) * W * .16;
-  const px = cx + slide, py = H * (H > W ? .30 : .27);
+  const pw = Math.min(W * 0.94, Math.max(wMain, wSub) + fs * 2.6);
+  const ph2 = fs * 2.8;
+
+  // Masshtab elastik tushishi (scale punch)
+  const scalePunch = 1 + Math.max(0, 0.4 * (1 - _ease(Math.min(1, t / 0.4))));
+  const px = cx, py = H * (H > W ? 0.30 : 0.26);
+
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.scale(scalePunch, scalePunch);
   ctx.globalAlpha = hold;
 
-  ctx.shadowColor = rgba(bm.neon, .9); ctx.shadowBlur = fs * 1.1;
-  ctx.fillStyle = 'rgba(6,9,22,' + (.82 * hold).toFixed(3) + ')';
-  _rrect(px - pw / 2, py - ph2 / 2, pw, ph2, ph2 * .28); ctx.fill();
+  // Banner orqa foni va neon nurlanish
+  ctx.shadowColor = rgba(bm.neon, 1);
+  ctx.shadowBlur = fs * 1.5;
+  const bgGrad = ctx.createLinearGradient(-pw / 2, 0, pw / 2, 0);
+  bgGrad.addColorStop(0, 'rgba(4,7,20,0.92)');
+  bgGrad.addColorStop(0.5, 'rgba(10,16,42,0.95)');
+  bgGrad.addColorStop(1, 'rgba(4,7,20,0.92)');
+  ctx.fillStyle = bgGrad;
+  _rrect(-pw / 2, -ph2 / 2, pw, ph2, ph2 * 0.26);
+  ctx.fill();
   ctx.shadowBlur = 0;
-  ctx.strokeStyle = rgba(bm.curbc || bm.neon, .95); ctx.lineWidth = Math.max(1.4, fs * .07);
-  _rrect(px - pw / 2, py - ph2 / 2, pw, ph2, ph2 * .28); ctx.stroke();
 
+  // Gorizontal kiber skaner chiziqlari banner ichida
+  ctx.strokeStyle = rgba(bm.neon, 0.2);
+  ctx.lineWidth = 1;
+  for (let yl = -ph2 * 0.4; yl <= ph2 * 0.4; yl += ph2 * 0.2) {
+    ctx.beginPath();
+    ctx.moveTo(-pw * 0.46, yl); ctx.lineTo(pw * 0.46, yl);
+    ctx.stroke();
+  }
+
+  // Banner ramkasi
+  ctx.strokeStyle = rgba(bm.curbc || bm.neon, 0.95);
+  ctx.lineWidth = Math.max(1.6, fs * 0.075);
+  _rrect(-pw / 2, -ph2 / 2, pw, ph2, ph2 * 0.26);
+  ctx.stroke();
+
+  // Cyberpunk burchak braketlari (L-shaklli dekorativ burchaklar)
+  const brk = Math.min(pw * 0.08, 22);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
+  // Yuqori chap
+  ctx.beginPath(); ctx.moveTo(-pw / 2 + brk, -ph2 / 2); ctx.lineTo(-pw / 2, -ph2 / 2); ctx.lineTo(-pw / 2, -ph2 / 2 + brk); ctx.stroke();
+  // Yuqori o'ng
+  ctx.beginPath(); ctx.moveTo(pw / 2 - brk, -ph2 / 2); ctx.lineTo(pw / 2, -ph2 / 2); ctx.lineTo(pw / 2, -ph2 / 2 + brk); ctx.stroke();
+  // Pastki chap
+  ctx.beginPath(); ctx.moveTo(-pw / 2 + brk, ph2 / 2); ctx.lineTo(-pw / 2, ph2 / 2); ctx.lineTo(-pw / 2, ph2 / 2 - brk); ctx.stroke();
+  // Pastki o'ng
+  ctx.beginPath(); ctx.moveTo(pw / 2 - brk, ph2 / 2); ctx.lineTo(pw / 2, ph2 / 2); ctx.lineTo(pw / 2, ph2 / 2 - brk); ctx.stroke();
+
+  // Matnlar: Sarlavha
   ctx.font = '900 ' + sm + 'px system-ui, "Segoe UI", Arial';
-  ctx.fillStyle = rgba(bm.sun1 || bm.neon, 1);
-  ctx.fillText(lab, px, py - ph2 * .30);
+  ctx.fillStyle = rgba(bm.sun0 || '#ffd166', 1);
+  ctx.shadowColor = rgba(bm.sun0 || '#ffd166', 0.8); ctx.shadowBlur = 8;
+  ctx.fillText(lab, 0, -ph2 * 0.30);
+
+  // Matnlar: Asosiy Biom Nomi
   ctx.font = '900 ' + fs + 'px system-ui, "Segoe UI", Arial';
   ctx.fillStyle = '#ffffff';
-  ctx.shadowColor = rgba(bm.neon, .95); ctx.shadowBlur = fs * .6;
-  ctx.fillText(name, px, py + ph2 * .02);
+  ctx.shadowColor = rgba(bm.neon, 1); ctx.shadowBlur = fs * 0.85;
+  ctx.fillText(name, 0, ph2 * 0.03);
+
+  // Matnlar: Qiyinlik va Yulduzlar
   ctx.shadowBlur = 0;
   ctx.font = '900 ' + sm + 'px system-ui, "Segoe UI", Arial';
   ctx.fillStyle = rgba(bm.curbc || bm.neon, 1);
-  ctx.fillText(sub, px, py + ph2 * .32);
+  ctx.fillText(sub, 0, ph2 * 0.33);
 
-  // 5) Ostidagi chiziq chapdan oʼngga chiziladi
-  const lw = pw * .8 * _ease(t / .5);
-  ctx.fillStyle = rgba(bm.neon, .9);
-  ctx.fillRect(px - pw * .4, py + ph2 * .5, lw, Math.max(2, fs * .07));
+  // Pastki yuklanish / energiya zaryadi chizig'i
+  const chargeW = pw * 0.86 * _ease(Math.min(1, t / 0.65));
+  ctx.fillStyle = rgba(bm.neon, 0.95);
+  ctx.shadowColor = bm.neon; ctx.shadowBlur = 10;
+  ctx.fillRect(-pw * 0.43, ph2 * 0.48, chargeW, Math.max(2.5, fs * 0.08));
+
+  ctx.restore();
+
   if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
   ctx.restore();
 }
@@ -2826,9 +3731,161 @@ function drawPrev(cv, rotForce) {
   Object.assign(CAM, saveCam);
 }
 
-const TABS = { ships: 'Ships', perk: 'Perk', skins: 'Skins', acct: 'Acct', stat: 'Stat', set: 'Set' };
+
+/* --------------------------- ИНДИВИДУАЛЬНЫЙ ТЮНИНГ И СТАТИСТИКА --------------------------- */
+function renderCarUpgrades(car) {
+  const c = car || CARS[showcaseCarId] || CARS[0];
+  const list = $('#carUpgradesList');
+  if (!list) return;
+
+  const title = $('#upgCarTitle');
+  if (title) title.textContent = 'ТЮНИНГ: ' + c.name.toUpperCase();
+  const rar = $('#upgCarRarity');
+  if (rar) {
+    const rNames = { common: 'ОБЫЧНАЯ', rare: 'РЕДКАЯ', epic: 'ЭПИЧЕСКАЯ', legendary: 'ЛЕГЕНДАРНАЯ' };
+    rar.textContent = rNames[c.rarity] || 'СПОРТКАР';
+    rar.className = 'inventory-count rarity-' + (c.rarity || 'common');
+  }
+  const nameEl = $('#upgCarName');
+  if (nameEl) nameEl.textContent = c.name;
+  const descEl = $('#upgCarDesc');
+  if (descEl) descEl.textContent = c.tag || 'Спортивный болид с уникальной аэродинамикой.';
+
+  const cv = document.getElementById('cvUpgCar');
+  if (cv) drawCarShowcase(cv, c, showcaseRot, 0.85, 2.1);
+
+  const owned = ownedOf(c);
+  const upg = CAR_UPG.get(c.id);
+
+  list.innerHTML = UPG_KEYS.map(key => {
+    const def = UPG_DEFS[key];
+    const lvl = (upg && upg[key] | 0) || 0;
+    const isMax = lvl >= 5;
+    const cost = CAR_UPG.cost(c, key, lvl);
+    const ptCost = CAR_UPG.ptCost(c, key, lvl);
+    const curVal = def.val(c, lvl);
+    const nextVal = isMax ? curVal : def.val(c, lvl + 1);
+
+    let pips = '<div class="upg-pips">';
+    for (let i = 0; i < 5; i++) {
+      pips += '<span class="pip' + (i < lvl ? ' active' : '') + '"></span>';
+    }
+    pips += '</div>';
+
+    let actionButtons = '';
+    if (isMax) {
+      actionButtons = '<div class="upg-max-badge">✓ МАКСИМАЛЬНЫЙ УРОВЕНЬ</div>';
+    } else if (!owned) {
+      actionButtons = '<div class="upg-locked-badge">🔒 Сначала откройте машину в гараже</div>';
+    } else {
+      const canCoin = G.coins >= cost;
+      const canPts = ACCT.pts >= ptCost;
+      actionButtons = '<div class="upg-actions">' +
+        '<button class="btn sm upg-btn upg-coin' + (canCoin ? '' : ' ghost') + '" data-upg-key="' + key + '" data-use-pts="false" type="button">🪙 ' + num(cost) + '</button>' +
+        '<button class="btn sm pink upg-btn upg-pts' + (canPts ? '' : ' ghost') + '" data-upg-key="' + key + '" data-use-pts="true" type="button">⭐ ' + num(ptCost) + '</button>' +
+        '</div>';
+    }
+
+    return '<div class="upg-card' + (isMax ? ' maxed' : '') + '" data-key="' + key + '">' +
+      '<div class="upg-card-header">' +
+        '<span class="upg-icon">' + def.ic + '</span>' +
+        '<div class="upg-title-box">' +
+          '<b>' + def.name + '</b>' +
+          '<small>' + def.desc + '</small>' +
+        '</div>' +
+        '<span class="upg-lvl-text">УР. ' + lvl + ' / 5</span>' +
+      '</div>' +
+      pips +
+      '<div class="upg-stat-row">' +
+        '<span class="upg-stat-cur">' + curVal + ' ' + def.unit + '</span>' +
+        (!isMax ? '<span class="upg-arrow">→</span><span class="upg-stat-next">' + nextVal + ' ' + def.unit + '</span>' : '') +
+        '<span class="upg-effect-tag">' + (isMax ? 'МАКСИМУМ' : def.effect) + '</span>' +
+      '</div>' +
+      actionButtons +
+    '</div>';
+  }).join('');
+}
+
+function renderFullStatistics() {
+  const statBox = $('#statList');
+  if (!statBox) return;
+
+  const totalDist = (G.meta.totalDist || 0) + (G.dist || 0);
+  const totalTime = (G.meta.totalTime || 0) + (G.t || 0);
+  const totalCoins = (G.meta.totalCoins || 0) + (G.runCoins || 0);
+  const plays = G.meta.plays || G.meta.runs || 0;
+  const bestScore = G.meta.best || 0;
+  const farthest = G.meta.farthest || 0;
+  const portals = G.meta.portalsEntered || 0;
+  const dims = G.meta.dimensionsCleared || 0;
+  const totalUpgrades = G.meta.totalUpgrades || 0;
+
+  const unlockedCars = CARS.filter(ownedOf).length;
+  const totalCars = CARS.length;
+  const collPct = Math.round(unlockedCars / totalCars * 100);
+  const timeFormatted = Math.floor(totalTime / 60) + ' мин ' + Math.floor(totalTime % 60) + ' сек';
+
+  let h = '<div class="stat-overview-grid">' +
+    '<div class="stat-hero-card">' +
+      '<small>УРОВЕНЬ АККАУНТА</small>' +
+      '<b>УР. ' + ACCT.lvl + ' / ' + ACCT.maxLvl + '</b>' +
+      '<div class="stat-progress-bar"><div class="fill" style="width:' + Math.min(100, ACCT.pts / ACCT.cost(ACCT.lvl) * 100) + '%"></div></div>' +
+      '<span>⭐ ' + num(ACCT.pts) + ' / ' + num(ACCT.cost(ACCT.lvl)) + ' очков</span>' +
+    '</div>' +
+    '<div class="stat-hero-card">' +
+      '<small>ЛУЧШИЙ РЕКОРД</small>' +
+      '<b>' + num(bestScore) + '</b>' +
+      '<span>Макс. дистанция: ' + km(farthest) + '</span>' +
+    '</div>' +
+    '<div class="stat-hero-card">' +
+      '<small>КОЛЛЕКЦИЯ МАШИН</small>' +
+      '<b>' + unlockedCars + ' / ' + totalCars + '</b>' +
+      '<div class="stat-progress-bar"><div class="fill" style="width:' + collPct + '%"></div></div>' +
+      '<span>Открыто ' + collPct + '% автопарка</span>' +
+    '</div>' +
+  '</div>';
+
+  h += '<div class="stat-metrics-grid">' +
+    '<div class="stat-metric-tile"><small>ВСЕГО ЗАЕЗДОВ</small><b>' + num(plays) + '</b></div>' +
+    '<div class="stat-metric-tile"><small>ОБЩАЯ ДИСТАНЦИЯ</small><b>' + km(totalDist) + '</b></div>' +
+    '<div class="stat-metric-tile"><small>ВРЕМЯ В ИГРЕ</small><b>' + timeFormatted + '</b></div>' +
+    '<div class="stat-metric-tile"><small>ВСЕГО МОНЕТ</small><b>🪙 ' + num(totalCoins) + '</b></div>' +
+    '<div class="stat-metric-tile"><small>ТЕКУЩИЙ БАЛАНС</small><b>🪙 ' + num(G.coins) + '</b></div>' +
+    '<div class="stat-metric-tile"><small>ПОРТАЛОВ ПРОЙДЕНО</small><b>🌀 ' + num(portals) + '</b></div>' +
+    '<div class="stat-metric-tile"><small>ИЗМЕРЕНИЙ ЗАВЕРШЕНО</small><b>✨ ' + num(dims) + '</b></div>' +
+    '<div class="stat-metric-tile"><small>КУПЛЕНО УЛУЧШЕНИЙ</small><b>⚡ ' + num(totalUpgrades) + '</b></div>' +
+  '</div>';
+
+  h += '<div class="stat-collection-section">' +
+    '<h4 class="stat-sec-title">КОЛЛЕКЦИЯ СПОРТКАРОВ (30 МОДЕЛЕЙ)</h4>' +
+    '<div class="stat-car-grid">';
+
+  for (const c of CARS) {
+    const owned = ownedOf(c);
+    const sel = G.car === c.id;
+    const upg = CAR_UPG.get(c.id);
+    let totalLvl = 0;
+    UPG_KEYS.forEach(k => { totalLvl += (upg && upg[k] | 0) || 0; });
+
+    h += '<div class="stat-car-card' + (sel ? ' selected' : '') + (owned ? ' owned' : ' locked') + '">' +
+      '<div class="stat-car-head">' +
+        '<b>' + c.name + '</b>' +
+        '<span class="stat-car-badge">' + (sel ? 'ВЫБРАНА' : owned ? 'ОТКРЫТА' : '🔒 УР. ' + c.lvl) + '</span>' +
+      '</div>' +
+      '<div class="stat-car-body">' +
+        '<span>Редкость: ' + (c.rarity === 'legendary' ? 'Легендарная' : c.rarity === 'epic' ? 'Эпическая' : c.rarity === 'rare' ? 'Редкая' : 'Обычная') + '</span>' +
+        '<span>Тюнинг: <b>' + totalLvl + ' / 30</b> ур.</span>' +
+      '</div>' +
+    '</div>';
+  }
+  h += '</div></div>';
+
+  statBox.innerHTML = h;
+}
+
+const TABS = { ships: 'Ships', carUpgrades: 'CarUpgrades', perk: 'Perk', skins: 'Skins', acct: 'Acct', stat: 'Stat', set: 'Set' };
 function activateTab(name, selectedFilter) {
-  const filterName = selectedFilter || (name === 'perk' ? 'upgrades' : name);
+  const filterName = selectedFilter || (name === 'perk' ? 'upgrades' : (name === 'carUpgrades' ? 'carUpgrades' : name));
   document.querySelectorAll('.garage-filters .tab').forEach(x => {
     const active = x.dataset.tab === filterName;
     x.classList.toggle('on', active);
@@ -2840,9 +3897,16 @@ function activateTab(name, selectedFilter) {
     if (selectedFilter) garageDetailOpen = false;
     renderShips();
   }
+  if (name === 'carUpgrades') {
+    const c = CARS[showcaseCarId] || CARS[0];
+    renderCarUpgrades(c);
+  }
   if (name === 'perk' || name === 'acct') renderAcct();
   if (name === 'skins') renderSkinGallery();
-  if (name === 'stat') menuStats();
+  if (name === 'stat') {
+    menuStats();
+    renderFullStatistics();
+  }
 }
 function setMenuView(view) {
   menuView = view;
@@ -2870,6 +3934,7 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
   const tab = t.dataset.tab;
   if (tab === 'all' || tab === 'ships') activateTab('ships', tab);
   else if (tab === 'upgrades') activateTab('perk');
+  else if (tab === 'carUpgrades') activateTab('carUpgrades');
   else activateTab(tab);
 }));
 $('#btnOpenGarage').addEventListener('click', () => {
@@ -3055,3 +4120,47 @@ window.NY3D = {
   buildBackdrop, drawBackdrop, drawSilhouette,
   drawPrev, bankCoins, statHTML, toast, burst, bumpCombo, setHint, nextLesson, lessonEvent, lessonTick
 };
+
+
+let upgDebounce = false;
+const upgListEl = document.getElementById('carUpgradesList');
+if (upgListEl) {
+  upgListEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.upg-btn');
+    if (!btn || upgDebounce) return;
+    upgDebounce = true;
+    setTimeout(() => { upgDebounce = false; }, 260);
+
+    const key = btn.dataset.upgKey;
+    const usePts = btn.dataset.usePts === 'true';
+    const c = CARS[showcaseCarId] || CARS[0];
+
+    const ok = CAR_UPG.upgrade(c, key, usePts);
+    if (ok) {
+      renderCarUpgrades(c);
+      menuStats();
+      updateShowcase();
+    }
+  });
+}
+
+const btnBackToCars = document.getElementById('btnBackToCars');
+if (btnBackToCars) {
+  btnBackToCars.addEventListener('click', () => {
+    activateTab('ships');
+  });
+}
+
+const btnGoUpg = document.getElementById('btnGoCarUpgrades');
+if (btnGoUpg) {
+  btnGoUpg.addEventListener('click', () => {
+    activateTab('carUpgrades');
+  });
+}
+
+// Close dropdown on Escape key
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    setMenuDropdown(false);
+  }
+});

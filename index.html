@@ -72,9 +72,14 @@ canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 .stat.lvstat b::before{content:'УР. ';font-size:.5em;letter-spacing:.12em;color:#7fe9ff;opacity:.8;vertical-align:top;margin-right:2px}
 .stat.speedo{
   text-align:center;
-  border-color:rgba(255,209,102,.45);
-  box-shadow:0 6px 20px rgba(0,0,0,.4), 0 0 14px rgba(255,209,102,.2);
+  border-color:rgba(255,209,102,.55);
+  box-shadow:0 6px 20px rgba(0,0,0,.4), 0 0 16px rgba(255,209,102,.25);
   min-width:clamp(82px, 13vw, 110px);
+  animation:speedoPulseGlow 3s ease-in-out infinite alternate;
+}
+@keyframes speedoPulseGlow{
+  0%{box-shadow:0 6px 20px rgba(0,0,0,.4), 0 0 14px rgba(255,209,102,.2)}
+  100%{box-shadow:0 6px 24px rgba(0,0,0,.5), 0 0 24px rgba(255,209,102,.55)}
 }
 .stat.speedo small{color:#ffe48f}
 .stat.speedo b{color:#fff7d6;text-shadow:0 0 16px rgba(255,209,102,.65)}
@@ -167,6 +172,11 @@ body.touch #legend{bottom:calc(env(safe-area-inset-bottom,0px) + 96px);max-width
   backdrop-filter:blur(16px);pointer-events:auto;text-align:center;z-index:5;
   overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;
   touch-action:pan-y;
+  animation:screenEnter .28s cubic-bezier(.16,1,.3,1);
+}
+@keyframes screenEnter{
+  from{opacity:0;transform:scale(.97);filter:blur(4px)}
+  to{opacity:1;transform:scale(1);filter:blur(0)}
 }
 /* Center short screens while keeping long content scrollable. */
 .screen>.first-auto{margin-top:auto}
@@ -184,25 +194,51 @@ body.touch #legend{bottom:calc(env(safe-area-inset-bottom,0px) + 96px);max-width
 
 h1.logo{font-size:clamp(30px,8vw,74px);line-height:.95;letter-spacing:-.02em;font-weight:900;
   background:linear-gradient(180deg,#fff,#00e5ff 58%,#ff2fb9);-webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 0 24px rgba(0,229,255,.32))}
-h1.logo span{display:block;font-size:.34em;letter-spacing:.38em;color:#8df5ff;-webkit-text-fill-color:#8df5ff;margin-top:6px}
+  filter:drop-shadow(0 0 24px rgba(0,229,255,.32));
+  animation:neonLogoBreathe 3.8s ease-in-out infinite alternate;
+}
+@keyframes neonLogoBreathe{
+  0%{filter:drop-shadow(0 0 16px rgba(0,229,255,.32))}
+  50%{filter:drop-shadow(0 0 34px rgba(0,229,255,.65)) drop-shadow(0 0 46px rgba(255,47,185,.42))}
+  100%{filter:drop-shadow(0 0 20px rgba(0,229,255,.4))}
+}
+h1.logo span{display:block;font-size:.34em;letter-spacing:.38em;color:#8df5ff;-webkit-text-fill-color:#8df5ff;margin-top:6px;
+  animation:neonSubFlicker 5s infinite;
+}
+@keyframes neonSubFlicker{
+  0%,100%{opacity:1}
+  50%{opacity:1}51%{opacity:.6}52%{opacity:1}
+  86%{opacity:1}87%{opacity:.45}88%{opacity:1}
+}
 .sub{color:#9fdcff;font-size:clamp(13px,2.4vw,15.5px);max-width:56ch;line-height:1.6}
 
 .btn{
+  position:relative;overflow:hidden;
   pointer-events:auto;cursor:pointer;border:0;font-family:var(--f);font-weight:900;letter-spacing:.05em;
   padding:13px 28px;border-radius:14px;font-size:clamp(14.5px,2.4vw,17.5px);color:#04121a;
   background:linear-gradient(120deg,#00e5ff,#7dff9b);box-shadow:0 0 0 1px rgba(255,255,255,.25) inset,0 12px 30px rgba(0,229,255,.25);
-  transition:transform .12s,filter .2s;user-select:none;-webkit-user-select:none;
+  transition:transform .18s cubic-bezier(.16,1,.3,1),box-shadow .2s ease,filter .2s;user-select:none;-webkit-user-select:none;
 }
-.btn:hover{transform:translateY(-2px) scale(1.02);filter:brightness(1.08)}
+.btn::after{
+  content:'';position:absolute;top:-50%;left:-70%;width:45%;height:200%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.32),transparent);
+  transform:rotate(25deg);animation:btnShine 4.5s infinite ease-in-out;pointer-events:none;
+}
+@keyframes btnShine{
+  0%,65%{left:-70%}
+  100%{left:170%}
+}
+.btn:hover{transform:translateY(-3px) scale(1.03);filter:brightness(1.1);box-shadow:0 0 24px rgba(0,229,255,.6),0 16px 36px rgba(0,229,255,.35)}
 .btn:active{transform:scale(.97)}
 .btn.ghost{background:transparent;color:#c9f5ff;border:1px solid var(--line);box-shadow:none}
+.btn.ghost:hover{border-color:#00e5ff;box-shadow:0 0 20px rgba(0,229,255,.3)}
 .btn.pink{background:linear-gradient(120deg,#ff2fb9,#ffd166);color:#2a0517;box-shadow:0 12px 30px rgba(255,47,185,.25)}
+.btn.pink:hover{box-shadow:0 0 26px rgba(255,47,185,.6),0 16px 36px rgba(255,47,185,.35)}
 .btn.sm{padding:8px 16px;font-size:13px;border-radius:11px}
-.btn.pulse{animation:pulseGlow 2.8s ease-in-out infinite}
+.btn.pulse{animation:pulseGlow 2.6s ease-in-out infinite}
 @keyframes pulseGlow{
   0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,.25) inset,0 12px 30px rgba(0,229,255,.25)}
-  50%{box-shadow:0 0 0 1px rgba(255,255,255,.35) inset,0 14px 42px rgba(0,229,255,.5)}
+  50%{box-shadow:0 0 0 1px rgba(255,255,255,.35) inset,0 14px 44px rgba(0,229,255,.55),0 0 28px rgba(125,255,155,.4)}
 }
 @media(prefers-reduced-motion:reduce){.btn.pulse{animation:none}}
 .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
@@ -262,15 +298,23 @@ h1.logo span{display:block;font-size:.34em;letter-spacing:.38em;color:#8df5ff;-w
 .plates{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;width:100%}
 .plate{
   cursor:pointer;border:1px solid var(--line);border-radius:15px;padding:10px 8px;
-  min-width:0;background:rgba(10,16,36,.65);transition:all .18s ease;text-align:center;
+  min-width:0;background:rgba(10,16,36,.65);transition:all .22s cubic-bezier(.16,1,.3,1);text-align:center;
   box-shadow:0 6px 18px rgba(0,0,0,.3);overflow:hidden;
 }
-.plate:hover{transform:translateY(-3px);border-color:#00e5ff;box-shadow:0 12px 28px rgba(0,229,255,.2)}
-.plate canvas{width:100%;max-width:96px;height:66px;display:block;margin:0 auto 6px}
+.plate:hover{transform:translateY(-4px) scale(1.03);border-color:#00e5ff;box-shadow:0 12px 28px rgba(0,229,255,.3)}
+.plate canvas{width:100%;max-width:96px;height:66px;display:block;margin:0 auto 6px;transition:transform .2s ease}
+.plate:hover canvas{transform:scale(1.06)}
 .plate b{font-size:13px;display:block}
 .plate small{font-size:11px;color:#8fdcff;opacity:.85}
 .plate.locked{opacity:.55}
-.plate.on{border-color:#00e5ff;box-shadow:0 0 0 1px #00e5ff inset,0 12px 30px rgba(0,229,255,.25);background:rgba(0,229,255,.12)}
+.plate.on{
+  border-color:#00e5ff;box-shadow:0 0 0 1px #00e5ff inset,0 12px 30px rgba(0,229,255,.25);background:rgba(0,229,255,.12);
+  animation:platePulse 3.2s ease-in-out infinite;
+}
+@keyframes platePulse{
+  0%,100%{box-shadow:0 0 0 1px #00e5ff inset,0 12px 30px rgba(0,229,255,.25)}
+  50%{box-shadow:0 0 0 1px #00e5ff inset,0 14px 40px rgba(0,229,255,.48)}
+}
 
 /* --- Car color chips --- */
 .skin-selector{
@@ -296,7 +340,13 @@ h1.logo span{display:block;font-size:.34em;letter-spacing:.38em;color:#8df5ff;-w
   border:1px solid rgba(0,229,255,.25);box-shadow:0 14px 34px rgba(0,0,0,.5), inset 0 0 22px rgba(0,229,255,.05)}
 .sc-stage{position:relative;width:100%;max-width:380px;height:184px}
 .sc-stage canvas{width:100%;height:100%;display:block;border-radius:14px;cursor:ew-resize;touch-action:none;
-  background:radial-gradient(ellipse at 50% 62%,rgba(0,229,255,.18) 0%,rgba(4,6,18,.88) 72%)}
+  background:radial-gradient(ellipse at 50% 62%,rgba(0,229,255,.22) 0%,rgba(4,6,18,.9) 72%);
+  box-shadow:0 0 20px rgba(0,229,255,.2);transition:box-shadow .25s ease,transform .25s ease;
+  animation:showcasePulse 4s ease-in-out infinite alternate}
+@keyframes showcasePulse{
+  0%{box-shadow:0 0 16px rgba(0,229,255,.2)}
+  100%{box-shadow:0 0 32px rgba(0,229,255,.45),inset 0 0 20px rgba(0,229,255,.15)}
+}
 .sc-drag{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);font-size:11px;color:#7fe9ff;opacity:.8;pointer-events:none;white-space:nowrap}
 .sc-name{font-size:19px;color:#fff;display:block;letter-spacing:.02em}
 .sc-tag{font-size:12px;color:var(--c1);font-weight:700}
@@ -777,6 +827,293 @@ body.touch #touch{display:block}
   .car-card-preview{height:115px}
   .garage-filters .tab{padding:7px 10px}
 }
+
+/* --- ЖЁЛТАЯ КНОПКА «НАЧАТЬ ГОНКУ» (КАК В РЕФЕРЕНСЕ) --- */
+.hero-race{
+  right:clamp(22px,5vw,76px);
+  gap:14px;
+  min-width:245px;
+  justify-content:center;
+  padding:14px 26px;
+  border:2px solid #fff9c4 !important;
+  background:linear-gradient(135deg, #fff59d 0%, #ffca28 35%, #ffb300 70%, #ff8f00 100%) !important;
+  color:#1a0f00 !important;
+  font-weight:900 !important;
+  border-radius:16px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.5) inset, 0 12px 36px rgba(255,179,0,.5), 0 0 42px rgba(255,215,0,.4) !important;
+  text-shadow:0 1px 0 rgba(255,255,255,.45);
+  transition:transform .18s, filter .18s, box-shadow .18s;
+}
+.hero-race>span{font-size:24px !important;color:#9a3412 !important;text-shadow:none !important}
+.hero-race b{font-size:14px !important;letter-spacing:.12em !important;color:#1a0f00 !important;font-weight:900}
+.hero-race small{font-size:8.5px !important;color:#451a03 !important;letter-spacing:.09em !important;font-weight:800}
+.hero-race:hover{
+  transform:translateY(-2px) scale(1.025);
+  filter:brightness(1.08);
+  box-shadow:0 0 0 1px rgba(255,255,255,.65) inset, 0 16px 42px rgba(255,179,0,.65), 0 0 50px rgba(255,215,0,.55) !important;
+}
+
+/* --- КНОПКА ЖЁЛТАЯ В ГАРАЖЕ --- */
+.btn.yellow{
+  background:linear-gradient(135deg, #fff59d 0%, #ffca28 50%, #ff8f00 100%);
+  color:#1a0f00;
+  font-weight:800;
+  border:1px solid #ffe082;
+  box-shadow:0 4px 16px rgba(255,179,0,.35);
+}
+.btn.yellow:hover{
+  filter:brightness(1.08);
+  box-shadow:0 6px 20px rgba(255,179,0,.55);
+}
+
+/* --- DIMENSION HUD TAG --- */
+#dimHud{
+  position:absolute;
+  top:clamp(65px, 12vh, 90px);
+  left:50%;
+  transform:translateX(-50%);
+  z-index:4;
+  padding:8px 18px;
+  background:linear-gradient(135deg, rgba(30,5,55,.9), rgba(10,2,25,.95));
+  border:2px solid #e879f9;
+  border-radius:24px;
+  color:#fdf4ff;
+  font-size:clamp(12px, 1.8vw, 15px);
+  letter-spacing:.08em;
+  box-shadow:0 0 25px rgba(217,70,239,.65), inset 0 0 14px rgba(232,121,249,.3);
+  backdrop-filter:blur(10px);
+  animation:dimPulse 1.6s ease-in-out infinite alternate;
+  pointer-events:none;
+  white-space:nowrap;
+}
+@keyframes dimPulse{
+  0%{box-shadow:0 0 18px rgba(217,70,239,.5); transform:translateX(-50%) scale(1);}
+  100%{box-shadow:0 0 32px rgba(217,70,239,.9), 0 0 10px #fff; transform:translateX(-50%) scale(1.03);}
+}
+#dimHud .dim-sec{
+  color:#ffd166;
+  font-weight:900;
+  font-size:1.15em;
+  text-shadow:0 0 10px rgba(255,209,102,.7);
+}
+
+/* --- ТЮНИНГ МАШИНЫ (#tabCarUpgrades) --- */
+.car-upgrade-preview-box{
+  display:flex;
+  gap:20px;
+  align-items:center;
+  background:rgba(12,18,38,.75);
+  border:1px solid rgba(111,158,229,.25);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:18px;
+  backdrop-filter:blur(10px);
+}
+@media(max-width:680px){
+  .car-upgrade-preview-box{flex-direction:column;text-align:center}
+}
+.car-upgrade-preview-box canvas{
+  background:radial-gradient(circle at center, rgba(30,50,90,.4) 0%, rgba(6,10,22,.6) 80%);
+  border-radius:12px;
+  border:1px solid rgba(0,229,255,.2);
+  max-width:100%;
+}
+.car-upgrade-info h4{
+  font-size:18px;
+  letter-spacing:.08em;
+  color:#fff;
+  margin-bottom:6px;
+}
+.car-upgrade-info p{
+  font-size:12px;
+  color:#94a3b8;
+  line-height:1.45;
+  margin-bottom:12px;
+}
+.car-upgrades-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+  gap:14px;
+}
+.upg-card{
+  background:linear-gradient(145deg, rgba(16,24,50,.85), rgba(8,12,28,.9));
+  border:1px solid rgba(111,158,229,.25);
+  border-radius:14px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  transition:border-color .18s, box-shadow .18s;
+}
+.upg-card:hover{
+  border-color:rgba(0,229,255,.5);
+  box-shadow:0 8px 24px rgba(0,229,255,.12);
+}
+.upg-card.maxed{
+  border-color:rgba(255,209,102,.4);
+  background:linear-gradient(145deg, rgba(28,26,45,.85), rgba(12,12,25,.9));
+}
+.upg-card-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.upg-icon{
+  font-size:22px;
+  width:38px;
+  height:38px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,229,255,.1);
+  border:1px solid rgba(0,229,255,.3);
+  border-radius:10px;
+}
+.upg-title-box{flex:1}
+.upg-title-box b{display:block;font-size:13.5px;color:#f8fafc;letter-spacing:.04em}
+.upg-title-box small{display:block;font-size:10.5px;color:#94a3b8;line-height:1.3;margin-top:2px}
+.upg-lvl-text{
+  font-size:11px;
+  font-weight:800;
+  color:#00e5ff;
+  background:rgba(0,229,255,.1);
+  padding:3px 8px;
+  border-radius:8px;
+  border:1px solid rgba(0,229,255,.25);
+}
+.upg-pips{
+  display:flex;
+  gap:6px;
+  margin:4px 0;
+}
+.upg-pips .pip{
+  flex:1;
+  height:7px;
+  background:rgba(255,255,255,.12);
+  border-radius:3px;
+  transition:background .2s, box-shadow .2s;
+}
+.upg-pips .pip.active{
+  background:linear-gradient(90deg, #00e5ff, #7dff9b);
+  box-shadow:0 0 8px rgba(0,229,255,.6);
+}
+.upg-stat-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  font-weight:700;
+  padding:6px 10px;
+  background:rgba(0,0,0,.3);
+  border-radius:8px;
+}
+.upg-stat-cur{color:#94a3b8}
+.upg-arrow{color:#00e5ff}
+.upg-stat-next{color:#7dff9b}
+.upg-effect-tag{margin-left:auto;color:#ffd166;font-size:11px}
+.upg-actions{
+  display:flex;
+  gap:8px;
+  margin-top:4px;
+}
+.upg-actions .btn{flex:1;justify-content:center}
+.upg-max-badge{
+  text-align:center;
+  font-size:11.5px;
+  font-weight:800;
+  color:#ffd166;
+  background:rgba(255,209,102,.12);
+  border:1px solid rgba(255,209,102,.3);
+  border-radius:8px;
+  padding:6px;
+}
+.upg-locked-badge{
+  text-align:center;
+  font-size:11.5px;
+  font-weight:700;
+  color:#94a3b8;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;
+  padding:6px;
+}
+
+/* --- СТАТИСТИКА (#tabStat) --- */
+.stat-overview-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+  gap:12px;
+  margin-bottom:16px;
+}
+.stat-hero-card{
+  background:linear-gradient(145deg, rgba(20,32,65,.8), rgba(10,16,36,.9));
+  border:1px solid rgba(111,158,229,.3);
+  border-radius:14px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.stat-hero-card small{font-size:10px;color:#7fe9ff;letter-spacing:.12em;font-weight:800}
+.stat-hero-card b{font-size:22px;color:#fff;font-variant-numeric:tabular-nums}
+.stat-hero-card span{font-size:11px;color:#94a3b8}
+.stat-progress-bar{
+  width:100%;
+  height:7px;
+  background:rgba(255,255,255,.1);
+  border-radius:4px;
+  overflow:hidden;
+  margin:4px 0;
+}
+.stat-progress-bar .fill{
+  height:100%;
+  background:linear-gradient(90deg, #00e5ff, #c084fc);
+  box-shadow:0 0 10px rgba(0,229,255,.5);
+}
+.stat-metrics-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));
+  gap:10px;
+  margin-bottom:20px;
+}
+.stat-metric-tile{
+  background:rgba(12,18,38,.7);
+  border:1px solid rgba(111,158,229,.2);
+  border-radius:12px;
+  padding:10px 12px;
+  text-align:center;
+}
+.stat-metric-tile small{display:block;font-size:9px;color:#94a3b8;letter-spacing:.08em;margin-bottom:4px}
+.stat-metric-tile b{font-size:15px;color:#f8fafc;font-variant-numeric:tabular-nums}
+.stat-sec-title{
+  font-size:13px;
+  letter-spacing:.1em;
+  color:#7fe9ff;
+  margin-bottom:10px;
+}
+.stat-car-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+  gap:10px;
+}
+.stat-car-card{
+  background:rgba(14,20,42,.7);
+  border:1px solid rgba(111,158,229,.2);
+  border-radius:10px;
+  padding:10px;
+  font-size:11px;
+}
+.stat-car-card.selected{border-color:#00e5ff;box-shadow:0 0 12px rgba(0,229,255,.3)}
+.stat-car-card.owned{border-color:rgba(111,158,229,.4)}
+.stat-car-card.locked{opacity:.6}
+.stat-car-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.stat-car-head b{color:#fff;font-size:12px}
+.stat-car-badge{font-size:9.5px;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.08);color:#94a3b8}
+.stat-car-card.selected .stat-car-badge{background:rgba(0,229,255,.2);color:#00e5ff}
+.stat-car-card.owned .stat-car-badge{background:rgba(125,255,155,.15);color:#7dff9b}
+.stat-car-body{display:flex;flex-direction:column;gap:3px;color:#94a3b8;font-size:10.5px}
+.stat-car-body b{color:#ffd166}
+
 </style>
 </head>
 <body>
@@ -814,6 +1151,7 @@ body.touch #touch{display:block}
     </div>
     <div id="combo"></div>
     <div id="levelTag"></div>
+    <div id="dimHud" class="hidden"></div>
     <div id="legend">
       <span class="chip bad"><s></s>КРАСНЫЙ = ОПАСНОСТЬ · избегайте</span>
       <span class="chip good"><s></s>ЦВЕТНОЕ = ОЧКИ · собирайте</span>
@@ -838,7 +1176,7 @@ body.touch #touch{display:block}
         </span>
       </button>
       <button class="brand-mark" id="btnBrandHome" type="button" aria-label="NEON RACE — главный экран">
-        <b>NEON <i>RACE</i></b><small>АРКАДНЫЕ ГОНКИ</small>
+        <b>NEON <i>RACE</i></b><small>3D-ГОНКИ</small>
       </button>
       <div class="menu-tools">
         <div class="wallet-pill coins-pill"><span>🪙</span><b id="homeCoins">0</b></div>
@@ -872,7 +1210,7 @@ body.touch #touch{display:block}
           </div>
           <div class="hero-car-switch">
             <button id="btnCarPrev" type="button" aria-label="Предыдущая машина">←</button>
-            <span id="homeCarCount">01 / 15</span>
+            <span id="homeCarCount">01 / 30</span>
             <button id="btnCarNext" type="button" aria-label="Следующая машина">→</button>
           </div>
         </div>
@@ -892,9 +1230,9 @@ body.touch #touch{display:block}
       <div class="best garage-facts">
         <span class="pill">УРОВЕНЬ ГОНКИ <b id="mLevel">1</b></span>
         <span class="pill gold">МОНЕТЫ 🪙 <b id="mCoins">0</b></span>
-        <span class="pill">🛣 <b>9 ТРАСС</b> · сложность растёт</span>
-        <span class="pill">🚗 <b>15 МАШИН</b> · за 🪙 или ⭐</span>
-        <span class="pill">🎯 <b>15 УНИКАЛЬНЫХ БОНУСОВ</b></span>
+        <span class="pill">🛣 <b>6 БИОМОВ</b> · контрольные точки 500 м</span>
+        <span class="pill">🚗 <b>30 СПОРТКАРОВ</b> · за 🪙 или ⭐</span>
+        <span class="pill">🌀 <b>6 ИЗМЕРЕНИЙ</b> · 3-полосные порталы</span>
       </div>
     <div class="acct-bar" id="acctBar">
       <div class="lvbox"><span class="cap">АККАУНТ</span><b id="aLvl">1</b></div>
@@ -908,14 +1246,15 @@ body.touch #touch{display:block}
     <div class="tabs garage-filters" role="tablist" aria-label="Категории гаража">
       <button class="tab on" data-tab="all" role="tab" aria-selected="true">ВСЁ</button>
       <button class="tab" data-tab="ships" role="tab" aria-selected="false">🚗 МАШИНЫ</button>
-      <button class="tab" data-tab="upgrades" role="tab" aria-selected="false">⚡ УЛУЧШЕНИЯ</button>
+      <button class="tab" data-tab="carUpgrades" role="tab" aria-selected="false">⚡ ТЮНИНГ</button>
+      <button class="tab" data-tab="upgrades" role="tab" aria-selected="false">⭐ БОНУСЫ</button>
       <button class="tab" data-tab="skins" role="tab" aria-selected="false">🎨 СКИНЫ</button>
     </div>
     <div class="card-plate" id="tabShips">
       <div class="garage-inventory" id="garageInventory">
         <div class="inventory-heading">
           <div><span class="eyebrow">АВТОПАРК NEON RACE</span><h3>ВЫБЕРИТЕ МАШИНУ</h3></div>
-          <span class="inventory-count"><b id="carOwnedCount">1</b> / 15 ОТКРЫТО</span>
+          <span class="inventory-count"><b id="carOwnedCount">1</b> / 30 ОТКРЫТО</span>
         </div>
         <div class="plates premium-plates" id="shipList"></div>
       </div>
@@ -941,12 +1280,31 @@ body.touch #touch{display:block}
         <div class="sc-perk" id="scPerk"></div>
         <div class="buy-row">
           <button class="btn sm" id="btnSelectCar">🚗 ВЫБРАТЬ</button>
+          <button class="btn sm yellow" id="btnGoCarUpgrades" type="button">⚡ ТЮНИНГ</button>
           <button class="btn sm pink hidden" id="btnSelectCarPts">⭐ КУПИТЬ ЗА ОЧКИ</button>
         </div>
       </div>
       <p class="sub" style="text-align:center;margin-top:10px;font-size:12px">
         Машины можно купить за <b>🪙 монеты</b> или <b>⭐ очки</b> (за очки дешевле).
         Характеристики показывают особенности машины. Для некоторых нужен определённый уровень аккаунта.</p>
+    </div>
+    
+    <div class="card-plate hidden" id="tabCarUpgrades">
+      <div class="inventory-heading">
+        <div><span class="eyebrow">ИНДИВИДУАЛЬНЫЙ ТЮНИНГ</span><h3 id="upgCarTitle">ТЮНИНГ МАШИНЫ</h3></div>
+        <span class="inventory-count" id="upgCarRarity">ЛЕГЕНДАРНАЯ</span>
+      </div>
+      <div class="car-upgrade-preview-box">
+        <canvas id="cvUpgCar" width="360" height="180"></canvas>
+        <div class="car-upgrade-info">
+          <h4 id="upgCarName">NEON SKOR</h4>
+          <p id="upgCarDesc">Спортивный болид с уникальной аэродинамикой.</p>
+          <div class="upg-quick-actions">
+            <button class="btn sm ghost" id="btnBackToCars" type="button">← К СПИСКУ МАШИН</button>
+          </div>
+        </div>
+      </div>
+      <div class="car-upgrades-grid" id="carUpgradesList"></div>
     </div>
     <div class="card-plate hidden" id="tabPerk" style="min-width:min(520px,94vw)">
       <div id="perkList"></div>
