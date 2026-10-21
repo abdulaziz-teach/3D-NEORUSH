@@ -610,7 +610,7 @@ const G = {
   magnet: 0, magnetMax: 5, shield: 0, shieldMax: 0, invul: 0, coinMult: 1,
   lane: 1, laneX: 0, x: 0, y: 0, vy: 0, onGround: true, tilt: 0, yaw: 0, jumpV: 1,
   spawnGap: 15, shake: 0, flash: 0, camRoll: 0, runCoins: 0, brakePow: 0, smashBonus: 0,
-  objs: [], parts: [], stars: [], mountains: [], posts: [],
+  objs: [], parts: [], stars: [], mountains: [], posts: [], biomeAtmo: [],
   trackIdx: 0, trackT: 0, prevTrackIdx: null, trans: 99,
   inDimension: false, dimensionTime: 0, dimensionIdx: 0,
   nextCheckpointAt: 1300, nextPortalAt: 650, checkpointSpawned: false, portalSpawned: false,
@@ -1900,7 +1900,7 @@ function buildBackdrop() {
     const bw = 0.035 + Math.random() * 0.055, bh = 0.06 + Math.random() * 0.18;
     const wins = [];
     for (let r = 0; r < 6; r++) for (let c = 0; c < 3; c++) if (Math.random() < 0.6) wins.push([c, r]);
-    G.buildings.push({ x: bx, w: bw, h: bh, wins });
+    G.buildings.push({ x: bx, w: bw, h: bh, wins, beacon: Math.random() < 0.65 });
     bx += bw + Math.random() * 0.02;
   }
   G.posts = [];
@@ -1912,6 +1912,18 @@ function buildBackdrop() {
     const sw = 0.035 + Math.random() * 0.055;
     G.sil.push({ x: sx, w: sw, h: 0.05 + Math.random() * 0.13, k: Math.random(), a: Math.random() * 6.28 });
     sx += sw + Math.random() * 0.045;
+  }
+  /* Har bir biom uchun dinamik atmosfera zarrachalari (chang, qor, uchqun, spora, kvant nurlar) */
+  G.biomeAtmo = [];
+  const atmoCount = G.quality === 'low' ? 35 : 75;
+  for (let i = 0; i < atmoCount; i++) {
+    G.biomeAtmo.push({
+      x: Math.random(),
+      y: Math.random(),
+      r: 1.0 + Math.random() * 2.4,
+      a: Math.random() * 6.28,
+      seed: Math.random()
+    });
   }
 }
 
@@ -2515,7 +2527,7 @@ function rgba(hex, a) {
   return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
 }
 
-/* Yon manzara: har bir yo'l o'z siluet turini chizadi */
+/* Yon manzara: har bir yo'l o'z dinamik siluet turini chizadi */
 function drawSilhouette(bm, horizon, bpar) {
   const type = bm.props || 'city';
   const sil = bm.sil || '#060714';
@@ -2528,24 +2540,45 @@ function drawSilhouette(bm, horizon, bpar) {
     for (const b of (G.buildings || [])) {
       const bx = b.x * W + bpar, bw = b.w * W, bh = b.h * H * (type === 'grid' ? .8 : 1), by = horizon - bh;
       if (type === 'grid') {
-        // Kiber matritsa — faqat neon kontur va gorizontal to'r
+        // Kiber matritsa — neon kontur va pulsatsiyalanuvchi to'r
         ctx.strokeRect(bx, by, bw, bh);
         for (let r = 1; r < 5; r++) {
           const yy = by + bh * r / 5;
           ctx.beginPath(); ctx.moveTo(bx, yy); ctx.lineTo(bx + bw, yy); ctx.stroke();
         }
-        ctx.fillStyle = rgba(bm.neon, .5);
+        ctx.fillStyle = rgba(bm.neon, 0.4 + 0.3 * Math.sin(G.t * 3 + b.x * 10));
         ctx.fillRect(bx + bw * .35, by - 3, bw * .3, 3);
         ctx.fillStyle = sil;
         continue;
       }
       ctx.fillRect(bx, by, bw, bh);
       ctx.strokeRect(bx, by, bw, bh);
-      ctx.fillStyle = bm.neon;
-      ctx.globalAlpha = .65;
+      
+      // Dinamik miltillovchi kiber derazalar
       const ww = bw / 4, wh = Math.max(2, bh / 9);
-      for (const wpos of b.wins) ctx.fillRect(bx + ww * (wpos[0] + .4), by + wh * (wpos[1] + 1.2), ww * .5, wh * .6);
-      ctx.globalAlpha = 1; ctx.fillStyle = sil;
+      for (const wpos of b.wins) {
+        const pulse = Math.sin(G.t * 3.2 + wpos[0] * 3.1 + wpos[1] * 2.2 + b.x * 18);
+        if (pulse > -0.2) {
+          ctx.fillStyle = pulse > 0.65 ? (bm.curbc || '#ffffff') : bm.neon;
+          ctx.globalAlpha = 0.35 + 0.55 * Math.max(0, pulse);
+          ctx.fillRect(bx + ww * (wpos[0] + .4), by + wh * (wpos[1] + 1.2), ww * .5, wh * .6);
+        }
+      }
+      ctx.globalAlpha = 1;
+
+      // Bino tomidagi animatsiyali mayoq va radio-antennalar
+      if (b.beacon && bh > H * 0.08) {
+        const beaconY = by - 9;
+        ctx.strokeStyle = rgba(bm.neon, 0.65);
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(bx + bw * 0.5, by); ctx.lineTo(bx + bw * 0.5, beaconY); ctx.stroke();
+        const bFlash = Math.sin(G.t * 6.5 + b.x * 32);
+        if (bFlash > 0.15) {
+          ctx.fillStyle = bFlash > 0.7 ? '#ffffff' : (b.x > 0.5 ? '#ff2b43' : (bm.curbc || '#00e5ff'));
+          ctx.beginPath(); ctx.arc(bx + bw * 0.5, beaconY, 2.2, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+      ctx.fillStyle = sil;
     }
     ctx.restore(); return;
   }
@@ -2554,7 +2587,7 @@ function drawSilhouette(bm, horizon, bpar) {
     const x = s.x * W + bpar, w = Math.max(6, s.w * W), h = s.h * H * 1.5, y = horizon;
     if (x < -60 || x > W + 60) continue;
     if (type === 'cactus') {
-      // saguaro kaktusi: qalin poya + yuqoriga qaragan ikki qo'l
+      // Saguaro kaktusi: qalin poya + yuqoriga qaragan ikki qo'l
       const ch = h * .85, tw = Math.max(4, w * .18), bx = x + w * .5 - tw / 2;
       ctx.fillRect(bx, y - ch, tw, ch);
       const ly = y - ch * .55;
@@ -2566,9 +2599,9 @@ function drawSilhouette(bm, horizon, bpar) {
     } else if (type === 'palm') {
       ctx.save();
       ctx.translate(x + w * .5, y);
-      ctx.rotate((s.k - .5) * .16);
+      const palmSway = Math.sin(G.t * 2.0 + s.a) * 0.08;
+      ctx.rotate((s.k - .5) * .16 + palmSway);
       const th = h * .92, tw = Math.max(3, w * .11);
-      // konussimon poya (pastda qalin, tepada ingichka)
       ctx.beginPath();
       ctx.moveTo(-tw * 1.7, 0); ctx.lineTo(tw * 1.7, 0); ctx.lineTo(tw * .65, -th); ctx.lineTo(-tw * .65, -th);
       ctx.closePath(); ctx.fill();
@@ -2585,20 +2618,31 @@ function drawSilhouette(bm, horizon, bpar) {
       ctx.beginPath();
       ctx.moveTo(x, y); ctx.lineTo(x + w * .22, y - h); ctx.lineTo(x + w * .78, y - h); ctx.lineTo(x + w, y);
       ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = rgba(bm.neon, .18);
+      const frostPulse = 0.2 + 0.2 * Math.sin(G.t * 2.8 + s.a);
+      ctx.fillStyle = rgba(bm.neon, frostPulse);
       ctx.fillRect(x + w * .22, y - h, w * .56, Math.max(2, h * .08));
       ctx.fillStyle = sil;
     } else if (type === 'crystal') {
+      const shim = Math.sin(G.t * 3.2 + s.a);
       ctx.beginPath();
       ctx.moveTo(x + w * .5, y - h * 1.35); ctx.lineTo(x + w * .82, y - h * .45);
       ctx.lineTo(x + w * .62, y); ctx.lineTo(x + w * .34, y);
       ctx.lineTo(x + w * .16, y - h * .5); ctx.closePath();
-      ctx.globalAlpha = .85; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
-      ctx.strokeStyle = rgba(bm.sun1 || bm.neon, .5);
+      ctx.globalAlpha = .88; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
+      // Ichki nur o'qi
+      ctx.strokeStyle = rgba(bm.sun1 || bm.neon, 0.4 + 0.45 * Math.abs(shim));
+      ctx.lineWidth = 1.3;
       ctx.beginPath(); ctx.moveTo(x + w * .5, y - h * 1.35); ctx.lineTo(x + w * .5, y); ctx.stroke();
+      // Cho'qqidagi olmos charaqlashi
+      if (shim > 0.35) {
+        ctx.fillStyle = rgba('#ffffff', (shim - 0.35) * 1.4);
+        ctx.beginPath();
+        ctx.arc(x + w * .5, y - h * 1.35, 2.5 * shim, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.lineWidth = .9;
       ctx.strokeStyle = rgba(bm.neon, .38);
     } else if (type === 'pyramid') {
-      // keng va past qiyofa — oddiy tog' uchlaridan farq qilsin
       const pw = w * 2.1, ph = h * .6, px = x + w * .5 - pw / 2;
       ctx.beginPath();
       ctx.moveTo(px, y); ctx.lineTo(px + pw * .5, y - ph); ctx.lineTo(px + pw, y);
@@ -2607,14 +2651,21 @@ function drawSilhouette(bm, horizon, bpar) {
       ctx.beginPath(); ctx.moveTo(px + pw * .5, y - ph); ctx.lineTo(px + pw * .68, y); ctx.stroke();
       ctx.strokeStyle = rgba(bm.neon, .38);
     } else if (type === 'lava' || type === 'volcano') {
+      const lavaPulse = 0.5 + 0.5 * Math.sin(G.t * 3.6 + s.a);
       ctx.beginPath();
       ctx.moveTo(x, y); ctx.lineTo(x + w * .3, y - h * .8); ctx.lineTo(x + w * .7, y - h * .8); ctx.lineTo(x + w, y);
       ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#ff6d2f'; ctx.globalAlpha = .9;
+      // Kraterdagi qaynayotgan lava
+      ctx.fillStyle = rgba('#ff4500', 0.8 + lavaPulse * 0.2);
       ctx.fillRect(x + w * .3, y - h * .86, w * .4, Math.max(2, h * .07));
-      ctx.globalAlpha = .35;
+      ctx.globalAlpha = 0.25 + 0.35 * lavaPulse;
       ctx.fillStyle = bm.sun0 || '#ffb02e';
-      ctx.beginPath(); ctx.arc(x + w * .5, y - h * .86, w * .45, Math.PI, 0); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + w * .5, y - h * .86, w * (0.35 + lavaPulse * 0.2), Math.PI, 0); ctx.fill();
+      // Kraterdan ko'tarilayotgan uchqun
+      const sparkY = y - h * .86 - ((G.t * 26 + s.a * 32) % (h * 0.5));
+      ctx.fillStyle = '#ffe066';
+      ctx.globalAlpha = 0.75;
+      ctx.beginPath(); ctx.arc(x + w * .5 + Math.sin(G.t * 4 + s.a) * 4, sparkY, 1.8, 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1; ctx.fillStyle = sil;
     } else if (type === 'moon') {
       const baseY = y - h * .12, domeH = h * .46;
@@ -2632,7 +2683,6 @@ function drawSilhouette(bm, horizon, bpar) {
       ctx.stroke();
       ctx.strokeStyle = rgba(bm.neon, .38);
     } else if (type === 'nebula') {
-      // Kosmik antennalar va suzuvchi orbital zond
       const cx0 = x + w * .5;
       ctx.beginPath();
       ctx.moveTo(cx0, y); ctx.lineTo(cx0, y - h * 1.2); ctx.stroke();
@@ -2643,7 +2693,6 @@ function drawSilhouette(bm, horizon, bpar) {
       ctx.beginPath(); ctx.arc(cx0, y - h * 1.35, 3.5, 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1; ctx.fillStyle = sil;
     } else if (type === 'aurora') {
-      // Qutb kiber archasi
       const cx0 = x + w * .5;
       ctx.beginPath();
       ctx.moveTo(cx0, y - h * 1.3); ctx.lineTo(cx0 + w * .4, y); ctx.lineTo(cx0 - w * .4, y);
@@ -2655,7 +2704,6 @@ function drawSilhouette(bm, horizon, bpar) {
       }
       ctx.strokeStyle = rgba(bm.neon, .38);
     } else if (type === 'sakura') {
-      // Tokio kiber-sakura daraxti
       const cx0 = x + w * .5;
       ctx.fillRect(cx0 - 3, y - h * .8, 6, h * .8);
       ctx.fillStyle = bm.curbc || bm.neon; ctx.globalAlpha = .8;
@@ -2664,7 +2712,6 @@ function drawSilhouette(bm, horizon, bpar) {
       ctx.beginPath(); ctx.arc(cx0, y - h * 1.15, w * .38, 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1; ctx.fillStyle = sil;
     } else if (type === 'synth') {
-      // Retro synthwave neon pilon va kiber minoralar
       ctx.fillRect(x + w * .2, y - h * 1.1, w * .6, h * 1.1);
       ctx.strokeRect(x + w * .2, y - h * 1.1, w * .6, h * 1.1);
       ctx.strokeStyle = rgba(bm.sun1 || bm.neon, .65);
@@ -2674,7 +2721,6 @@ function drawSilhouette(bm, horizon, bpar) {
       }
       ctx.strokeStyle = rgba(bm.neon, .38);
     } else if (type === 'acid') {
-      // Zaharli reaktor ustuni
       ctx.fillRect(x + w * .25, y - h * .9, w * .5, h * .9);
       ctx.strokeRect(x + w * .25, y - h * .9, w * .5, h * .9);
       ctx.fillStyle = bm.neon; ctx.globalAlpha = .7;
@@ -2682,7 +2728,6 @@ function drawSilhouette(bm, horizon, bpar) {
       ctx.beginPath(); ctx.arc(x + w * .5, y - h * 1.25, w * .12, 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1; ctx.fillStyle = sil;
     } else if (type === 'pillar') {
-      // Oltin kiber kolonnalar va obelisk
       const pw = w * .45, px = x + w * .5 - pw / 2;
       ctx.fillRect(px, y - h * 1.25, pw, h * 1.25);
       ctx.strokeRect(px, y - h * 1.25, pw, h * 1.25);
@@ -2691,7 +2736,6 @@ function drawSilhouette(bm, horizon, bpar) {
       ctx.lineTo(px + pw * .5, y - h * 1.45); ctx.closePath();
       ctx.fill(); ctx.stroke();
     } else if (type === 'lightning') {
-      // Chaqmoq elektr minorasi
       const cx0 = x + w * .5;
       ctx.beginPath();
       ctx.moveTo(cx0 - w * .25, y); ctx.lineTo(cx0, y - h * 1.3); ctx.lineTo(cx0 + w * .25, y);
@@ -2699,24 +2743,302 @@ function drawSilhouette(bm, horizon, bpar) {
       ctx.fillStyle = '#ffffff'; ctx.shadowColor = bm.neon; ctx.shadowBlur = 10;
       ctx.beginPath(); ctx.arc(cx0, y - h * 1.35, 4, 0, Math.PI * 2); ctx.fill();
       ctx.shadowBlur = 0; ctx.fillStyle = sil;
-        } else if (type === 'bio') {
+    } else if (type === 'bio') {
+      const sway = Math.sin(G.t * 2.2 + s.a) * (w * 0.16);
       const cx0 = x + w * .5;
-      ctx.fillRect(cx0 - 3, y - h * .85, 6, h * .85);
-      ctx.fillStyle = bm.neon || '#10b981'; ctx.globalAlpha = .75;
-      ctx.beginPath(); ctx.arc(cx0, y - h * .95, w * .35, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = bm.curbc || '#6ee7b7'; ctx.globalAlpha = .65;
-      ctx.beginPath(); ctx.arc(cx0, y - h * 1.15, w * .22, 0, Math.PI * 2); ctx.fill();
+      // Shamolda tebranuvchi daraxt tanasi
+      ctx.beginPath();
+      ctx.moveTo(cx0 - 3, y);
+      ctx.quadraticCurveTo(cx0 - 2 + sway * 0.5, y - h * 0.45, cx0 - 2 + sway, y - h * .85);
+      ctx.lineTo(cx0 + 2 + sway, y - h * .85);
+      ctx.quadraticCurveTo(cx0 + 2 + sway * 0.5, y - h * 0.45, cx0 + 3, y);
+      ctx.closePath();
+      ctx.fill();
+
+      // Pulsatsiyalanuvchi biolyuminestsent toj
+      const bioPulse = 0.65 + 0.35 * Math.sin(G.t * 2.8 + s.a);
+      ctx.fillStyle = bm.neon || '#10b981'; ctx.globalAlpha = bioPulse;
+      ctx.beginPath(); ctx.arc(cx0 + sway, y - h * .95, w * .35, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = bm.curbc || '#6ee7b7'; ctx.globalAlpha = 0.5 + 0.3 * Math.cos(G.t * 2.4 + s.a);
+      ctx.beginPath(); ctx.arc(cx0 + sway * 1.2, y - h * 1.15, w * .22, 0, Math.PI * 2); ctx.fill();
+
+      // Suzuvchi yorqin spora
+      const sporeY = y - h * 1.15 + Math.sin(G.t * 3.5 + s.a * 2) * 8;
+      ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.85;
+      ctx.beginPath(); ctx.arc(cx0 + sway + Math.cos(G.t * 2.8 + s.a) * 12, sporeY, 1.8, 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1; ctx.fillStyle = sil;
     } else if (type === 'cosmic' || type === 'chrono') {
       // Fazoviy gravitatsion portal halqalari
       const cx0 = x + w * .5, cy0 = y - h * .75;
-      ctx.strokeStyle = rgba(bm.neon, .7); ctx.lineWidth = 1.8;
-      ctx.beginPath(); ctx.ellipse(cx0, cy0, w * .45, h * .6, 0, 0, Math.PI * 2); ctx.stroke();
-      ctx.strokeStyle = rgba(bm.curbc || '#ff0055', .8);
-      ctx.beginPath(); ctx.ellipse(cx0, cy0, w * .25, h * .35, 0, 0, Math.PI * 2); ctx.stroke();
+      const rot = G.t * 1.2 + s.a;
+      const ringPulse = 1 + 0.12 * Math.sin(G.t * 2.6 + s.a);
+      ctx.save();
+      ctx.translate(cx0, cy0);
+      ctx.rotate(rot);
+      ctx.strokeStyle = rgba(bm.neon, .75); ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.ellipse(0, 0, w * .45 * ringPulse, h * .6 * ringPulse, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = rgba(bm.curbc || '#ff0055', .85);
+      ctx.rotate(-rot * 1.8);
+      ctx.beginPath(); ctx.ellipse(0, 0, w * .25, h * .35, 0, 0, Math.PI * 2); ctx.stroke();
+      // Orbitada aylanuvchi kvant uchquni
+      const sparkAng = G.t * 3.6 + s.a;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(Math.cos(sparkAng) * w * .45 * ringPulse, Math.sin(sparkAng) * h * .6 * ringPulse, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
       ctx.lineWidth = .9; ctx.strokeStyle = rgba(bm.neon, .38);
     } else {
       ctx.fillRect(x + w * .4, y - h * .7, w * .2, h * .7);
+    }
+  }
+  ctx.restore();
+}
+
+/* ------------------- BIOM ATMOSFERA ANIMATSIYALARI ------------------- */
+/** Shimol yog'dusi / Kvant plazma to'lqinlari */
+function drawAurora(bm, horizon) {
+  const t = G.t * 0.8;
+  const colors = [
+    rgba(bm.neon, 0.22),
+    rgba(bm.curbc || bm.neon, 0.18),
+    rgba(bm.sun1 || bm.neon, 0.14)
+  ];
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  for (let layer = 0; layer < 3; layer++) {
+    ctx.fillStyle = colors[layer];
+    ctx.beginPath();
+    ctx.moveTo(0, horizon * 0.05);
+    for (let x = 0; x <= W; x += W / 8) {
+      const prog = x / W;
+      const yWave = horizon * (0.15 + layer * 0.08) +
+        Math.sin(prog * 5.0 + t + layer * 1.6) * horizon * 0.09 +
+        Math.cos(prog * 3.2 - t * 0.6) * horizon * 0.05;
+      ctx.lineTo(x, yWave);
+    }
+    ctx.lineTo(W, 0);
+    ctx.lineTo(0, 0);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/** Shahar osmonidagi neon projektor nurlari */
+function drawSkySearchlights(bm, horizon) {
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  const t = G.t;
+  const lights = [
+    { originX: W * 0.22, angle: -Math.PI / 2 + Math.sin(t * 0.72) * 0.44, col: bm.neon },
+    { originX: W * 0.76, angle: -Math.PI / 2 + Math.cos(t * 0.85) * 0.48, col: bm.curbc || bm.neon }
+  ];
+  for (const sl of lights) {
+    const rayLen = H * 0.88;
+    const spread = 0.11;
+    const ax = sl.originX + Math.cos(sl.angle - spread) * rayLen;
+    const ay = horizon + Math.sin(sl.angle - spread) * rayLen;
+    const bx = sl.originX + Math.cos(sl.angle + spread) * rayLen;
+    const by = horizon + Math.sin(sl.angle + spread) * rayLen;
+    const beamGrad = ctx.createLinearGradient(sl.originX, horizon, (ax + bx) / 2, (ay + by) / 2);
+    beamGrad.addColorStop(0, rgba(sl.col, 0.28));
+    beamGrad.addColorStop(0.6, rgba(sl.col, 0.08));
+    beamGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = beamGrad;
+    ctx.beginPath();
+    ctx.moveTo(sl.originX, horizon);
+    ctx.lineTo(ax, ay);
+    ctx.lineTo(bx, by);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/** Dinamik retro-quyosh va chaqnashlar */
+function drawAnimatedSun(bm, horizon) {
+  const sunPulse = 1 + Math.sin(G.t * 2.2) * 0.035;
+  const sunR = H * .175 * sunPulse;
+  const sunX = cx - CAM.x * 24;
+  const sunY = horizon - sunR * .55;
+
+  // Tashqi neon korona nurlanishi
+  ctx.save();
+  const coronaGrad = ctx.createRadialGradient(sunX, sunY, sunR * 0.65, sunX, sunY, sunR * 1.45);
+  coronaGrad.addColorStop(0, rgba(bm.sun1 || bm.neon, 0.42));
+  coronaGrad.addColorStop(0.6, rgba(bm.sun2 || bm.neon, 0.14));
+  coronaGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = coronaGrad;
+  ctx.beginPath();
+  ctx.arc(sunX, sunY, sunR * 1.45, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Lava / Quyosh bo'ronida quyosh tojidan otiluvchi plazma nurlar
+  if (bm.props === 'lava' || (G.inDimension && G.dimensionIdx === 4)) {
+    ctx.strokeStyle = rgba(bm.sun0 || '#ff5500', 0.52);
+    ctx.lineWidth = 2.4;
+    for (let f = 0; f < 5; f++) {
+      const fa = G.t * 0.55 + f * (Math.PI * 2 / 5);
+      const fx = sunX + Math.cos(fa) * sunR;
+      const fy = sunY + Math.sin(fa) * sunR;
+      const flen = 16 + Math.sin(G.t * 3.8 + f * 2) * 12;
+      ctx.beginPath();
+      ctx.moveTo(fx, fy);
+      ctx.quadraticCurveTo(
+        sunX + Math.cos(fa + 0.2) * (sunR + flen * 1.3),
+        sunY + Math.sin(fa + 0.2) * (sunR + flen * 1.3),
+        sunX + Math.cos(fa + 0.35) * sunR,
+        sunY + Math.sin(fa + 0.35) * sunR
+      );
+      ctx.stroke();
+    }
+  }
+
+  // Quyosh gardishi
+  ctx.beginPath(); ctx.arc(sunX, sunY, sunR, 0, 6.283); ctx.clip();
+  const sunGrad = ctx.createLinearGradient(0, sunY - sunR, 0, sunY + sunR);
+  sunGrad.addColorStop(0, bm.sun0);
+  sunGrad.addColorStop(.5, bm.sun1);
+  sunGrad.addColorStop(1, bm.sun2);
+  ctx.fillStyle = sunGrad;
+  ctx.fillRect(sunX - sunR, sunY - sunR, sunR * 2, sunR * 2);
+
+  // Animatsiyali sintveyv gorizontal skan-chiziqlar
+  ctx.globalCompositeOperation = 'destination-out';
+  const scanCount = 8;
+  const scanPhase = (G.t * 8) % (sunR * 0.18);
+  for (let i = 0; i < scanCount; i++) {
+    const yy = sunY + sunR * 0.05 + i * sunR * 0.16 + scanPhase * (i / scanCount);
+    if (yy < sunY + sunR) {
+      const lineH = sunR * 0.035 + (i * 0.9);
+      ctx.fillRect(sunX - sunR, yy, sunR * 2, lineH);
+    }
+  }
+  ctx.restore();
+}
+
+/** Biomlarning harakatlanuvchi atmosfera zarrachalari */
+function drawBiomeParticles(bm, horizon) {
+  if (!G.biomeAtmo || !G.biomeAtmo.length) return;
+  const type = bm.props || 'city';
+  const dt = G.dt || 0.016;
+  ctx.save();
+
+  if (type === 'city') {
+    // 1) Uzoq osmonda uchuvchi kiber-aerotaksi
+    const droneSpeed = 0.075;
+    const droneProg = ((G.t * droneSpeed) % 1.4) - 0.2;
+    const droneX = droneProg * W;
+    const droneY = horizon * 0.36 + Math.sin(G.t * 1.6) * 6;
+    ctx.fillStyle = bm.neon;
+    ctx.fillRect(droneX, droneY, 14, 2.5);
+    ctx.fillStyle = '#ff2b43';
+    ctx.fillRect(droneX - 4, droneY + 0.5, 4, 1.5);
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillRect(droneX + 13, droneY + 0.5, 3, 1.5);
+
+    // 2) Tushayotgan neon ma'lumot uchqunlari
+    for (const p of G.biomeAtmo) {
+      p.y = (p.y + dt * (0.04 + p.seed * 0.06)) % 1;
+      p.x = (p.x + Math.sin(G.t * 1.2 + p.a) * dt * 0.02 + 1) % 1;
+      const px = p.x * W;
+      const py = p.y * (horizon * 1.15);
+      const alpha = (0.25 + 0.55 * Math.sin(G.t * 3 + p.seed * 10)) * (1 - py / (horizon * 1.2));
+      if (alpha > 0.05) {
+        ctx.fillStyle = p.seed > 0.5 ? bm.neon : (bm.curbc || '#fff');
+        ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+        ctx.fillRect(px, py, p.r, p.r * 2.2);
+      }
+    }
+  } else if (type === 'crystal') {
+    // Ko'tariluvchi kristall zarralari va olmos charaqlari
+    for (const p of G.biomeAtmo) {
+      p.y -= dt * (0.05 + p.seed * 0.07);
+      if (p.y < 0) p.y += 1;
+      p.x = (p.x + Math.sin(G.t * 2 + p.a) * dt * 0.03 + 1) % 1;
+      const px = p.x * W;
+      const py = p.y * horizon;
+      const glint = Math.sin(G.t * 4 + p.seed * 20);
+      if (glint > 0.2) {
+        ctx.fillStyle = glint > 0.8 ? '#ffffff' : (p.seed > 0.5 ? bm.neon : (bm.sun1 || '#d946ef'));
+        ctx.globalAlpha = (glint - 0.2) * 0.9;
+        const sz = p.r * (0.8 + glint * 0.6);
+        ctx.beginPath();
+        ctx.moveTo(px, py - sz * 1.5);
+        ctx.lineTo(px + sz, py);
+        ctx.lineTo(px, py + sz * 1.5);
+        ctx.lineTo(px - sz, py);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+  } else if (type === 'ice') {
+    // Qor va muz bo'roni (aerodinamik gorizontal oqim)
+    const windSpeed = 0.42 + (G.speed / 42) * 0.35;
+    for (const p of G.biomeAtmo) {
+      p.x -= dt * (windSpeed + p.seed * 0.25);
+      if (p.x < 0) p.x += 1;
+      p.y = (p.y + dt * (0.06 + p.seed * 0.08)) % 1;
+      const px = p.x * W;
+      const py = p.y * H;
+      const alpha = 0.3 + 0.5 * Math.sin(G.t * 2 + p.seed * 10);
+      ctx.fillStyle = p.seed > 0.6 ? '#ffffff' : (bm.neon || '#a5f3fc');
+      ctx.globalAlpha = Math.max(0, Math.min(1, alpha * 0.75));
+      ctx.beginPath();
+      ctx.ellipse(px, py, p.r * 2.5, p.r * 0.9, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (type === 'lava') {
+    // Otiluvchi olovli vulqon uchqunlari va qizil cho'g'
+    for (const p of G.biomeAtmo) {
+      p.y -= dt * (0.10 + p.seed * 0.14);
+      if (p.y < 0) { p.y += 1; p.x = Math.random(); }
+      p.x = (p.x + Math.sin(G.t * 3.5 + p.a) * dt * 0.05 + 1) % 1;
+      const px = p.x * W;
+      const py = p.y * horizon;
+      const life = 1 - p.y;
+      const flick = Math.sin(G.t * 6 + p.seed * 30);
+      ctx.fillStyle = life > 0.6 ? '#ff2200' : (life > 0.3 ? '#ff6600' : '#ffe066');
+      ctx.globalAlpha = Math.max(0, Math.min(1, (0.5 + 0.5 * flick) * (1 - life * 0.6)));
+      ctx.beginPath();
+      ctx.arc(px, py, Math.max(1, p.r * (1.2 - life * 0.5)), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (type === 'bio') {
+    // Suvuvchi yashil biolyuminestsent sporalar va yorug'lik g'uborlari
+    for (const p of G.biomeAtmo) {
+      p.x = (p.x + Math.sin(G.t * 1.6 + p.a) * dt * 0.03 + 1) % 1;
+      p.y = (p.y + Math.cos(G.t * 1.3 + p.seed * 15) * dt * 0.02 + 1) % 1;
+      const px = p.x * W;
+      const py = p.y * (horizon * 1.1);
+      const pulse = 0.4 + 0.6 * Math.sin(G.t * 2.5 + p.seed * 12);
+      ctx.fillStyle = p.seed > 0.5 ? (bm.neon || '#10b981') : (bm.curbc || '#6ee7b7');
+      ctx.globalAlpha = pulse * 0.75;
+      ctx.beginPath();
+      ctx.arc(px, py, p.r * 1.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = pulse * 0.24;
+      ctx.beginPath();
+      ctx.arc(px, py, p.r * 3.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (type === 'cosmic') {
+    // Gravitatsion kvant girdobi zarrachalari
+    const swirlCenter = cx;
+    const swirlY = horizon * 0.58;
+    for (const p of G.biomeAtmo) {
+      p.a += dt * (0.6 + p.seed * 0.8);
+      const dist = (p.seed * 0.45 + 0.05) * Math.max(W, H);
+      const px = swirlCenter + Math.cos(p.a) * dist * 1.2;
+      const py = swirlY + Math.sin(p.a) * dist * 0.5;
+      if (px >= 0 && px <= W && py >= 0 && py <= horizon) {
+        ctx.fillStyle = p.seed > 0.5 ? bm.neon : (bm.curbc || '#ec4899');
+        ctx.globalAlpha = 0.35 + 0.55 * Math.sin(p.a * 2);
+        ctx.beginPath();
+        ctx.arc(px, py, p.r * 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   }
   ctx.restore();
@@ -2733,7 +3055,7 @@ function drawBackdrop() {
   ctx.fillStyle = sg;
   ctx.fillRect(0, 0, W, H);
 
-  // Yulduzlar
+  // Yulduzlar (pulsatsiyalanuvchi nurlanish)
   ctx.save();
   ctx.fillStyle = bm.star || '#dfeaff';
   for (const s of G.stars) {
@@ -2742,22 +3064,21 @@ function drawBackdrop() {
   }
   ctx.restore();
 
-  // Quyosh (pulsatsiya va skanlaynlar bilan)
-  const sunPulse = 1 + Math.sin(G.t * 1.8) * 0.025;
-  const sunR = H * .17 * sunPulse, sunX = cx - CAM.x * 24, sunY = horizon - sunR * .55;
-  ctx.save();
-  ctx.beginPath(); ctx.arc(sunX, sunY, sunR, 0, 6.283); ctx.clip();
-  const sunGrad = ctx.createLinearGradient(0, sunY - sunR, 0, sunY + sunR);
-  sunGrad.addColorStop(0, bm.sun0); sunGrad.addColorStop(.5, bm.sun1); sunGrad.addColorStop(1, bm.sun2);
-  ctx.fillStyle = sunGrad; ctx.fillRect(sunX - sunR, sunY - sunR, sunR * 2, sunR * 2);
-  ctx.globalCompositeOperation = 'destination-out';
-  for (let i = 0; i < 7; i++) {
-    const yy = sunY + sunR * .08 + i * sunR * .16;
-    ctx.fillRect(sunX - sunR, yy, sunR * 2, sunR * .035 + i * 1.0);
+  // Shimol yog'dusi / Kiber-aurora (muz, kosmik, biosfera yoki o'lchamlarda)
+  const type = bm.props || 'city';
+  if (type === 'ice' || type === 'cosmic' || type === 'bio' || G.inDimension) {
+    drawAurora(bm, horizon);
   }
-  ctx.restore();
 
-  // Uzoq tog'lar (yon manzara ajralib tursin — yarim shaffof)
+  // Shahar kiber-projektorlari
+  if (type === 'city' || type === 'grid' || (G.inDimension && G.dimensionIdx === 3)) {
+    drawSkySearchlights(bm, horizon);
+  }
+
+  // Dinamik Quyosh (korona, chaqnashlar va skan-chiziqlar bilan)
+  drawAnimatedSun(bm, horizon);
+
+  // Uzoq tog'lar (neon qirra to'lqini bilan)
   const par = -CAM.x * 8;
   ctx.save();
   ctx.globalAlpha = .62;
@@ -2769,26 +3090,38 @@ function drawBackdrop() {
   }
   ctx.lineTo(W + 40, horizon); ctx.lineTo(W + 40, horizon + 30); ctx.lineTo(0, horizon + 30);
   ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = rgba(bm.neon, 0.25); ctx.lineWidth = 1; ctx.stroke();
+
+  // Tog' cho'qqilari bo'ylab oquvchi neon nur to'lqini
+  const crestPulse = 0.22 + 0.16 * Math.sin(G.t * 2.4);
+  ctx.strokeStyle = rgba(bm.neon, crestPulse);
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
   ctx.restore();
 
-  // Yon manzara (har yo'l o'z manzarasini chizadi)
+  // Biom atmosfera zarrachalari (qor, uchqun, chang, spora)
+  drawBiomeParticles(bm, horizon);
+
+  // Yon manzara (har yo'l o'z animatsiyali manzarasi)
   const bpar = -CAM.x * 14;
   drawSilhouette(bm, horizon, bpar);
 
-  // Yer
+  // Yer gradienti
   const gnd = ctx.createLinearGradient(0, horizon, 0, H);
   gnd.addColorStop(0, bm.gnd0 || '#100a26'); gnd.addColorStop(1, bm.gnd1 || '#03030a');
   ctx.fillStyle = gnd; ctx.fillRect(0, horizon, W, H - horizon);
 
-  // Neon gorizontal to'r (perspektiv qatlam)
+  // Neon gorizontal to'r (perspektiv qatlam va harakatlanuvchi impuls to'lqini)
   ctx.save();
-  ctx.strokeStyle = rgba(bm.curbc, 0.16); ctx.lineWidth = 1;
   const gs = 8, gsc = G.dist % gs;
   for (let i = 1; i < 11; i++) {
     const z = i * gs - gsc + 4;
     proj([-48, 0, z], _a); proj([48, 0, z], _b);
-    if (_a.vis && _b.vis) { ctx.beginPath(); ctx.moveTo(_a.x, _a.y); ctx.lineTo(_b.x, _b.y); ctx.stroke(); }
+    if (_a.vis && _b.vis) {
+      const linePulse = 0.14 + 0.09 * Math.sin(G.t * 3.6 - z * 0.12);
+      ctx.strokeStyle = rgba(bm.curbc || bm.neon, linePulse);
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(_a.x, _a.y); ctx.lineTo(_b.x, _b.y); ctx.stroke();
+    }
   }
   ctx.strokeStyle = rgba(bm.neon, 0.14);
   for (let gx = -42; gx <= 42; gx += 7) {
