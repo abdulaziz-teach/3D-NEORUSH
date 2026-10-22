@@ -749,6 +749,141 @@ T('audit-fixes', `(() => {
   });
 })()`);
 
+// 23) REGRESSION TEST: Portalga yaqinlashish, kirish, ichidan o'tish va chiqishda mashinaning uzluksiz ko'rinishi
+T('portal-car-continuity', `(() => {
+  const g = NY3D, G = g.G;
+  g.startRun();
+  G.speed = 24;
+  G.inDimension = false;
+  G.nextPortalAt = G.dist;
+  G.portalSpawned = false;
+  g.update(0.016); // 3-lane portal guruhini yaratadi
+
+  const portals = G.objs.filter(o => o.kind === 'portal_active' || o.kind === 'portal_open');
+  const activeP = G.objs.find(o => o.kind === 'portal_active');
+  if (!activeP || portals.length !== 3) {
+    throw new Error('Portal guruhi to\\'liq yaratilmadi: active=' + !!activeP + ' total=' + portals.length);
+  }
+
+  // O'yinchini faol portal yo'lagiga qo'yamiz
+  G.x = activeP.x;
+  G.lane = activeP.lane;
+
+  let minCarFacesObserved = 999;
+  let carProjHiddenCount = 0;
+  let framesTested = 0;
+
+  // Portal z=35 dan z=-2.5 gacha yaqinlashib o'tib ketguncha har 0.25 metrda tekshiramiz
+  for (let z = 35; z >= -2.5; z -= 0.25) {
+    framesTested++;
+    for (const p of portals) p.z = z;
+
+    // Har kadrda render chaqiriladi
+    g.render();
+
+    const c = g.car();
+    const faces = g.facesOf(c.mesh, [G.x, G.y, 0], G.yaw, 1);
+    if (faces.length < minCarFacesObserved) minCarFacesObserved = faces.length;
+
+    // Mashina markazi proj vis tekshiruvi
+    const testP = { x: 0, y: 0, s: 0, dz: 0, vis: true };
+    g.proj([G.x, 0.45 + G.y, 0], testP);
+    if (!testP.vis) carProjHiddenCount++;
+  }
+
+  // Dimensionga kirish va chiqish test
+  g.enterDimension(activeP.targetDim || 0);
+  g.render();
+  const cInDim = g.car();
+  const facesInDim = g.facesOf(cInDim.mesh, [G.x, G.y, 0], G.yaw, 1).length;
+
+  g.exitDimension();
+  g.render();
+  const cAfterExit = g.car();
+  const facesAfterExit = g.facesOf(cAfterExit.mesh, [G.x, G.y, 0], G.yaw, 1).length;
+
+  // Mobil 320px ekranda tekshirish
+  window.innerWidth = 320; window.innerHeight = 568;
+  g.render();
+  const facesMobile = g.facesOf(cAfterExit.mesh, [G.x, G.y, 0], G.yaw, 1).length;
+  window.innerWidth = 1280; window.innerHeight = 720; // tiklash
+
+  if (minCarFacesObserved < 300) throw new Error('Mashina yuzalari portal yaqinida kamayib ketdi: ' + minCarFacesObserved);
+  if (carProjHiddenCount > 0) throw new Error('Mashina koordinatasi kamerasida ko\\'rinmay qoldi!');
+  if (facesInDim < 300) throw new Error('Dimension ichida mashina yuzalari yo\\'qoldi!');
+  if (facesAfterExit < 300) throw new Error('Dimensiondan chiqqach mashina yuzalari yo\\'qoldi!');
+  if (facesMobile < 300) throw new Error('320px mobil ekranda mashina yuzalari yo\\'qoldi!');
+
+  return JSON.stringify({
+    ok: true,
+    framesTested,
+    minFaces: minCarFacesObserved,
+    inDimFaces: facesInDim,
+    afterExitFaces: facesAfterExit,
+    mobile320Faces: facesMobile,
+    carAlwaysVisible: true
+  });
+})()`);
+
+
+
+// 24) INTERACTIVE TUTORIAL SYSTEM: intro modal, 5 poyga bosqichi, garaj, tuning, completion modal va xavfsizlik
+T('interactive-tutorial-suite', `(() => {
+  const g = NY3D, G = g.G, tut = g.TUTORIAL_SYSTEM;
+  if (!tut) throw new Error('TUTORIAL_SYSTEM topilmadi');
+
+  // Intro modal
+  tut.showIntro();
+  const introModal = document.getElementById('introModal');
+  if (!introModal || introModal.classList.contains('hidden')) throw new Error('Intro modal ochilmadi');
+  tut.skipIntro();
+  if (!introModal.classList.contains('hidden')) throw new Error('skipIntro yopmadi');
+
+  // Race tutorial
+  tut.startRace(1);
+  if (!tut.active || tut.step !== 1) throw new Error('Race tutorial Step 1 boshlanmadi');
+  g.moveLane(-1); g.moveLane(1);
+  if (!tut.tasks.left || !tut.tasks.right) throw new Error('Step 1 yolak vazifalari xato');
+
+  tut.setStep(2);
+  tut.onAction('coin'); g.jump();
+  if (!tut.tasks.coin || !tut.tasks.jump) throw new Error('Step 2 coin/jump vazifalari xato');
+
+  tut.setStep(3);
+  tut.onAction('nitro');
+  if (!tut.tasks.nitro) throw new Error('Step 3 nitro xato');
+
+  tut.setStep(4);
+  if (G.shield <= 0 || G.maxLives < 4) throw new Error('Step 4 shield/lives xato');
+
+  tut.setStep(5);
+  tut.onAction('portal');
+  if (!tut.tasks.portal) throw new Error('Step 5 portal xato');
+
+  // Garage and Tuning tutorial
+  const coinsBefore = G.coins;
+  tut.startGarage();
+  if (tut.step !== 6 || G.coins !== coinsBefore) throw new Error('Garage tutorial xato');
+
+  tut.startTuning();
+  if (tut.step !== 7) throw new Error('Tuning tutorial xato');
+
+  // Completion modal
+  tut.showComplete();
+  const compModal = document.getElementById('tutorialCompleteModal');
+  if (!compModal || compModal.classList.contains('hidden')) throw new Error('Completion modal ochilmadi');
+  tut.hideComplete();
+
+  return JSON.stringify({
+    ok: true,
+    introWorks: true,
+    stepsVerified: 5,
+    garageOk: true,
+    tuningOk: true,
+    completeOk: true
+  });
+})()`);
+
 console.log(out.join('\n'));
 if (results.length) console.log('\n--- FAILURES ---\n' + results.join('\n'));
 process.exit(results.length ? 1 : 0);

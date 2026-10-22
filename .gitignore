@@ -1,0 +1,4 @@
+node_modules/
+_dev/shots/
+.DS_Store
+Thumbs.db
