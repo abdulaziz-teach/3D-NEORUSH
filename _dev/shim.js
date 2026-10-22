@@ -136,7 +136,17 @@ function buildEnv(src) {
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const m = [...html.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/g)].filter((b) => !/src=/.test(b[1]) && b[2].length > 1000);
-if (!m.length) throw new Error('script topilmadi');
+let scriptCode = '';
+if (m.length) {
+  scriptCode = m[0][2];
+} else {
+  const gameJsPath = path.join(__dirname, '..', 'game.js');
+  if (fs.existsSync(gameJsPath)) {
+    scriptCode = fs.readFileSync(gameJsPath, 'utf8');
+  } else {
+    throw new Error('script topilmadi');
+  }
+}
 const vm = require('vm');
 const env = buildEnv();
 const ctxv = vm.createContext(env.sandbox);
@@ -146,7 +156,6 @@ function run(label, code) {
   catch (e) { results.push('FAIL [' + label + ']: ' + e.message + ' >> ' + String(e.stack || '').split('\n').slice(1, 7).join(' | ')); return null; }
 }
 
-
-run('load', m[0][2]);
+run('load', scriptCode);
 env.sandbox.NY3D = env.win.NY3D;
 module.exports = { vm, ctxv, results, run, env, sandbox: env.sandbox, win: env.win, doc: env.doc, canvas: env.canvas, registry: env.registry, listeners: env.listeners };

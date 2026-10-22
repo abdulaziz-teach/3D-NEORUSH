@@ -1,0 +1,114 @@
+{
+  "viewportsTested": [
+    {
+      "name": "Mobile-Narrow-320px",
+      "metrics": {
+        "W": 320,
+        "H": 568,
+        "canvasW": 320,
+        "canvasH": 568,
+        "dpr": 1
+      }
+    },
+    {
+      "name": "Mobile-Standard-375px",
+      "metrics": {
+        "W": 375,
+        "H": 667,
+        "canvasW": 375,
+        "canvasH": 667,
+        "dpr": 1
+      }
+    },
+    {
+      "name": "Tablet-768px",
+      "metrics": {
+        "W": 768,
+        "H": 1024,
+        "canvasW": 768,
+        "canvasH": 1024,
+        "dpr": 1
+      }
+    },
+    {
+      "name": "Laptop-1366px",
+      "metrics": {
+        "W": 1366,
+        "H": 768,
+        "canvasW": 1366,
+        "canvasH": 768,
+        "dpr": 1
+      }
+    },
+    {
+      "name": "Desktop-FHD-1920px",
+      "metrics": {
+        "W": 1920,
+        "H": 1080,
+        "canvasW": 1920,
+        "canvasH": 1080,
+        "dpr": 1
+      }
+    }
+  ],
+  "gameplayFramesRun": 180,
+  "carPartsVerified": true,
+  "allBiomesRendered": [
+    {
+      "idx": 0,
+      "name": "НЕОНОВЫЙ МЕГАПОЛИС",
+      "band": 0,
+      "neon": "#00e5ff",
+      "road": "rgba(21,23,43,0.85)",
+      "props": "city"
+    },
+    {
+      "idx": 1,
+      "name": "КРИСТАЛЬНАЯ ПУСТЫНЯ",
+      "band": 1,
+      "neon": "#d946ef",
+      "road": "rgba(36,18,48,0.86)",
+      "props": "crystal"
+    },
+    {
+      "idx": 2,
+      "name": "ЛЕДЯНАЯ ОРБИТА",
+      "band": 2,
+      "neon": "#38bdf8",
+      "road": "rgba(14,32,56,0.88)",
+      "props": "ice"
+    },
+    {
+      "idx": 3,
+      "name": "ЛАВА И МАГМА",
+      "band": 2,
+      "neon": "#ff5500",
+      "road": "rgba(34,14,14,0.90)",
+      "props": "lava"
+    },
+    {
+      "idx": 4,
+      "name": "БИОСФЕРА БУДУЩЕГО",
+      "band": 3,
+      "neon": "#10b981",
+      "road": "rgba(10,34,24,0.88)",
+      "props": "bio"
+    },
+    {
+      "idx": 5,
+      "name": "КОСМИЧЕСКАЯ АНОМАЛИЯ",
+      "band": 3,
+      "neon": "#00f5ff",
+      "road": "rgba(20,10,40,0.92)",
+      "props": "cosmic"
+    }
+  ],
+  "portalTransitionVerified": true,
+  "audioState": "running",
+  "storageIntegrity": {
+    "upgOk": true,
+    "speedLvl": 1,
+    "underglow": "#00e5ff"
+  },
+  "consoleErrors": []
+}

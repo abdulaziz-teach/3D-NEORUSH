@@ -470,7 +470,7 @@ T('car-perks', `(() => {
   for (let i = 0; i < 60 * 8; i++) { G.dist += .1; g.update(1 / 60); if (G.shield > 0) { regenTick = i; break; } }
   const nitroSaves = +(plainUsed / Math.max(.001, drainUsed)).toFixed(2);
   const bad = [];
-  if (keys.length !== 15 || g.CARS.length !== 15) bad.push('son:' + keys.length + '/' + g.CARS.length);
+  if (keys.length !== 30 || g.CARS.length !== 30) bad.push('son:' + keys.length + '/' + g.CARS.length);
   if (dupes.length) bad.push('takror:' + dupes.join('|'));
   if (unused.length) bad.push('ishlatilmagan:' + unused.join('|'));
   if (inert.length) bad.push("ta'sirsiz:" + inert.join("|"));
@@ -676,6 +676,77 @@ T('car-shapes', `(() => {
     if (!c.mesh.f.length) meshBad.push(c.id + ':yuzasiz');
   }
   return JSON.stringify({ shapes: Object.keys(S).length, bad, meshBad, cars: g.CARS.length });
+})()`);
+
+// 23) Audit fixes verification: Spawning continuity, transitions, toast queue, corrupted storage, audio safety
+T('audit-fixes', `(() => {
+  const g = NY3D, G = g.G;
+  const bad = [];
+
+  // A. Object spawning continuity: no huge voids (> 24m) along active road
+  g.startRun();
+  for (let f = 0; f < 120; f++) g.update(1/60);
+  const zs = G.objs.filter(o => !o.dead && o.z > 0 && o.z < 65).map(o => o.z).sort((a,b) => a - b);
+  let maxGap = 0;
+  for (let i = 1; i < zs.length; i++) {
+    const gap = zs[i] - zs[i - 1];
+    if (gap > maxGap) maxGap = gap;
+  }
+  if (zs.length < 3 || maxGap > 25) bad.push('spawn-gap:max=' + maxGap.toFixed(1) + ',count=' + zs.length);
+
+  // B. Portal transition continuity: verify objs populated immediately after enterDimension
+  g.enterDimension(0);
+  const dimObjs = G.objs.filter(o => !o.dead && o.z > 0 && o.z < 50);
+  if (dimObjs.length < 2) bad.push('dimension-objs-empty:' + dimObjs.length);
+  g.exitDimension();
+  const exitObjs = G.objs.filter(o => !o.dead && o.z > 0 && o.z < 50);
+  if (exitObjs.length < 2) bad.push('exit-objs-empty:' + exitObjs.length);
+
+  // C. Toast queue safety
+  try {
+    g.toast('TEST_1', 500);
+    g.toast('TEST_2', 500);
+    g.toast('TEST_2', 500); // duplicate suppressed
+  } catch (e) {
+    bad.push('toast-err:' + e.message);
+  }
+
+  // D. Corrupted storage resilience
+  try {
+    localStorage.setItem('ny3d_test_corrupt', '{bad json');
+    const safeObj = g.store.get('test_corrupt', { ok: 1 });
+    if (!safeObj || safeObj.ok !== 1) bad.push('corrupt-fallback-failed');
+
+    localStorage.setItem('ny3d_car_upg_99', JSON.stringify({ speed: 999, accel: -5, nitro: 'NaN' }));
+    const validated = g.CAR_UPG.get(99);
+    if (validated.speed !== 5 || validated.accel !== 0 || validated.nitro !== 0) {
+      bad.push('upg-clamp-failed:' + JSON.stringify(validated));
+    }
+
+    localStorage.setItem('ny3d_perm', 'not-an-object');
+    const permN = g.PERM.n('speed');
+    if (typeof permN !== 'number' || isNaN(permN)) bad.push('perm-corrupt-failed');
+  } catch (e) {
+    bad.push('storage-err:' + e.message);
+  }
+
+  // E. Audio resume safety
+  try {
+    if (g.Sound && typeof g.Sound.resume === 'function') {
+      g.Sound.resume();
+    }
+  } catch (e) {
+    bad.push('sound-resume-err:' + e.message);
+  }
+
+  if (bad.length) throw new Error('AUDIT FIXES XATO: ' + bad.join(', '));
+  return JSON.stringify({
+    ok: true,
+    maxSpawnGap: +maxGap.toFixed(1),
+    activeObjs: zs.length,
+    dimTransitObjs: dimObjs.length,
+    exitTransitObjs: exitObjs.length
+  });
 })()`);
 
 console.log(out.join('\n'));

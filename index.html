@@ -54,13 +54,13 @@ canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 .stat-stack{display:flex;flex-direction:column;gap:4px}
 
 .stat{
-  background:rgba(8,12,28,.68);
-  border:1px solid var(--line);
+  background:linear-gradient(145deg,rgba(10,16,36,.88),rgba(4,8,20,.92));
+  border:1px solid rgba(0,229,255,.38);
   border-radius:14px;
   padding:6px 12px;
   backdrop-filter:blur(8px);
   min-width:clamp(68px, 11vw, 94px);
-  box-shadow:0 6px 18px rgba(0,0,0,.35), inset 0 0 12px rgba(0,229,255,.06);
+  box-shadow:0 6px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 12px rgba(0,229,255,.06);
 }
 .stat small{display:block;font-size:9.5px;letter-spacing:.16em;color:#7fe9ff;opacity:.9;font-weight:800}
 .stat b{font-size:clamp(15px, 2.2vw, 22px);text-shadow:0 0 14px rgba(0,229,255,.6);font-variant-numeric:tabular-nums}
@@ -72,8 +72,8 @@ canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 .stat.lvstat b::before{content:'УР. ';font-size:.5em;letter-spacing:.12em;color:#7fe9ff;opacity:.8;vertical-align:top;margin-right:2px}
 .stat.speedo{
   text-align:center;
-  border-color:rgba(255,209,102,.55);
-  box-shadow:0 6px 20px rgba(0,0,0,.4), 0 0 16px rgba(255,209,102,.25);
+  border-color:rgba(255,209,102,.65);
+  box-shadow:0 6px 20px rgba(0,0,0,.4), 0 0 18px rgba(255,209,102,.3);
   min-width:clamp(82px, 13vw, 110px);
   animation:speedoPulseGlow 3s ease-in-out infinite alternate;
 }
@@ -83,7 +83,13 @@ canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 }
 .stat.speedo small{color:#ffe48f}
 .stat.speedo b{color:#fff7d6;text-shadow:0 0 16px rgba(255,209,102,.65)}
-.stat.right{text-align:right}
+.stat.right{
+  text-align:right;
+  border-color:rgba(255,209,102,.45);
+  box-shadow:0 6px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,230,138,.12), 0 0 12px rgba(255,209,102,.12);
+}
+.stat.right small{color:#ffe48f}
+.stat.right b{color:#fff5d6;text-shadow:0 0 14px rgba(255,209,102,.65)}
 
 #lives{
   display:flex;gap:5px;padding:7px 11px;
@@ -107,14 +113,51 @@ canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 }
 .pw{
   display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.08em;color:#bff3ff;
-  background:rgba(4,8,22,.94);border:1px solid rgba(150,225,255,.48);border-radius:12px;padding:5px 10px 5px 8px;
+  background:rgba(4,8,22,.94);border:1px solid rgba(150,225,255,.35);border-radius:12px;padding:5px 10px 5px 8px;
   backdrop-filter:blur(8px);box-shadow:0 4px 14px rgba(0,0,0,.55),inset 0 0 12px rgba(0,229,255,.08);
+  transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
 .pw .p-ic{font-size:14px;line-height:1;filter:drop-shadow(0 0 4px currentColor)}
 .pw>span:nth-child(2){min-width:58px;color:#fff;font-size:11px;font-weight:900;text-shadow:0 1px 3px #000}
-.pw.boost{border-color:rgba(0,229,255,.8);box-shadow:0 4px 16px rgba(0,0,0,.6),0 0 12px rgba(0,229,255,.24),inset 0 0 14px rgba(0,229,255,.14)}
+.pw.boost{border-color:rgba(0,229,255,.5);box-shadow:0 4px 16px rgba(0,0,0,.6),0 0 10px rgba(0,229,255,.15),inset 0 0 14px rgba(0,229,255,.08)}
 .pw.boost .p-ic{color:#69f4ff;filter:drop-shadow(0 0 6px #00e5ff)}
 .pw.boost>span:nth-child(2){color:#e7fdff;letter-spacing:.12em;text-shadow:0 0 8px rgba(0,229,255,.9),0 1px 3px #000}
+.pw.mag{border-color:rgba(217,70,239,.5);box-shadow:0 4px 16px rgba(0,0,0,.6),0 0 10px rgba(217,70,239,.15),inset 0 0 14px rgba(217,70,239,.08)}
+.pw.mag .p-ic{color:#f0abfc;filter:drop-shadow(0 0 6px #d946ef)}
+.pw.mag>span:nth-child(2){color:#fae8ff;letter-spacing:.12em;text-shadow:0 0 8px rgba(217,70,239,.9),0 1px 3px #000}
+.pw.sh{border-color:rgba(16,185,129,.5);box-shadow:0 4px 16px rgba(0,0,0,.6),0 0 10px rgba(16,185,129,.15),inset 0 0 14px rgba(16,185,129,.08)}
+.pw.sh .p-ic{color:#6ee7b7;filter:drop-shadow(0 0 6px #10b981)}
+.pw.sh>span:nth-child(2){color:#ecfdf5;letter-spacing:.12em;text-shadow:0 0 8px rgba(16,185,129,.9),0 1px 3px #000}
+
+/* Active Glowing Cyberpunk State */
+.pw.active{transform:scale(1.02)}
+.pw.boost.active{
+  border-color:#00e5ff;
+  box-shadow:0 4px 20px rgba(0,0,0,.6),0 0 18px rgba(0,229,255,.7),inset 0 0 16px rgba(0,229,255,.25);
+  animation:pwPulseCyan 1.2s ease-in-out infinite alternate;
+}
+.pw.mag.active{
+  border-color:#d946ef;
+  box-shadow:0 4px 20px rgba(0,0,0,.6),0 0 18px rgba(217,70,239,.7),inset 0 0 16px rgba(217,70,239,.25);
+  animation:pwPulseViolet 1.2s ease-in-out infinite alternate;
+}
+.pw.sh.active{
+  border-color:#10b981;
+  box-shadow:0 4px 20px rgba(0,0,0,.6),0 0 18px rgba(16,185,129,.7),inset 0 0 16px rgba(16,185,129,.25);
+  animation:pwPulseGreen 1.2s ease-in-out infinite alternate;
+}
+@keyframes pwPulseCyan{
+  0%{box-shadow:0 4px 18px rgba(0,0,0,.6),0 0 12px rgba(0,229,255,.5),inset 0 0 12px rgba(0,229,255,.2)}
+  100%{box-shadow:0 4px 24px rgba(0,0,0,.7),0 0 22px rgba(0,229,255,.9),inset 0 0 20px rgba(0,229,255,.35)}
+}
+@keyframes pwPulseViolet{
+  0%{box-shadow:0 4px 18px rgba(0,0,0,.6),0 0 12px rgba(217,70,239,.5),inset 0 0 12px rgba(217,70,239,.2)}
+  100%{box-shadow:0 4px 24px rgba(0,0,0,.7),0 0 22px rgba(217,70,239,.9),inset 0 0 20px rgba(217,70,239,.35)}
+}
+@keyframes pwPulseGreen{
+  0%{box-shadow:0 4px 18px rgba(0,0,0,.6),0 0 12px rgba(16,185,129,.5),inset 0 0 12px rgba(16,185,129,.2)}
+  100%{box-shadow:0 4px 24px rgba(0,0,0,.7),0 0 22px rgba(16,185,129,.9),inset 0 0 20px rgba(16,185,129,.35)}
+}
 .pw .bar{width:clamp(78px, 12vw, 110px);height:10px;border:1px solid rgba(255,255,255,.32);border-radius:99px;
   overflow:hidden;background:rgba(255,255,255,.14)}
 .pw .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--c1),#8ef9ff);transition:width .12s}
@@ -411,6 +454,14 @@ body.touch #touch{display:block}
   box-shadow:0 8px 24px rgba(0,0,0,.5), 0 0 18px rgba(255,47,185,.25);
 }
 #tJ:active{background:rgba(255,47,185,.42);box-shadow:0 0 28px rgba(255,47,185,.65)}
+#tD{
+  right:max(14px, env(safe-area-inset-right));
+  bottom:calc(max(18px, env(safe-area-inset-bottom)) + clamp(64px, 15vw, 84px));
+  background:rgba(0,229,255,.16);border-color:rgba(0,229,255,.6);color:#b8f9ff;
+  box-shadow:0 8px 24px rgba(0,0,0,.5), 0 0 18px rgba(0,229,255,.25);
+  font-size:clamp(18px, 4.5vw, 24px);
+}
+#tD:active{background:rgba(0,229,255,.4);box-shadow:0 0 28px rgba(0,229,255,.65)}
 #tP{
   position:static;align-self:flex-end;flex:0 0 38px;width:38px;height:34px;margin-top:2px;
   border-radius:10px;font-size:13px;z-index:6;
@@ -599,8 +650,24 @@ body.touch #touch{display:block}
   box-shadow:inset 0 1px rgba(255,255,255,.05),0 8px 20px rgba(0,0,0,.2);font-size:13px;font-variant-numeric:tabular-nums}
 .wallet-pill>span{font-size:15px;filter:drop-shadow(0 0 8px rgba(255,208,93,.25))}
 .wallet-pill b{color:#f0f5ff}
-.coins-pill{border-color:rgba(255,201,91,.27)}
-.points-pill{border-color:rgba(127,153,255,.24)}
+.coins-pill{
+  border-color:rgba(255,209,102,.45);
+  background:linear-gradient(145deg,rgba(32,28,14,.92),rgba(14,12,6,.96));
+  box-shadow:inset 0 1px 0 rgba(255,230,138,.12),0 6px 18px rgba(0,0,0,.3),0 0 12px rgba(255,209,102,.12);
+}
+.coins-pill b{color:#ffe79a;text-shadow:0 0 10px rgba(255,209,102,.5)}
+.points-pill{
+  border-color:rgba(217,70,239,.45);
+  background:linear-gradient(145deg,rgba(34,16,42,.92),rgba(16,8,22,.96));
+  box-shadow:inset 0 1px 0 rgba(240,171,252,.12),0 6px 18px rgba(0,0,0,.3),0 0 12px rgba(217,70,239,.12);
+}
+.points-pill b{color:#f5d0fe;text-shadow:0 0 10px rgba(217,70,239,.5)}
+.garage-record{
+  font-size:12px;font-weight:900;letter-spacing:.08em;color:#94a3b8;
+  display:inline-flex;align-items:center;gap:6px;padding:5px 12px;
+  background:rgba(8,14,30,.75);border:1px solid rgba(255,209,102,.35);border-radius:10px;
+}
+.garage-record b{color:#ffd166;font-size:14px;text-shadow:0 0 10px rgba(255,209,102,.5)}
 .menu-toggle{width:42px;height:42px;border:1px solid rgba(108,164,255,.3);border-radius:12px;background:rgba(17,26,48,.92);
   color:#e7f3ff;font-size:20px;cursor:pointer;transition:.18s;box-shadow:0 6px 18px rgba(0,0,0,.28)}
 .menu-toggle:hover,.menu-toggle[aria-expanded="true"]{border-color:#61caff;background:rgba(27,59,96,.95);box-shadow:0 0 22px rgba(58,171,255,.24)}
@@ -648,12 +715,13 @@ body.touch #touch{display:block}
 .hero-garage>span{font-size:22px;color:#75cfff}
 .hero-garage b{font-size:13px;letter-spacing:.13em}
 .hero-garage small{font-size:8px;color:#8298b8;letter-spacing:.08em}
-.hero-race{right:clamp(22px,5vw,76px);gap:13px;min-width:238px;justify-content:center;padding:12px 22px;
-  border:1px solid rgba(169,219,255,.75);background:linear-gradient(115deg,#49bdff,#4784ff 55%,#8468ff);color:white;
-  box-shadow:0 0 0 1px rgba(255,255,255,.18) inset,0 12px 34px rgba(46,113,255,.35),0 0 38px rgba(68,144,255,.22)}
-.hero-race>span{font-size:19px;text-shadow:0 2px 8px rgba(0,0,0,.35)}
-.hero-race b{font-size:13px;letter-spacing:.11em}
-.hero-race small{font-size:8px;color:rgba(255,255,255,.76);letter-spacing:.08em}
+.hero-race{right:clamp(22px,5vw,76px);gap:13px;min-width:238px;justify-content:center;padding:12px 24px;
+  border:2px solid #fff2a3;background:linear-gradient(135deg,#ffe600 0%,#ffb703 52%,#fb8500 100%);color:#070b14;
+  box-shadow:0 0 0 1px rgba(255,255,255,.35) inset,0 12px 34px rgba(255,183,3,.45),0 0 38px rgba(255,230,0,.5);
+  font-weight:1000}
+.hero-race>span{font-size:20px;color:#070b14;text-shadow:none}
+.hero-race b{font-size:14px;letter-spacing:.12em;color:#070b14;font-weight:1000}
+.hero-race small{font-size:8.5px;color:#3d2200;letter-spacing:.08em;font-weight:900}
 .hero-garage:hover,.hero-race:hover{transform:translateY(-3px);filter:brightness(1.1)}
 .hero-garage:active,.hero-race:active{transform:scale(.98)}
 .hero-footnote{position:absolute;z-index:2;top:5%;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;
@@ -744,15 +812,24 @@ body.touch #touch{display:block}
   color:#8ea5c9;font-size:9px;font-weight:900;letter-spacing:.12em;white-space:nowrap}
 .inventory-count b{color:#dcecff}
 .premium-plates{grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:12px}
-.car-card{position:relative;display:flex;min-height:224px;flex-direction:column;align-items:stretch;gap:5px;
-  padding:10px;text-align:left;color:#ecf5ff;font-family:var(--f);border:1px solid rgba(105,143,197,.2);
+.car-card{position:relative;display:flex;min-height:232px;flex-direction:column;align-items:stretch;gap:5px;
+  padding:10px;text-align:left;color:#ecf5ff;font-family:var(--f);border:1px solid rgba(105,143,197,.24);
   border-radius:15px;background:linear-gradient(155deg,rgba(18,28,50,.94),rgba(7,12,26,.97));
   box-shadow:0 8px 22px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.035);cursor:pointer;overflow:hidden;
   transition:transform .16s,border-color .16s,box-shadow .16s}
 .car-card::before{content:"";position:absolute;inset:0 20% auto;height:1px;background:linear-gradient(90deg,transparent,rgba(80,174,255,.55),transparent)}
 .car-card:hover{transform:translateY(-3px);border-color:rgba(60,191,255,.62);box-shadow:0 14px 28px rgba(0,0,0,.35),0 0 22px rgba(37,143,255,.12)}
-.car-card.selected{border-color:rgba(50,210,255,.82);background:linear-gradient(155deg,rgba(13,56,78,.74),rgba(7,15,31,.98));
-  box-shadow:0 0 0 1px rgba(58,196,255,.22) inset,0 0 22px rgba(0,195,255,.16)}
+.car-card.selected{border-color:rgba(0,229,255,.85);background:linear-gradient(155deg,rgba(10,48,72,.82),rgba(6,14,30,.98));
+  box-shadow:0 0 0 1px rgba(0,229,255,.28) inset,0 0 24px rgba(0,229,255,.22)}
+.car-card-top-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px}
+.car-card-rarity, .rarity-chip{
+  font-size:8.5px;font-weight:900;letter-spacing:.1em;padding:2px 7px;border-radius:6px;
+  text-transform:uppercase;display:inline-flex;align-items:center;line-height:1.2;
+}
+.rarity-common{color:#94a3b8;background:rgba(148,163,184,.12);border:1px solid rgba(148,163,184,.3)}
+.rarity-rare{color:#38bdf8;background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.45);box-shadow:0 0 8px rgba(56,189,248,.18)}
+.rarity-epic{color:#e879f9;background:rgba(232,121,249,.14);border:1px solid rgba(232,121,249,.45);box-shadow:0 0 10px rgba(232,121,249,.22)}
+.rarity-legendary{color:#fde047;background:rgba(253,224,71,.14);border:1px solid rgba(253,224,71,.5);box-shadow:0 0 12px rgba(253,224,71,.26)}
 .car-card.available{border-color:rgba(255,204,97,.4)}
 .car-card.locked{border-color:rgba(110,124,159,.16)}
 .car-card-preview{width:100%;height:112px;display:block;border-radius:10px;
@@ -826,6 +903,25 @@ body.touch #touch{display:block}
   .car-card{min-height:180px}
   .car-card-preview{height:115px}
   .garage-filters .tab{padding:7px 10px}
+  .hud-top{padding:4px 6px;gap:3px}
+  .stat{min-width:50px;padding:4px 6px;border-radius:10px}
+  .stat small{font-size:7.5px;letter-spacing:.06em}
+  .stat b{font-size:12px}
+  .stat.speedo{min-width:62px;padding:4px 6px}
+  #lives{padding:4px 6px;gap:3px}
+  #lives i{width:9px;height:9px}
+  #tP{flex:0 0 32px;width:32px;height:28px;font-size:11px}
+  .tbtn{
+    width:clamp(48px, 13vw, 54px);
+    height:clamp(48px, 13vw, 54px);
+    border-radius:15px;
+    font-size:20px;
+  }
+  #tL{left:max(8px, env(safe-area-inset-left));bottom:max(10px, env(safe-area-inset-bottom))}
+  #tR{left:calc(max(8px, env(safe-area-inset-left)) + 54px);bottom:max(10px, env(safe-area-inset-bottom))}
+  #tJ{right:max(8px, env(safe-area-inset-right));bottom:max(10px, env(safe-area-inset-bottom))}
+  #tB{right:calc(max(8px, env(safe-area-inset-right)) + 54px);bottom:max(10px, env(safe-area-inset-bottom))}
+  #tD{right:max(8px, env(safe-area-inset-right));bottom:calc(max(10px, env(safe-area-inset-bottom)) + 58px)}
 }
 
 /* --- ЖЁЛТАЯ КНОПКА «НАЧАТЬ ГОНКУ» (КАК В РЕФЕРЕНСЕ) --- */
@@ -1114,6 +1210,179 @@ body.touch #touch{display:block}
 .stat-car-body{display:flex;flex-direction:column;gap:3px;color:#94a3b8;font-size:10.5px}
 .stat-car-body b{color:#ffd166}
 
+/* --- Boss HUD Banner --- */
+.boss-hud{position:absolute;top:calc(env(safe-area-inset-top,0px) + 72px);left:50%;transform:translateX(-50%);
+  width:min(440px,94vw);padding:9px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(40,10,20,.95),rgba(20,5,10,.95));
+  border:1.5px solid #ff2b43;box-shadow:0 0 24px rgba(255,43,67,.5),inset 0 0 16px rgba(255,43,67,.2);
+  z-index:5;pointer-events:none;animation:bossPulse 1.2s infinite alternate}
+@keyframes bossPulse{0%{box-shadow:0 0 16px rgba(255,43,67,.4)}100%{box-shadow:0 0 28px rgba(255,43,67,.85)}}
+.boss-hud-inner{display:flex;align-items:center;gap:10px}
+.boss-hud-icon{font-size:26px;animation:bossIconShake .4s infinite alternate}
+@keyframes bossIconShake{0%{transform:rotate(-6deg) scale(1)}100%{transform:rotate(6deg) scale(1.15)}}
+.boss-hud-info{flex:1;min-width:0;text-align:left}
+.boss-hud-title{font-size:12px;font-weight:900;letter-spacing:.12em;color:#ff8ea0;text-shadow:0 0 10px #ff2b43}
+.boss-hud-sub{font-size:10px;font-weight:800;color:#ffd166;letter-spacing:.05em;margin-top:2px}
+.boss-hud-bar-wrap{width:100%;height:6px;background:rgba(0,0,0,.6);border:1px solid rgba(255,43,67,.4);border-radius:99px;margin-top:4px;overflow:hidden}
+.boss-hud-bar{height:100%;width:50%;background:linear-gradient(90deg,#7dff9b,#ffd166,#ff2b43);transition:width .2s ease}
+
+/* --- Drift & Checkpoint HUD --- */
+.drift-tag{position:absolute;top:32%;left:50%;transform:translate(-50%,-50%);padding:7px 18px;border-radius:99px;
+  background:rgba(8,12,28,.88);border:1.5px solid #00e5ff;color:#7dffe4;font-size:clamp(15px,2.6vw,22px);font-weight:1000;
+  letter-spacing:.08em;box-shadow:0 0 22px rgba(0,229,255,.55);z-index:5;pointer-events:none;text-shadow:0 0 12px #00e5ff}
+.checkpoint-hud{position:absolute;top:calc(env(safe-area-inset-top,0px) + 52px);left:50%;transform:translateX(-50%);
+  padding:6px 16px;border-radius:12px;background:linear-gradient(135deg,rgba(6,18,36,.92),rgba(4,10,24,.92));
+  border:1px solid #00e5ff;color:#eaf6ff;font-size:11.5px;font-weight:900;letter-spacing:.08em;
+  box-shadow:0 0 18px rgba(0,229,255,.35);z-index:4;pointer-events:none;white-space:nowrap}
+.checkpoint-hud b{color:#ffd166}
+
+/* --- Tuning Subtabs & Customization --- */
+.tuning-subtabs{display:flex;gap:8px;margin-bottom:12px;justify-content:center}
+.tuning-subtab{padding:8px 18px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(111,158,229,.25);color:#94a3b8;font-size:12px;font-weight:900;letter-spacing:.08em;cursor:pointer;transition:.18s}
+.tuning-subtab.on{background:linear-gradient(135deg,rgba(0,229,255,.2),rgba(122,92,255,.2));border-color:#00e5ff;color:#fff;box-shadow:0 0 15px rgba(0,229,255,.3)}
+.tuning-section{display:flex;flex-direction:column;gap:12px;width:100%}
+.tune-group{background:rgba(10,16,35,.75);border:1px solid rgba(111,158,229,.2);border-radius:14px;padding:12px;text-align:left}
+.tune-group-title{font-size:11px;font-weight:900;color:#7fe9ff;letter-spacing:.14em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.tune-options{display:flex;gap:6px;flex-wrap:wrap}
+.tune-opt-btn{padding:6px 12px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#cfe6ff;font-size:11px;font-weight:800;cursor:pointer;transition:.15s}
+.tune-opt-btn:hover{background:rgba(0,229,255,.15);border-color:#00e5ff}
+.tune-opt-btn.on{background:rgba(0,229,255,.25);border-color:#00e5ff;color:#fff;box-shadow:0 0 10px rgba(0,229,255,.3)}
+.color-swatch-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.color-swatch-btn{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.3);cursor:pointer;transition:.15s}
+.color-swatch-btn.on{transform:scale(1.25);border-color:#fff;box-shadow:0 0 12px currentColor}
+
+/* --- Missions & Achievements Cards --- */
+.mission-card{display:flex;align-items:center;gap:12px;background:rgba(12,18,40,.82);border:1px solid rgba(111,158,229,.25);border-radius:14px;padding:12px 14px;margin-bottom:8px;text-align:left}
+.mission-card.done{border-color:rgba(125,255,155,.45);background:rgba(125,255,155,.08)}
+.mission-icon{font-size:26px;width:34px;text-align:center;flex-shrink:0}
+.mission-info{flex:1;min-width:0}
+.mission-title{font-size:13px;font-weight:900;color:#fff;letter-spacing:.04em}
+.mission-desc{font-size:11px;color:#94a3b8;margin-top:2px}
+.mission-bar-wrap{height:6px;border-radius:99px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);margin-top:6px;overflow:hidden}
+.mission-bar{height:100%;width:0;background:linear-gradient(90deg,#00e5ff,#7dff9b);transition:width .3s}
+.mission-meta{display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:10px;font-weight:800;color:#7fe9ff}
+.mission-rewards{display:flex;gap:8px;font-size:11px;font-weight:900;color:#ffd166}
+.claim-btn{padding:8px 14px;border-radius:10px;font-size:11px;font-weight:900;letter-spacing:.08em;cursor:pointer;border:none;flex-shrink:0;transition:.15s}
+.claim-btn.ready{background:linear-gradient(135deg,#ffe600,#ff9a3d);color:#080e18;box-shadow:0 0 15px rgba(255,209,102,.5)}
+.claim-btn.ready:hover{transform:scale(1.05)}
+.claim-btn.claimed{background:rgba(255,255,255,.08);color:#64748b;cursor:default}
+.claim-btn.locked{background:rgba(255,255,255,.05);color:#64748b;cursor:not-allowed}
+
+/* --- Modals --- */
+.modal-overlay{position:fixed;inset:0;background:rgba(3,5,14,.88);backdrop-filter:blur(14px);z-index:20;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-box{width:min(680px,96vw);max-height:88vh;background:linear-gradient(145deg,rgba(16,24,50,.98),rgba(8,12,28,.99));border:1px solid rgba(111,158,229,.35);border-radius:20px;padding:22px;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.7),0 0 35px rgba(0,229,255,.15);overflow:hidden}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:10px}
+.modal-header h3{font-size:20px;font-weight:1000;letter-spacing:.12em;color:#fff}
+.modal-close-btn{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#cbd5e1;font-size:18px;cursor:pointer;display:grid;place-items:center;transition:.15s}
+.modal-close-btn:hover{background:rgba(255,43,67,.2);border-color:#ff2b43;color:#fff}
+.modal-body{overflow-y:auto;flex:1;padding-right:4px;-webkit-overflow-scrolling:touch}
+
+/* --- Statistics Grid --- */
+.stats-cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:10px;margin-bottom:14px}
+.stat-summary-card{background:rgba(12,18,38,.75);border:1px solid rgba(111,158,229,.2);border-radius:12px;padding:12px;text-align:left}
+.stat-summary-card small{display:block;font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#7fe9ff}
+.stat-summary-card b{display:block;font-size:22px;font-weight:1000;color:#fff;margin-top:3px;font-variant-numeric:tabular-nums}
+.stat-summary-card b em{font-style:normal;font-size:12px;color:#ffd166;margin-left:4px}
+
+/* --- Low-Quality Mobile GPU Compositor Optimizations --- */
+body.qual-low .stat,
+body.qual-low #lives,
+body.qual-low .pw,
+body.qual-low #combo,
+body.qual-low .chip,
+body.qual-low .tbtn,
+body.qual-low #dimHud,
+body.qual-low .menu-topbar,
+body.qual-low .hero-car-stats span,
+body.qual-low .car-upgrade-preview-box{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+body.qual-low .stat.speedo,
+body.qual-low h1.logo,
+body.qual-low .plate.on,
+body.qual-low .sc-stage canvas,
+body.qual-low #dimHud,
+body.qual-low .boss-hud{
+  animation:none !important;
+}
+body.qual-low #fx{display:none}
+
+/* --- Comprehensive Responsive Breakpoints (320px .. 1024px+) --- */
+@media(max-width:1023px){
+  .card-plate{width:min(96vw,860px);max-width:96vw;min-width:0}
+  .car-upgrades-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:10px}
+}
+@media(max-width:767px){
+  .hero-race{
+    right:12px !important;
+    min-width:0 !important;
+    width:calc(100% - 148px) !important;
+    max-width:260px;
+    padding:10px 14px !important;
+    gap:8px !important;
+    min-height:54px !important;
+  }
+  .hero-race>span{font-size:18px !important}
+  .hero-race b{font-size:12px !important;letter-spacing:.08em !important}
+  .hero-race small{display:none !important}
+  .hero-garage{
+    left:12px !important;
+    min-height:54px !important;
+    padding:10px 14px !important;
+  }
+  #dimHud{
+    top:calc(env(safe-area-inset-top,0px) + 56px);
+    max-width:92vw;
+    white-space:normal;
+    text-align:center;
+    font-size:11px;
+    padding:6px 12px;
+  }
+  .boss-hud{
+    top:calc(env(safe-area-inset-top,0px) + 60px);
+    padding:7px 10px;
+  }
+  .checkpoint-hud{
+    top:calc(env(safe-area-inset-top,0px) + 52px);
+    font-size:10.5px;
+    padding:5px 12px;
+    max-width:92vw;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .tuning-subtabs{flex-wrap:wrap;gap:6px}
+  .tuning-subtab{flex:1 1 140px;padding:8px 10px;font-size:11px;text-align:center}
+  .mission-card{flex-wrap:wrap;gap:10px;padding:10px 12px}
+  .mission-meta{flex-wrap:wrap;gap:4px}
+  .claim-btn{width:100%;padding:8px 12px;margin-top:2px}
+  .stat-overview-grid{grid-template-columns:1fr;gap:8px}
+  .stat-metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .stat-car-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+}
+@media(max-width:430px){
+  .menu-topbar{min-height:68px;padding:7px 10px;gap:5px}
+  .hero-stage{inset:10% 0 22%}
+  .hero-side{bottom:max(76px,calc(env(safe-area-inset-bottom,0px) + 70px));width:92vw}
+  .hero-car-name{font-size:18px}
+  .hero-car-stats{gap:4px;margin-top:6px;flex-wrap:wrap;justify-content:center}
+  .hero-car-stats span{min-width:62px;padding:4px 7px}
+  .hero-garage{left:10px !important;padding:8px 11px !important}
+  .hero-race{right:10px !important;width:calc(100% - 132px) !important;padding:9px 12px !important}
+  .upg-card{padding:11px;gap:8px}
+  .upg-actions .btn{padding:8px 10px;font-size:12px}
+  #powerRow{bottom:calc(max(18px,env(safe-area-inset-bottom,0px)) + 74px);left:8px}
+}
+@media(max-width:374px){
+  .brand-mark>b{font-size:13px;letter-spacing:.05em}
+  .brand-mark small{display:none}
+  .hero-car-stats span{min-width:56px;padding:3px 5px}
+  .hero-garage b{font-size:9.5px}
+  .hero-race b{font-size:10.5px !important}
+  .stat-metrics-grid,.stat-car-grid,.stats-cards-grid{grid-template-columns:1fr}
+  .tbtn{width:50px;height:50px;font-size:20px;border-radius:15px}
+  #tR{left:calc(max(10px, env(safe-area-inset-left)) + 56px)}
+  #tB{right:calc(max(10px, env(safe-area-inset-right)) + 56px)}
+}
 </style>
 </head>
 <body>
@@ -1152,6 +1421,18 @@ body.touch #touch{display:block}
     <div id="combo"></div>
     <div id="levelTag"></div>
     <div id="dimHud" class="hidden"></div>
+    <div id="bossHud" class="boss-hud hidden">
+      <div class="boss-hud-inner">
+        <div class="boss-hud-icon">🚨</div>
+        <div class="boss-hud-info">
+          <div class="boss-hud-title" id="bossTitle">БОСС-ПОГОНЯ: ПЕРЕХВАТЧИК</div>
+          <div class="boss-hud-sub" id="bossSub">ДИСТАНЦИЯ: 18 М · ВРЕМЯ: 22 С</div>
+          <div class="boss-hud-bar-wrap"><div class="boss-hud-bar" id="bossBar"></div></div>
+        </div>
+      </div>
+    </div>
+    <div id="driftTag" class="drift-tag hidden"></div>
+    <div id="checkpointHud" class="checkpoint-hud hidden"></div>
     <div id="legend">
       <span class="chip bad"><s></s>КРАСНЫЙ = ОПАСНОСТЬ · избегайте</span>
       <span class="chip good"><s></s>ЦВЕТНОЕ = ОЧКИ · собирайте</span>
@@ -1160,10 +1441,11 @@ body.touch #touch{display:block}
   </div>
 
   <div id="touch">
-    <button class="tbtn" id="tL">◀</button>
-    <button class="tbtn" id="tR">▶</button>
-    <button class="tbtn" id="tB">⚡</button>
-    <button class="tbtn" id="tJ">▲</button>
+    <button class="tbtn" id="tL" type="button" aria-label="Влево">◀</button>
+    <button class="tbtn" id="tR" type="button" aria-label="Вправо">▶</button>
+    <button class="tbtn" id="tB" type="button" aria-label="Нитро">⚡</button>
+    <button class="tbtn" id="tJ" type="button" aria-label="Прыжок">▲</button>
+    <button class="tbtn" id="tD" type="button" aria-label="Дрифт / Тормоз">💨</button>
   </div>
 
   <section class="screen" id="scrMenu">
@@ -1183,10 +1465,14 @@ body.touch #touch{display:block}
         <div class="wallet-pill points-pill"><span>⭐</span><b id="homePoints">0</b></div>
         <button class="menu-toggle" id="btnMenuToggle" type="button" aria-label="Открыть меню" aria-expanded="false">☰</button>
         <nav class="menu-dropdown hidden" id="menuDropdown" aria-label="Главное меню">
-          <button type="button" data-menu-action="stat"><span>▤</span> Статистика</button>
-          <button type="button" data-menu-action="set"><span>⚙</span> Настройки</button>
+          <button type="button" data-menu-action="garage"><span>▦</span> Гараж и машины</button>
+          <button type="button" data-menu-action="tuning"><span>⚡</span> Тюнинг и прокачка</button>
+          <button type="button" data-menu-action="missions"><span>🎯</span> Миссии и задания</button>
+          <button type="button" data-menu-action="achieve"><span>🏆</span> Достижения</button>
+          <button type="button" data-menu-action="stat"><span>📊</span> Статистика и рекорды</button>
+          <button type="button" data-menu-action="set"><span>⚙</span> Настройки игры</button>
           <button type="button" data-menu-action="help"><span>?</span> Как играть</button>
-          <button type="button" data-menu-action="home"><span>↩</span> Выйти в главное меню</button>
+          <button type="button" data-menu-action="home"><span>↩</span> Главный экран</button>
         </nav>
       </div>
     </header>
@@ -1247,8 +1533,12 @@ body.touch #touch{display:block}
       <button class="tab on" data-tab="all" role="tab" aria-selected="true">ВСЁ</button>
       <button class="tab" data-tab="ships" role="tab" aria-selected="false">🚗 МАШИНЫ</button>
       <button class="tab" data-tab="carUpgrades" role="tab" aria-selected="false">⚡ ТЮНИНГ</button>
+      <button class="tab" data-tab="missions" role="tab" aria-selected="false">🎯 МИССИИ</button>
+      <button class="tab" data-tab="achieve" role="tab" aria-selected="false">🏆 ДОСТИЖЕНИЯ</button>
+      <button class="tab" data-tab="stat" role="tab" aria-selected="false">📊 СТАТИСТИКА</button>
       <button class="tab" data-tab="upgrades" role="tab" aria-selected="false">⭐ БОНУСЫ</button>
       <button class="tab" data-tab="skins" role="tab" aria-selected="false">🎨 СКИНЫ</button>
+      <button class="tab" data-tab="set" role="tab" aria-selected="false">⚙ НАСТРОЙКИ</button>
     </div>
     <div class="card-plate" id="tabShips">
       <div class="garage-inventory" id="garageInventory">
@@ -1304,7 +1594,32 @@ body.touch #touch{display:block}
           </div>
         </div>
       </div>
-      <div class="car-upgrades-grid" id="carUpgradesList"></div>
+      <div class="tuning-subtabs">
+        <button class="tuning-subtab on" id="subtabPerf" type="button">⚡ ХАРАКТЕРИСТИКИ</button>
+        <button class="tuning-subtab" id="subtabVisual" type="button">🎨 ВИЗУАЛЬНЫЙ ТЮНИНГ</button>
+      </div>
+      <div id="perfUpgradesBox">
+        <div class="car-upgrades-grid" id="carUpgradesList"></div>
+      </div>
+      <div class="hidden" id="visualTuningBox">
+        <div class="tuning-section" id="visualTuningList"></div>
+      </div>
+    </div>
+    <div class="card-plate hidden" id="tabMissions">
+      <div class="inventory-heading">
+        <div><span class="eyebrow">ЕЖЕДНЕВНЫЕ ЗАДАНИЯ</span><h3>МИССИИ</h3></div>
+        <span class="inventory-count" id="missionsTimerText">ОБНОВЛЕНИЕ 24 Ч</span>
+      </div>
+      <p class="sub" style="text-align:left;margin-bottom:12px;font-size:12px">Выполняйте задания в заездах и забирайте награды в 🪙 монетах и ⭐ очках!</p>
+      <div id="missionsList"></div>
+    </div>
+    <div class="card-plate hidden" id="tabAchieve">
+      <div class="inventory-heading">
+        <div><span class="eyebrow">КАРЬЕРА И ДОСТИЖЕНИЯ</span><h3>ДОСТИЖЕНИЯ</h3></div>
+        <span class="inventory-count" id="achieveCountText">0 / 12 ВЫПОЛНЕНО</span>
+      </div>
+      <p class="sub" style="text-align:left;margin-bottom:12px;font-size:12px">Долгосрочные цели для истинных мастеров гонок NEON RACE.</p>
+      <div id="achieveList"></div>
     </div>
     <div class="card-plate hidden" id="tabPerk" style="min-width:min(520px,94vw)">
       <div id="perkList"></div>
@@ -1325,7 +1640,14 @@ body.touch #touch{display:block}
       </div>
       <p class="sub" style="margin-top:8px;font-size:12px">Уровень повышается за <b>⭐ очки</b>, полученные в конце гонки.</p>
     </div>
-    <div class="card-plate hidden" id="tabStat"><div class="keys" id="statList"></div></div>
+    <div class="card-plate hidden" id="tabStat">
+      <div class="inventory-heading">
+        <div><span class="eyebrow">ЛИЧНЫЕ РЕКОРДЫ</span><h3>СТАТИСТИКА</h3></div>
+        <span class="inventory-count">КАРЬЕРА</span>
+      </div>
+      <div class="stats-cards-grid" id="statsCardsGrid"></div>
+      <div class="keys" id="statList"></div>
+    </div>
     <div class="card-plate hidden" id="tabSet">
       <div class="row" style="justify-content:space-between">
         <span style="font-size:13px;color:#a9d9ef">Звук / музыка</span>
@@ -1447,6 +1769,16 @@ body.touch #touch{display:block}
     <div class="row"><button class="btn pink" id="btnReviveAd">📺 Воскреснуть за рекламу</button><button class="btn ghost" id="btnReviveNo">Нет, закончить</button></div>
     <p class="ad-note" id="reviveNote"></p>
   </section>
+
+  <div class="modal-overlay hidden" id="modalContainer">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalTitle">МЕНЮ</h3>
+        <button class="modal-close-btn" id="btnModalClose" type="button" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
 
   <div id="load"><div class="ring"></div><p>ЗАГРУЗКА…</p></div>
   <div id="toast"></div>
