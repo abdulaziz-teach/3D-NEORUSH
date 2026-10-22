@@ -92,15 +92,81 @@ canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 .stat.right b{color:#fff5d6;text-shadow:0 0 14px rgba(255,209,102,.65)}
 
 #lives{
-  display:flex;gap:5px;padding:7px 11px;
-  background:rgba(8,12,28,.68);
-  border:1px solid rgba(255,47,185,.45);
+  display:flex;gap:6px;padding:6px 10px;
+  background:rgba(8,12,28,.78);
+  border:1px solid rgba(255,43,67,.45);
   border-radius:14px;
   backdrop-filter:blur(8px);
-  box-shadow:0 6px 18px rgba(0,0,0,.35), 0 0 14px rgba(255,47,185,.16);
+  box-shadow:0 6px 18px rgba(0,0,0,.45), 0 0 14px rgba(255,43,67,.2);
+  align-items:center;
 }
-#lives i{width:13px;height:13px;background:var(--c2);border-radius:50%;box-shadow:0 0 12px var(--c2);display:block;transition:.25s}
-#lives i.off{background:#1e2438;box-shadow:none;transform:scale(.65);opacity:.5}
+#lives i{
+  width:16px;height:16px;
+  background:transparent;
+  border-radius:0;
+  box-shadow:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  transition:transform .25s ease, opacity .25s ease;
+}
+#lives i .heart-svg{
+  width:100%;height:100%;
+  display:block;
+  overflow:visible;
+  animation:cyberHeartPulse 2.4s ease-in-out infinite;
+  transform-origin:center;
+}
+#lives i .heart-crest{
+  fill:rgba(255,43,67,.32);
+  stroke:#ff2b43;
+  stroke-width:1.6;
+  stroke-linejoin:round;
+  filter:drop-shadow(0 0 5px rgba(255,43,67,.8));
+  transition:fill .25s ease, stroke .25s ease;
+}
+#lives i .heart-accent{
+  fill:none;
+  stroke:#ff758f;
+  stroke-width:1.1;
+  stroke-linecap:round;
+  opacity:.85;
+}
+#lives i .heart-core{
+  fill:#ffffff;
+  filter:drop-shadow(0 0 3px #ff2b43);
+}
+#lives i.off{
+  animation:heartLostGlitch .45s ease-out forwards;
+}
+#lives i.off .heart-svg{
+  animation:none;
+}
+#lives i.off .heart-crest{
+  fill:rgba(30,36,56,.3);
+  stroke:#404b68;
+  filter:none;
+}
+#lives i.off .heart-accent{
+  opacity:.15;
+  stroke:#475569;
+}
+#lives i.off .heart-core{
+  opacity:0;
+}
+@keyframes cyberHeartPulse{
+  0%, 100%{transform:scale(1)}
+  15%{transform:scale(1.1)}
+  30%{transform:scale(1.02)}
+  45%{transform:scale(1.14)}
+}
+@keyframes heartLostGlitch{
+  0%{transform:scale(1.28);filter:drop-shadow(0 0 10px #ff2b43)}
+  35%{transform:scale(.82) skewX(7deg);opacity:.6}
+  70%{transform:scale(.78) skewX(-4deg);opacity:.4}
+  100%{transform:scale(.75);opacity:.32;filter:none}
+}
 
 #powerRow{
   position:absolute;
@@ -112,39 +178,126 @@ canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
   z-index:2;
 }
 .pw{
-  display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.08em;color:#bff3ff;
+  display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.08em;color:#bff3ff;
   background:rgba(4,8,22,.94);border:1px solid rgba(150,225,255,.35);border-radius:12px;padding:5px 10px 5px 8px;
   backdrop-filter:blur(8px);box-shadow:0 4px 14px rgba(0,0,0,.55),inset 0 0 12px rgba(0,229,255,.08);
   transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
-.pw .p-ic{font-size:14px;line-height:1;filter:drop-shadow(0 0 4px currentColor)}
+.pw .p-ic{
+  width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;
+  line-height:1;position:relative;flex-shrink:0;
+}
+.cyber-power-svg{
+  width:18px;height:18px;display:block;overflow:visible;
+  transform-origin:center;
+}
 .pw>span:nth-child(2){min-width:58px;color:#fff;font-size:11px;font-weight:900;text-shadow:0 1px 3px #000}
-.pw.boost{border-color:rgba(0,229,255,.5);box-shadow:0 4px 16px rgba(0,0,0,.6),0 0 10px rgba(0,229,255,.15),inset 0 0 14px rgba(0,229,255,.08)}
-.pw.boost .p-ic{color:#69f4ff;filter:drop-shadow(0 0 6px #00e5ff)}
-.pw.boost>span:nth-child(2){color:#e7fdff;letter-spacing:.12em;text-shadow:0 0 8px rgba(0,229,255,.9),0 1px 3px #000}
-.pw.mag{border-color:rgba(217,70,239,.5);box-shadow:0 4px 16px rgba(0,0,0,.6),0 0 10px rgba(217,70,239,.15),inset 0 0 14px rgba(217,70,239,.08)}
-.pw.mag .p-ic{color:#f0abfc;filter:drop-shadow(0 0 6px #d946ef)}
-.pw.mag>span:nth-child(2){color:#fae8ff;letter-spacing:.12em;text-shadow:0 0 8px rgba(217,70,239,.9),0 1px 3px #000}
-.pw.sh{border-color:rgba(16,185,129,.5);box-shadow:0 4px 16px rgba(0,0,0,.6),0 0 10px rgba(16,185,129,.15),inset 0 0 14px rgba(16,185,129,.08)}
-.pw.sh .p-ic{color:#6ee7b7;filter:drop-shadow(0 0 6px #10b981)}
-.pw.sh>span:nth-child(2){color:#ecfdf5;letter-spacing:.12em;text-shadow:0 0 8px rgba(16,185,129,.9),0 1px 3px #000}
 
-/* Active Glowing Cyberpunk State */
+/* Nitro Icon & Powerup */
+.pw.boost{border-color:rgba(0,229,255,.5);box-shadow:0 4px 16px rgba(0,0,0,.6),0 0 10px rgba(0,229,255,.15),inset 0 0 14px rgba(0,229,255,.08)}
+.pw.boost>span:nth-child(2){color:#e7fdff;letter-spacing:.12em;text-shadow:0 0 8px rgba(0,229,255,.9),0 1px 3px #000}
+.nitro-capsule-hull{
+  stroke:#00e5ff;stroke-width:1.4;fill:rgba(0,229,255,.14);
+  filter:drop-shadow(0 0 5px rgba(0,229,255,.8));
+  transition:all .2s ease;
+}
+.nitro-capsule-mid{
+  stroke:rgba(168,85,247,.6);stroke-width:.9;stroke-dasharray:1.5 2;
+}
+.nitro-bolt-core{
+  fill:#a855f7;stroke:#f1f5f9;stroke-width:.6;stroke-linejoin:round;
+  filter:drop-shadow(0 0 5px #00e5ff);
+  transform-origin:center;
+  transition:all .2s ease;
+}
+
+/* Magnet Icon & Powerup */
+.pw.mag{border-color:rgba(217,70,239,.5);box-shadow:0 4px 16px rgba(0,0,0,.6),0 0 10px rgba(217,70,239,.15),inset 0 0 14px rgba(217,70,239,.08)}
+.pw.mag>span:nth-child(2){color:#fae8ff;letter-spacing:.12em;text-shadow:0 0 8px rgba(217,70,239,.9),0 1px 3px #000}
+.mag-arch-hull{
+  stroke:#d946ef;stroke-width:1.4;stroke-linecap:round;fill:rgba(217,70,239,.14);
+  filter:drop-shadow(0 0 5px rgba(217,70,239,.75));
+}
+.mag-pole{
+  fill:#f0abfc;stroke:#d946ef;stroke-width:.5;
+}
+.mag-flux-line{
+  stroke:#ffe48f;stroke-width:1.1;stroke-linecap:round;opacity:.85;
+  filter:drop-shadow(0 0 4px #ffd166);
+  transform-origin:center;
+}
+
+/* Shield Icon & Powerup */
+.pw.sh{border-color:rgba(0,229,255,.5);box-shadow:0 4px 16px rgba(0,0,0,.6),0 0 10px rgba(0,229,255,.15),inset 0 0 14px rgba(0,229,255,.08)}
+.pw.sh>span:nth-child(2){color:#ecfdf5;letter-spacing:.12em;text-shadow:0 0 8px rgba(0,229,255,.9),0 1px 3px #000}
+.shield-armor-hull{
+  stroke:#00e5ff;stroke-width:1.4;stroke-linejoin:round;fill:rgba(0,229,255,.14);
+  filter:drop-shadow(0 0 5px rgba(0,229,255,.8));
+  transform-origin:center;
+  transition:all .2s ease;
+}
+.shield-inner-field{
+  stroke:#10b981;stroke-width:1;stroke-linejoin:round;fill:rgba(16,185,129,.2);
+  transform-origin:center;
+  transition:all .2s ease;
+}
+.shield-core-dot{
+  fill:#ffffff;filter:drop-shadow(0 0 3px #00e5ff);
+}
+
+/* Active Glowing Cyberpunk State with Fluid Animations */
 .pw.active{transform:scale(1.02)}
 .pw.boost.active{
   border-color:#00e5ff;
-  box-shadow:0 4px 20px rgba(0,0,0,.6),0 0 18px rgba(0,229,255,.7),inset 0 0 16px rgba(0,229,255,.25);
+  box-shadow:0 4px 20px rgba(0,0,0,.6),0 0 18px rgba(0,229,255,.75),inset 0 0 16px rgba(168,85,247,.25);
   animation:pwPulseCyan 1.2s ease-in-out infinite alternate;
 }
+.pw.boost.active .nitro-capsule-hull{
+  stroke:#38bdf8;fill:rgba(168,85,247,.28);
+  filter:drop-shadow(0 0 8px #00e5ff) drop-shadow(0 0 12px #a855f7);
+}
+.pw.boost.active .nitro-bolt-core{
+  fill:#ffffff;stroke:#e0e7ff;
+  animation:nitroBoltSurge .55s ease-in-out infinite alternate;
+}
+@keyframes nitroBoltSurge{
+  0%{transform:scale(.95);filter:drop-shadow(0 0 4px #00e5ff)}
+  100%{transform:scale(1.18);filter:drop-shadow(0 0 10px #ffffff) drop-shadow(0 0 14px #a855f7)}
+}
+
 .pw.mag.active{
   border-color:#d946ef;
-  box-shadow:0 4px 20px rgba(0,0,0,.6),0 0 18px rgba(217,70,239,.7),inset 0 0 16px rgba(217,70,239,.25);
+  box-shadow:0 4px 20px rgba(0,0,0,.6),0 0 18px rgba(217,70,239,.75),inset 0 0 16px rgba(217,70,239,.25);
   animation:pwPulseViolet 1.2s ease-in-out infinite alternate;
 }
+.pw.mag.active .mag-flux-line{
+  animation:magFluxWave .75s ease-in-out infinite alternate;
+}
+@keyframes magFluxWave{
+  0%{opacity:.5;transform:scaleY(.7)}
+  100%{opacity:1;transform:scaleY(1.3);stroke:#ffffff;filter:drop-shadow(0 0 8px #ffd166)}
+}
+
 .pw.sh.active{
-  border-color:#10b981;
-  box-shadow:0 4px 20px rgba(0,0,0,.6),0 0 18px rgba(16,185,129,.7),inset 0 0 16px rgba(16,185,129,.25);
+  border-color:#00e5ff;
+  box-shadow:0 4px 20px rgba(0,0,0,.6),0 0 18px rgba(0,229,255,.75),0 0 24px rgba(16,185,129,.4),inset 0 0 16px rgba(0,229,255,.25);
   animation:pwPulseGreen 1.2s ease-in-out infinite alternate;
+}
+.pw.sh.active .shield-armor-hull{
+  stroke:#38bdf8;
+  filter:drop-shadow(0 0 9px #00e5ff) drop-shadow(0 0 14px #10b981);
+  animation:shieldArmorPulse .95s ease-in-out infinite alternate;
+}
+.pw.sh.active .shield-inner-field{
+  animation:shieldFieldRipple 1.1s ease-in-out infinite alternate;
+}
+@keyframes shieldArmorPulse{
+  0%{transform:scale(1)}
+  100%{transform:scale(1.08)}
+}
+@keyframes shieldFieldRipple{
+  0%{opacity:.6;transform:scale(.92);fill:rgba(16,185,129,.18)}
+  100%{opacity:1;transform:scale(1.06);fill:rgba(0,229,255,.36);stroke:#67e8f9}
 }
 @keyframes pwPulseCyan{
   0%{box-shadow:0 4px 18px rgba(0,0,0,.6),0 0 12px rgba(0,229,255,.5),inset 0 0 12px rgba(0,229,255,.2)}
@@ -508,10 +661,12 @@ body.touch #touch{display:block}
   .stat b{font-size:13.5px}
   .stat.speedo{min-width:70px}
   #lives{padding:6px 7px;gap:3.5px}
-  #lives i{width:11px;height:11px}
+  #lives i{width:13px;height:13px}
   .hud-top{padding:6px 8px;gap:4px}
   #powerRow{gap:4px}
   .pw{font-size:10px;padding:4px 8px 4px 6px}
+  .pw .p-ic{width:15px;height:15px}
+  .cyber-power-svg{width:15px;height:15px}
   .pw>span:nth-child(2){min-width:49px;font-size:10px}
   .pw .bar{width:70px;height:8px}
   .stat.lvstat span{font-size:8px;padding:2px 3px;letter-spacing:0}
@@ -814,6 +969,7 @@ body.touch #touch{display:block}
 }
 @media(prefers-reduced-motion:reduce){
   .hero-garage,.hero-race,.hero-car-switch button,.menu-toggle{transition:none}
+  #lives i .heart-svg, .nitro-bolt-core, .shield-armor-hull, .shield-inner-field, .mag-flux-line, .pw.active{animation:none!important}
 }
 .garage-filters{position:relative;top:auto;align-self:center;margin:0 0 12px}
 #tabShips,#tabSkins{width:min(1120px,94vw);max-width:none;min-width:0}
@@ -921,7 +1077,9 @@ body.touch #touch{display:block}
   .stat b{font-size:12px}
   .stat.speedo{min-width:62px;padding:4px 6px}
   #lives{padding:4px 6px;gap:3px}
-  #lives i{width:9px;height:9px}
+  #lives i{width:11px;height:11px}
+  .pw .p-ic{width:13px;height:13px}
+  .cyber-power-svg{width:13px;height:13px}
   #tP{flex:0 0 32px;width:32px;height:28px;font-size:11px}
   .tbtn{
     width:clamp(48px, 13vw, 54px);
@@ -1426,9 +1584,40 @@ body.qual-low #fx{display:none}
       </div>
     </div>
     <div id="powerRow">
-      <div class="pw boost"><span class="p-ic">⚡</span><span>NITRO</span><div class="bar"><i id="boostBar"></i></div></div>
-      <div class="pw mag"><span class="p-ic">🧲</span><span>МАГНИТ</span><div class="bar"><i id="magBar"></i></div></div>
-      <div class="pw sh"><span class="p-ic">🛡</span><span>ЩИТ</span><div class="bar"><i id="shBar"></i></div></div>
+      <div class="pw boost">
+        <span class="p-ic" aria-label="Нитро">
+          <svg viewBox="0 0 20 20" class="cyber-power-svg nitro-svg" fill="none" aria-hidden="true">
+            <rect x="2.5" y="4" width="15" height="12" rx="6" class="nitro-capsule-hull" />
+            <path d="M5.5 10H14.5" class="nitro-capsule-mid" />
+            <path d="M11.2 5.5L7.2 10.8H10.5L8.8 14.5L13.2 9.2H9.8L11.2 5.5Z" class="nitro-bolt-core" />
+          </svg>
+        </span>
+        <span>NITRO</span>
+        <div class="bar"><i id="boostBar"></i></div>
+      </div>
+      <div class="pw mag">
+        <span class="p-ic" aria-label="Магнит">
+          <svg viewBox="0 0 20 20" class="cyber-power-svg mag-svg" fill="none" aria-hidden="true">
+            <path d="M5 5.5V9.8C5 12.5 7.2 14.8 10 14.8C12.8 14.8 15 12.5 15 9.8V5.5" class="mag-arch-hull" />
+            <rect x="4" y="3.5" width="2.2" height="3" rx="0.5" class="mag-pole" />
+            <rect x="13.8" y="3.5" width="2.2" height="3" rx="0.5" class="mag-pole" />
+            <path d="M7 7C7.8 8.2 8.8 8.8 10 8.8C11.2 8.8 12.2 8.2 13 7" class="mag-flux-line" />
+          </svg>
+        </span>
+        <span>МАГНИТ</span>
+        <div class="bar"><i id="magBar"></i></div>
+      </div>
+      <div class="pw sh">
+        <span class="p-ic" aria-label="Щит">
+          <svg viewBox="0 0 20 20" class="cyber-power-svg shield-svg" fill="none" aria-hidden="true">
+            <path d="M10 2.2L16.2 5V10.2C16.2 14.1 13.5 17.2 10 18.2C6.5 17.2 3.8 14.1 3.8 10.2V5L10 2.2Z" class="shield-armor-hull" />
+            <path d="M10 5.4L13.8 7.2V10.2C13.8 12.6 12.2 14.6 10 15.4C7.8 14.6 6.2 12.6 6.2 10.2V7.2L10 5.4Z" class="shield-inner-field" />
+            <circle cx="10" cy="10.2" r="1.4" class="shield-core-dot" />
+          </svg>
+        </span>
+        <span>ЩИТ</span>
+        <div class="bar"><i id="shBar"></i></div>
+      </div>
     </div>
     <div id="combo"></div>
     <div id="levelTag"></div>
