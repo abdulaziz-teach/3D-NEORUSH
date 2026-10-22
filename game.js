@@ -1929,10 +1929,13 @@ function _showToast(msg, ms) {
     }
   }, ms);
 }
+const CYBER_HEART_SVG = '<svg viewBox="0 0 24 24" class="heart-svg" aria-hidden="true"><path class="heart-crest" d="M12 21.2L3.8 13.4C1.4 11 1.4 7.2 3.8 4.8C6.2 2.4 10 2.4 12.4 4.8L12 5.2L11.6 4.8C14 2.4 17.8 2.4 20.2 4.8C22.6 7.2 22.6 11 20.2 13.4L12 21.2Z"/><path class="heart-accent" d="M12 7.2L14.2 9.5H17.2L12 15.8L6.8 9.5H9.8L12 7.2Z"/><polygon class="heart-core" points="12,8.8 13.4,10.2 10.6,10.2"/></svg>';
+
 function renderLives() {
   el.lives.innerHTML = '';
   for (let i = 0; i < G.maxLives; i++) {
     const s = document.createElement('i');
+    s.innerHTML = CYBER_HEART_SVG;
     if (i >= G.lives) s.className = 'off';
     el.lives.appendChild(s);
   }
