@@ -1432,10 +1432,15 @@ body.touch #touch{display:block}
 .tune-options{display:flex;gap:6px;flex-wrap:wrap}
 .tune-opt-btn{padding:6px 12px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#cfe6ff;font-size:11px;font-weight:800;cursor:pointer;transition:.15s}
 .tune-opt-btn:hover{background:rgba(0,229,255,.15);border-color:#00e5ff}
-.tune-opt-btn.on{background:rgba(0,229,255,.25);border-color:#00e5ff;color:#fff;box-shadow:0 0 10px rgba(0,229,255,.3)}
+.tune-opt-btn.on{background:rgba(0,229,255,.28);border-color:#00e5ff;color:#fff;box-shadow:0 0 12px rgba(0,229,255,.4)}
+.tune-opt-btn.to-buy{border-color:rgba(255,209,102,.5);color:#ffe48f;background:rgba(255,209,102,.08)}
+.tune-opt-btn.to-buy:hover{background:rgba(255,209,102,.2);border-color:#ffd166}
+.tune-opt-btn.owned{border-color:rgba(125,255,155,.35);color:#dcfce7;background:rgba(125,255,155,.06)}
 .color-swatch-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .color-swatch-btn{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.3);cursor:pointer;transition:.15s}
 .color-swatch-btn.on{transform:scale(1.25);border-color:#fff;box-shadow:0 0 12px currentColor}
+.color-swatch-btn.to-buy{position:relative}
+.color-swatch-btn.to-buy::after{content:'';position:absolute;inset:2px;border:1.5px dashed rgba(255,255,255,.65);border-radius:50%}
 
 /* --- Missions & Achievements Cards --- */
 .mission-card{display:flex;align-items:center;gap:12px;background:rgba(12,18,40,.82);border:1px solid rgba(111,158,229,.25);border-radius:14px;padding:12px 14px;margin-bottom:8px;text-align:left}
@@ -1451,8 +1456,9 @@ body.touch #touch{display:block}
 .claim-btn{padding:8px 14px;border-radius:10px;font-size:11px;font-weight:900;letter-spacing:.08em;cursor:pointer;border:none;flex-shrink:0;transition:.15s}
 .claim-btn.ready{background:linear-gradient(135deg,#ffe600,#ff9a3d);color:#080e18;box-shadow:0 0 15px rgba(255,209,102,.5)}
 .claim-btn.ready:hover{transform:scale(1.05)}
-.claim-btn.claimed{background:rgba(255,255,255,.08);color:#64748b;cursor:default}
+.claim-btn.claimed{background:rgba(125,255,155,.12);color:#7dff9b;border:1px solid rgba(125,255,155,.3);cursor:default}
 .claim-btn.locked{background:rgba(255,255,255,.05);color:#64748b;cursor:not-allowed}
+.mission-card.claimed{opacity:.82;border-color:rgba(125,255,155,.25)}
 
 /* --- Modals --- */
 .modal-overlay{position:fixed;inset:0;background:rgba(3,5,14,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;pointer-events:auto}

@@ -90,6 +90,7 @@ try {
   console.log('7. Hero button btnOpenTut starts race tutorial at step 1');
 
   console.log('\n--- ALL DOM BUTTON TESTS PASSED (100%) ---');
+  process.exit(0);
 } catch (err) {
   console.error('TEST FAILED:', err.message, err.stack);
   process.exit(1);

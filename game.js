@@ -2891,6 +2891,25 @@ function bankCoins() { store.set('coins', G.coins); }
 
 function enterDimension(dimIdx) {
   const dim = DIMENSIONS[dimIdx] || DIMENSIONS[0];
+  if (G.bossActive) {
+    G.bossActive = false;
+    G.bossWarningActive = false;
+    const bh = el._bossHud || (el._bossHud = $('#bossHud'));
+    if (bh) bh.classList.add('hidden');
+    G.bossEscaped = (G.bossEscaped || 0) + 1;
+    G.runBossEscaped = (G.runBossEscaped || 0) + 1;
+    G.meta.bossEscapes = (G.meta.bossEscapes || 0) + 1;
+    const rCoins = 250, rPts = 100, rScore = 5000;
+    G.coins += rCoins; G.runCoins += rCoins; ACCT.add(rPts); G.score += rScore;
+    bankCoins(); store.set('meta', G.meta);
+    if (typeof checkAchievementsRealtime === 'function') checkAchievementsRealtime();
+    if (typeof checkMissionsInRace === 'function') checkMissionsInRace();
+    toast('🌀 ПОБЕГ ЧЕРЕЗ ПОРТАЛ! Босс потерял след!', 3500);
+    G.nextBossAt = G.dist + 3000;
+  } else if (G.bossWarningActive) {
+    G.bossWarningActive = false;
+    G.nextBossAt = G.dist + 3000;
+  }
   G.inDimension = true;
   G.dimensionIdx = dimIdx;
   G.dimensionTime = 45.0;
@@ -2967,12 +2986,17 @@ function startRun() {
     driftControlMul: 1,
     magnetRadiusBonus: 0,
     bossActive: false,
+    bossWarningActive: false,
+    bossWarningTimer: 0,
     bossTimer: 0,
     bossDist: 20,
     bossZ: 20,
     bossX: 0,
     bossLane: 1,
     bossName: '',
+    bossAttackState: 'idle',
+    bossAttackTimer: 0,
+    bossTargetLane: 1,
     nextBossAt: 2200,
     bossEscaped: 0,
     drifting: false,
@@ -3046,6 +3070,9 @@ function startRun() {
 
 function gameOver() {
   G.running = false; G.over = true; G.paused = false; setHint(-1);
+  G.bossActive = false; G.bossWarningActive = false;
+  const bh = el._bossHud || (el._bossHud = $('#bossHud'));
+  if (bh) bh.classList.add('hidden');
   Sound.blip(160, .45, 'sawtooth', .28); Sound.noise(.45, .3);
   Sound.engineSet(0);
   const prevBest = Math.floor(G.meta.best || 0);
@@ -3066,15 +3093,17 @@ function gameOver() {
   if (typeof getMissionState === 'function') {
     const mSt = getMissionState();
     MISSIONS.forEach(m => {
-      const item = mSt[m.id] || { cur: 0, done: false, claimed: false };
+      const item = (mSt.items && mSt.items[m.id]) || { cur: 0, done: false, claimed: false, notified: false };
       const val = m.getVal ? m.getVal() : 0;
       item.cur = Math.max(item.cur || 0, val);
-      if (item.cur >= m.goal) item.done = true;
-      mSt[m.id] = item;
+      if (item.cur >= m.goal) { item.done = true; item.notified = true; }
+      if (mSt.items) mSt.items[m.id] = item;
     });
     setMissionState(mSt);
   }
-  if (typeof getAchieveState === 'function') {
+  if (typeof checkAchievementsRealtime === 'function') {
+    checkAchievementsRealtime(true);
+  } else if (typeof getAchieveState === 'function') {
     const aSt = getAchieveState();
     ACHIEVEMENTS.forEach(a => {
       const item = aSt[a.id] || { cur: 0, done: false, claimed: false };
@@ -3244,6 +3273,8 @@ function updateHUD() {
       dimTag.classList.add('hidden');
     }
   }
+  if (typeof checkMissionsInRace === 'function') checkMissionsInRace();
+  if (typeof checkAchievementsRealtime === 'function') checkAchievementsRealtime();
 }
 function bumpCombo(d) {
   G.combo = Math.max(1, Math.min(9, G.combo + d));
@@ -3261,6 +3292,7 @@ function bumpCombo(d) {
 
 /* --------------------------- UPDATE --------------------------- */
 function update(dt) {
+  if (!G.meta || typeof G.meta !== 'object') G.meta = {};
   const lv = G.level;
   const dp = diff01();
   // Base speed 23 = 120 km/h; Full upgrade caps at 400 km/h (internal speed 76.67)
@@ -3377,13 +3409,26 @@ function update(dt) {
   }
 
   // Boss Chase System
+  // 1. Pre-spawn Warning (~2.5s / 80m before boss arrival)
+  if (!G.inDimension && !G.bossActive && !G.bossWarningActive && G.dist >= (G.nextBossAt || 2200) - 80) {
+    G.bossWarningActive = true;
+    toast('⚠️ БОСС ПРИБЛИЖАЕТСЯ!', 3000);
+    Sound.bossWarning();
+    G.flash = 0.35;
+  }
+
+  // 2. Boss Spawn (when dist reaches nextBossAt)
   if (!G.inDimension && !G.bossActive && G.dist >= (G.nextBossAt || 2200)) {
     G.bossActive = true;
+    G.bossWarningActive = false;
     G.bossTimer = 22.0;
     G.bossDist = 20.0;
     G.bossZ = 20.0;
-    G.bossX = LANES[1];
-    G.bossLane = 1;
+    G.bossLane = (typeof G.lane === 'number' && G.lane >= 0 && G.lane <= 2) ? G.lane : 1;
+    G.bossX = LANES[G.bossLane];
+    G.bossAttackState = 'idle';
+    G.bossAttackTimer = 3.5; // First attack telegraph in 3.5s
+    G.bossTargetLane = G.bossLane;
     const bNames = [
       'ПЕРЕХВАТЧИК «СПЕКТР-9»',
       'КИБЕР-КРЕЙСЕР «ОНИКС»',
@@ -3395,31 +3440,120 @@ function update(dt) {
     G.bossName = bNames[G.trackIdx % bNames.length] || 'ПЕРЕХВАТЧИК «СПЕКТР-9»';
     toast('🚨 БОСС-ПОГОНЯ: «' + G.bossName + '» НА ТРАССЕ! УДЕРЖИВАЙТЕ СКОРОСТЬ!', 4000);
     Sound.bossWarning();
-    G.flash = 0.6; G.shake = 0.5;
+    G.flash = 0.45; G.shake = 0.4;
   }
   if (G.bossActive) {
     if (!G.paused) {
       G.bossTimer -= dt;
-      if (Math.random() < 0.02) G.bossLane = Math.floor(Math.random() * 3);
-      const targetBossX = LANES[G.bossLane];
-      G.bossX += (targetBossX - G.bossX) * Math.min(1, dt * 3.5);
 
+      // Distance control based on player speed
       if (G.speed > 26 || G.boostOn) G.bossDist = Math.min(32, G.bossDist + dt * 2.8);
       else if (G.speed < 22) G.bossDist = Math.max(5, G.bossDist - dt * 2.2);
 
       G.bossZ = G.bossDist;
+
+      // Attack State Machine: idle -> aiming (fair telegraph) -> strike -> idle
+      G.bossAttackTimer -= dt;
+
+      if (G.bossAttackState === 'idle') {
+        if (Math.random() < 0.02) G.bossLane = Math.floor(Math.random() * 3);
+        const targetBossX = LANES[G.bossLane];
+        G.bossX += (targetBossX - G.bossX) * Math.min(1, dt * 3.5);
+
+        if (G.bossAttackTimer <= 0) {
+          G.bossAttackState = 'aiming';
+          G.bossAttackTimer = 1.4; // Fair 1.4s window for player to dodge lane
+          G.bossTargetLane = (typeof G.lane === 'number' && G.lane >= 0 && G.lane <= 2) ? G.lane : 1;
+          Sound.blip(660, 0.12, 'square', 0.15);
+          addFloatingText(LANES[G.bossTargetLane], 2.4, 18, '⚠️ ЗАХВАТ ЦЕЛИ!', '#ff2b43');
+        }
+      } else if (G.bossAttackState === 'aiming') {
+        const targetBossX = LANES[G.bossTargetLane];
+        G.bossX += (targetBossX - G.bossX) * Math.min(1, dt * 5.0);
+
+        if (G.bossAttackTimer <= 0) {
+          G.bossAttackState = 'strike';
+          G.bossAttackTimer = 0.6; // strike beam display duration
+          Sound.blip(220, 0.25, 'sawtooth', 0.3);
+
+          const playerInLane = Math.abs(G.x - LANES[G.bossTargetLane]) < 0.85;
+          const playerIsHighJump = G.y > 1.25;
+
+          if (playerInLane && !playerIsHighJump && G.invul <= 0) {
+            // Hit by boss strike: shield absorbs first, otherwise lose life
+            if (G.shield > 0) {
+              G.shield = 0;
+              G.shieldRipple = 1.0;
+              G.invul = 1.2;
+              bumpCombo(-1);
+              Sound.noise(0.25, 0.2);
+              Sound.blip(320, 0.14, 'triangle', 0.2);
+              toast('🛡 Щит поглотил удар босса!', 1800);
+              addFloatingText(G.x, 2.0, 0, '🛡 ЩИТ ПОГЛОТИЛ УДАР', '#00e5ff');
+            } else {
+              G.lives--;
+              G.invul = 2.0; // Fair invulnerability window prevents instant multi-death
+              G.shake = 0.8;
+              G.flash = 0.5;
+              bumpCombo(-1);
+              Sound.noise(0.4, 0.3);
+              toast('💥 УДАР БОССА! Потеряна жизнь!', 2000);
+              renderLives();
+              if (G.lives <= 0) maybeRevive();
+            }
+          } else {
+            // Successfully dodged!
+            toast('💨 ВЫ УКЛОНИЛИСЬ ОТ УДАРА БОССА!', 1800);
+            addFloatingText(G.x, 2.2, 0, '💨 УКЛОНЕНИЕ!', '#7dff9b');
+            Sound.blip(520, 0.1, 'triangle', 0.15);
+            G.runNearMisses = (G.runNearMisses || 0) + 1;
+            bumpCombo(1);
+          }
+        }
+      } else if (G.bossAttackState === 'strike') {
+        if (G.bossAttackTimer <= 0) {
+          G.bossAttackState = 'idle';
+          G.bossAttackTimer = 4.2; // 4.2s interval between attacks
+        }
+      }
+
+      // Close proximity direct ram check with shield protection
+      if (G.bossDist <= 5.5 && Math.abs(G.bossX - G.x) < 0.85 && G.invul <= 0) {
+        if (G.shield > 0) {
+          G.shield = 0;
+          G.shieldRipple = 1.0;
+          G.invul = 1.2;
+          G.bossDist = 14.0;
+          bumpCombo(-1);
+          Sound.noise(0.25, 0.2);
+          toast('🛡 Щит поглотил таран босса!', 1800);
+        } else {
+          G.lives--;
+          G.invul = 2.0;
+          G.shake = 0.8;
+          G.flash = 0.5;
+          G.bossDist = 14.0;
+          bumpCombo(-1);
+          Sound.noise(0.4, 0.3);
+          toast('💥 ТАРАН БОССА! Потеряна жизнь!', 2000);
+          renderLives();
+          if (G.lives <= 0) maybeRevive();
+        }
+      }
 
       const bh = el._bossHud || (el._bossHud = $('#bossHud'));
       if (bh) {
         bh.classList.remove('hidden');
         const bTitle = $('#bossTitle'), bSub = $('#bossSub'), bBar = $('#bossBar');
         if (bTitle) bTitle.textContent = '🚨 БОСС-ПОГОНЯ: ' + G.bossName;
-        if (bSub) bSub.textContent = 'ДИСТАНЦИЯ: ' + Math.round(G.bossDist) + ' М · ВРЕМЯ: ' + Math.ceil(G.bossTimer) + ' С';
+        const attackHint = G.bossAttackState === 'aiming' ? ' · ⚠️ ЗАХВАТ!' : '';
+        if (bSub) bSub.textContent = 'ДИСТАНЦИЯ: ' + Math.round(G.bossDist) + ' М · ВРЕМЯ: ' + Math.ceil(G.bossTimer) + ' С' + attackHint;
         if (bBar) bBar.style.width = Math.max(0, Math.min(100, (G.bossDist / 28) * 100)) + '%';
       }
 
       if (G.bossTimer <= 0 || G.bossDist >= 28) {
         G.bossActive = false;
+        G.bossWarningActive = false;
         if (bh) bh.classList.add('hidden');
         G.bossEscaped = (G.bossEscaped || 0) + 1;
         G.runBossEscaped = (G.runBossEscaped || 0) + 1;
@@ -3427,21 +3561,17 @@ function update(dt) {
         const rCoins = 250, rPts = 100, rScore = 5000;
         G.coins += rCoins; G.runCoins += rCoins; ACCT.add(rPts); G.score += rScore;
         bankCoins(); store.set('meta', G.meta);
+
+        // Real-time achievements & missions notification
+        if (typeof checkAchievementsRealtime === 'function') checkAchievementsRealtime();
+        if (typeof checkMissionsInRace === 'function') checkMissionsInRace();
+
         Sound.chord([523, 659, 784, 1046], .5, .25);
         toast('🏆 ПОБЕГ УСПЕШЕН! Награда: +' + rCoins + ' 🪙, +' + rPts + ' ⭐, +' + rScore + ' очков!', 4000);
         addFloatingText(G.x, 2.3, 0, '🏆 ПОБЕГ УСПЕШЕН! +250 🪙', '#ffd166');
         burst(G.bossX, 1.2, G.bossZ, 25, '#ffd166', 1.5);
         G.nextBossAt = G.dist + 2800;
-        G.flash = 0.6;
-      } else if (G.bossDist <= 5.5 && Math.abs(G.bossX - G.x) < 0.9 && G.invul <= 0) {
-        G.lives--;
-        G.invul = 2.0;
-        G.shake = 0.8;
-        G.bossDist = 14.0;
-        Sound.noise(.4, .3);
-        toast('💥 СТОЛКНОВЕНИЕ С БОССОМ! Потеряна жизнь!', 2000);
-        renderLives();
-        if (G.lives <= 0) maybeRevive();
+        G.flash = 0.45;
       }
     }
   } else {
@@ -6159,15 +6289,25 @@ function drawBoss() {
     ctx.ellipse(_b.x, _b.y, 2.6 * _b.s, 1.0 * _b.s, 0, 0, 6.283);
     ctx.fill();
 
-    // Laser target line pointing towards player
-    ctx.strokeStyle = 'rgba(255, 30, 60, 0.65)';
-    ctx.lineWidth = Math.max(2, 4 * _b.s * 0.05);
+    // Laser target line pointing towards target lane or player
+    const isAiming = G.bossAttackState === 'aiming';
+    const isStriking = G.bossAttackState === 'strike';
+    const targetX = (isAiming && G.bossTargetLane != null) ? LANES[G.bossTargetLane] : G.x;
+    ctx.strokeStyle = isStriking ? 'rgba(255, 255, 255, 0.95)' : (isAiming ? 'rgba(255, 20, 50, 0.95)' : 'rgba(255, 30, 60, 0.65)');
+    ctx.lineWidth = Math.max(2, (isStriking ? 8 : (isAiming ? 5 : 3.5)) * _b.s * 0.05);
     ctx.beginPath();
     ctx.moveTo(_b.x, _b.y);
-    proj([G.x, 0.05, 0], _c);
+    proj([targetX, 0.05, 0], _c);
     if (_c.vis) {
       ctx.lineTo(_c.x, _c.y);
       ctx.stroke();
+      if (isAiming) {
+        ctx.strokeStyle = '#ff2b43';
+        ctx.lineWidth = Math.max(2, 3 * _c.s * 0.05);
+        ctx.beginPath();
+        ctx.arc(_c.x, _c.y, Math.max(12, 28 * _c.s * 0.05), 0, 6.283);
+        ctx.stroke();
+      }
     }
     ctx.restore();
   }
@@ -6788,86 +6928,268 @@ function renderCarUpgrades(car) {
   }).join('');
 }
 
-/* --- ВИЗУАЛЬНЫЙ ТЮНИНГ (AERO, BODY, VINYL, UNDERGLOW) --- */
+/* --- ВИЗУАЛЬНЫЙ ТЮНИНГ (AERO, BODY, VINYL, UNDERGLOW, RIMS) --- */
 const TUNE_DEFS = {
   wing: {
     title: 'АЭРОДИНАМИЧЕСКИЙ СПОЙЛЕР',
     options: [
-      { val: 0, name: 'Заводской' },
-      { val: 1, name: 'Спорт GT' },
-      { val: 2, name: 'Карбон Track' },
-      { val: 3, name: 'Двойной пилон' },
-      { val: 4, name: 'Дактейл' },
-      { val: 5, name: 'Биплан Super' }
+      { val: 0, name: 'Заводской', price: 0 },
+      { val: 1, name: 'Спорт GT', price: 200 },
+      { val: 2, name: 'Карбон Track', price: 350 },
+      { val: 3, name: 'Двойной пилон', price: 450 },
+      { val: 4, name: 'Дактейл', price: 300 },
+      { val: 5, name: 'Биплан Super', price: 600 }
     ]
   },
   splitter: {
     title: 'ПЕРЕДНИЙ СПЛИТТЕР',
     options: [
-      { val: 0, name: 'Заводской' },
-      { val: 1, name: 'Aero Blade' },
-      { val: 2, name: 'Широкий трековый' }
+      { val: 0, name: 'Заводской', price: 0 },
+      { val: 1, name: 'Aero Blade', price: 250 },
+      { val: 2, name: 'Широкий трековый', price: 400 }
     ]
   },
   stripe: {
     title: 'ГОНОЧНЫЕ ПОЛОСЫ (ВИНИЛ)',
     options: [
-      { val: 0, name: 'Без полос' },
-      { val: 1, name: 'Одинарная' },
-      { val: 2, name: 'Двойные полосы' }
+      { val: 0, name: 'Без полос', price: 0 },
+      { val: 1, name: 'Одинарная', price: 150 },
+      { val: 2, name: 'Двойные полосы', price: 250 }
     ]
   },
   stripeColor: {
     title: 'ЦВЕТ ВИНИЛА / ПОЛОС',
     type: 'colors',
     options: [
-      { val: '#00e5ff', name: 'Электрический циан' },
-      { val: '#a855f7', name: 'Неоновый фиолет' },
-      { val: '#ffc857', name: 'Энерго-золото' },
-      { val: '#ff6b35', name: 'Огненный оранж' },
-      { val: '#39ff14', name: 'Токсик-лайм' },
-      { val: '#f1f5f9', name: 'Чистый белый' }
+      { val: '#00e5ff', name: 'Электрический циан', price: 0 },
+      { val: '#a855f7', name: 'Неоновый фиолет', price: 150 },
+      { val: '#ffc857', name: 'Энерго-золото', price: 200 },
+      { val: '#ff6b35', name: 'Огненный оранж', price: 180 },
+      { val: '#39ff14', name: 'Токсик-лайм', price: 180 },
+      { val: '#f1f5f9', name: 'Чистый белый', price: 220 }
     ]
   },
   rimColor: {
     title: 'КОЛЁСНЫЕ ДИСКИ И ОБОДА',
     type: 'underglow',
     options: [
-      { val: null, name: 'Заводские' },
-      { val: '#00e5ff', name: 'Циан Aero' },
-      { val: '#a855f7', name: 'Фиолет Неон' },
-      { val: '#ffc857', name: 'Золото GT' },
-      { val: '#ff6b35', name: 'Вулкан' },
-      { val: '#f1f5f9', name: 'Титан Белый' }
+      { val: null, name: 'Заводские', price: 0 },
+      { val: '#00e5ff', name: 'Циан Aero', price: 180 },
+      { val: '#a855f7', name: 'Фиолет Неон', price: 200 },
+      { val: '#ffc857', name: 'Золото GT', price: 250 },
+      { val: '#ff6b35', name: 'Вулкан', price: 220 },
+      { val: '#f1f5f9', name: 'Титан Белый', price: 260 }
     ]
   },
   underglow: {
     title: 'НЕОНОВАЯ ПОДСВЕТКА ДНИЩА',
     type: 'underglow',
     options: [
-      { val: null, name: 'Выкл' },
-      { val: '#00e5ff', name: 'Электрический циан' },
-      { val: '#a855f7', name: 'Неоновый фиолет' },
-      { val: '#ffc857', name: 'Энерго-золото' },
-      { val: '#ff6b35', name: 'Плазма оранж' },
-      { val: '#00ff66', name: 'Био-изумруд' }
+      { val: null, name: 'Выкл', price: 0 },
+      { val: '#00e5ff', name: 'Электрический циан', price: 300 },
+      { val: '#a855f7', name: 'Неоновый фиолет', price: 350 },
+      { val: '#ffc857', name: 'Энерго-золото', price: 400 },
+      { val: '#ff6b35', name: 'Плазма оранж', price: 350 },
+      { val: '#00ff66', name: 'Био-изумруд', price: 380 }
     ]
   },
   cyberFin: {
     title: 'АКУЛИЙ КИЛЬ НА КРЫШЕ',
     options: [
-      { val: false, name: 'Отключен' },
-      { val: true, name: 'Установлен' }
+      { val: false, name: 'Отключен', price: 0 },
+      { val: true, name: 'Установлен', price: 350 }
     ]
   },
   widebody: {
     title: 'ТРЕКОВОЕ РАСШИРЕНИЕ (WIDEBODY)',
     options: [
-      { val: false, name: 'Стандарт' },
-      { val: true, name: 'Широкий обвес' }
+      { val: false, name: 'Стандарт', price: 0 },
+      { val: true, name: 'Широкий обвес', price: 750 }
     ]
   }
 };
+
+function getTuneItemId(key, val) {
+  return key + '_' + String(val);
+}
+
+function getCosmeticsOwnership() {
+  let owned = store.get('car_cosmetics', null);
+  if (!owned || typeof owned !== 'object' || Array.isArray(owned)) {
+    owned = {};
+  }
+  // 1. Zavod va bepul opsiyalar doim ochiq
+  for (const k in TUNE_DEFS) {
+    const grp = TUNE_DEFS[k];
+    if (grp.options) {
+      for (let i = 0; i < grp.options.length; i++) {
+        const o = grp.options[i];
+        if (o.price === 0 || o.val === 0 || o.val === null || o.val === false) {
+          owned[getTuneItemId(k, o.val)] = true;
+        }
+      }
+    }
+  }
+  // 2. Orqaga mos migratsiya: agar avval biror mashinada car_tune_<carId> da detal o\'rnatilgan bo\'lsa,
+  // uni avtomatik owned deb belgilaymiz, shunda mavjud foydalanuvchidan qayta pul talab qilinmaydi!
+  if (!store.get('car_cosmetics_migrated', false)) {
+    for (let carId = 0; carId < CARS.length; carId++) {
+      const tune = store.get('car_tune_' + carId, null);
+      if (tune && typeof tune === 'object' && !Array.isArray(tune)) {
+        for (const k in tune) {
+          if (tune[k] !== undefined && tune[k] !== null) {
+            owned[getTuneItemId(k, tune[k])] = true;
+          }
+        }
+      }
+    }
+    store.set('car_cosmetics_migrated', true);
+    store.set('car_cosmetics', owned);
+  }
+  return owned;
+}
+
+function setCosmeticsOwnership(owned) {
+  if (!owned || typeof owned !== 'object' || Array.isArray(owned)) return;
+  store.set('car_cosmetics', owned);
+}
+
+function isCosmeticOwned(key, val) {
+  const owned = getCosmeticsOwnership();
+  return !!owned[getTuneItemId(key, val)];
+}
+
+let _cosmeticConfirmState = null;
+let _buyCosmeticDebounce = false;
+
+function openCosmeticBuyModal(key, opt, car) {
+  const c = car || CARS[showcaseCarId] || CARS[0];
+  const group = TUNE_DEFS[key];
+  if (!group || !opt) return;
+
+  const price = opt.price || 0;
+  const hasFunds = G.coins >= price;
+  _cosmeticConfirmState = { key, opt, car: c, price };
+
+  // 3D Preview: Mashinada detalni vaqtincha chizamiz
+  const previewCar = Object.assign({}, c);
+  const tune = Object.assign({}, CAR_TUNING.get(c.id));
+  tune[key] = opt.val;
+  const p = palOf(previewCar);
+  previewCar.mesh = buildCar(p.body, p.roof, p.glass, p.acc, previewCar.shape, Object.assign({}, previewCar, tune));
+  const cv = document.getElementById('cvUpgCar');
+  if (cv) drawCarShowcase(cv, previewCar, showcaseRot, 0.85, 2.1);
+
+  const title = group.title;
+  const name = opt.name || 'Опция';
+
+  const modalHtml = '<div class="cosmetic-confirm-modal" style="text-align:center;padding:12px 6px">' +
+    '<div style="font-size:32px;margin-bottom:8px">🎨</div>' +
+    '<div style="font-size:16px;font-weight:900;color:#fff;margin-bottom:4px">' + title + '</div>' +
+    '<div style="font-size:13px;color:#7fe9ff;font-weight:800;margin-bottom:14px">ВЫБРАНО: ' + name + '</div>' +
+    '<div style="background:rgba(12,18,40,.85);border:1px solid rgba(111,158,229,.3);border-radius:12px;padding:12px;margin-bottom:16px;text-align:left">' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8;margin-bottom:8px">' +
+        '<span>Стоимость детали:</span>' +
+        '<b style="color:#ffd166;font-size:14px">🪙 ' + price + ' монет</b>' +
+      '</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8">' +
+        '<span>Ваш текущий баланс:</span>' +
+        '<b style="color:' + (hasFunds ? '#7dff9b' : '#ff2b43') + ';font-size:13px">🪙 ' + G.coins + ' монет</b>' +
+      '</div>' +
+    '</div>' +
+    (hasFunds ?
+      '<div style="display:flex;gap:10px;justify-content:center">' +
+        '<button class="btn sm ghost" id="btnCancelCosmetic" type="button" style="flex:1">ОТМЕНА</button>' +
+        '<button class="btn sm yellow" id="btnConfirmBuyCosmetic" type="button" style="flex:1">🪙 КУПИТЬ</button>' +
+      '</div>'
+      :
+      '<div style="margin-bottom:14px">' +
+        '<p style="color:#ff758f;font-size:12px;font-weight:800;margin-bottom:4px">❌ Недостаточно средств!</p>' +
+        '<p style="color:#94a3b8;font-size:11px">Не хватает 🪙 ' + (price - G.coins) + ' монет. Заработайте монеты в заездах!</p>' +
+      '</div>' +
+      '<button class="btn sm ghost" id="btnCancelCosmetic" type="button" style="width:100%">ЗАКРЫТЬ</button>'
+    ) +
+  '</div>';
+
+  showModal('ПОДТВЕРЖДЕНИЕ ПОКУПКИ', modalHtml);
+
+  const btnCancel = document.getElementById('btnCancelCosmetic');
+  if (btnCancel) {
+    btnCancel.onclick = () => {
+      cancelCosmeticPreview();
+      hideModal();
+    };
+  }
+
+  const btnConfirm = document.getElementById('btnConfirmBuyCosmetic');
+  if (btnConfirm) {
+    btnConfirm.onclick = () => {
+      executeCosmeticPurchase();
+    };
+  }
+}
+
+function cancelCosmeticPreview() {
+  _cosmeticConfirmState = null;
+  const c = CARS[showcaseCarId] || CARS[0];
+  applySkin(c);
+  renderVisualTuning(c);
+  updateShowcase();
+}
+
+function executeCosmeticPurchase() {
+  if (!_cosmeticConfirmState || _buyCosmeticDebounce) return;
+  const { key, opt, car, price } = _cosmeticConfirmState;
+  const c = car || CARS[showcaseCarId] || CARS[0];
+
+  // Qat\'iy himoya: agar allaqachon sotib olingan bo\'lsa, pul yechilmaydi
+  if (isCosmeticOwned(key, opt.val)) {
+    hideModal();
+    _cosmeticConfirmState = null;
+    const tune = CAR_TUNING.get(c.id);
+    tune[key] = opt.val;
+    CAR_TUNING.set(c.id, tune);
+    applySkin(c);
+    renderVisualTuning(c);
+    updateShowcase();
+    return;
+  }
+
+  if (G.coins < price) {
+    toast('Недостаточно монет! Требуется 🪙 ' + price, 2400);
+    cancelCosmeticPreview();
+    hideModal();
+    return;
+  }
+
+  _buyCosmeticDebounce = true;
+  setTimeout(() => { _buyCosmeticDebounce = false; }, 260);
+
+  // 1. Balansdan yechish
+  G.coins -= price;
+  bankCoins();
+
+  // 2. Ownership saqlash
+  const owned = getCosmeticsOwnership();
+  owned[getTuneItemId(key, opt.val)] = true;
+  setCosmeticsOwnership(owned);
+
+  // 3. Mashinaga o\'rnatish
+  const tune = CAR_TUNING.get(c.id);
+  tune[key] = opt.val;
+  CAR_TUNING.set(c.id, tune);
+  applySkin(c);
+
+  _cosmeticConfirmState = null;
+  hideModal();
+
+  Sound.chord([523, 659, 784, 1046], .4, .25);
+  toast('🎉 Деталь успешно куплена и установлена!', 2600);
+
+  renderVisualTuning(c);
+  updateShowcase();
+  menuStats();
+}
 
 function renderVisualTuning(car) {
   const c = car || CARS[showcaseCarId] || CARS[0];
@@ -6878,6 +7200,7 @@ function renderVisualTuning(car) {
   if (cv) drawCarShowcase(cv, c, showcaseRot, 0.85, 2.1);
 
   const tune = CAR_TUNING.get(c.id);
+  const owned = getCosmeticsOwnership();
 
   let html = '';
   for (const key in TUNE_DEFS) {
@@ -6885,24 +7208,51 @@ function renderVisualTuning(car) {
     const curVal = tune[key];
 
     html += '<div class="tune-group" style="margin-bottom:14px;text-align:left">' +
-      '<div style="font-size:11px;font-weight:900;letter-spacing:.08em;color:#7fe9ff;margin-bottom:6px">' + group.title + '</div>';
+      '<div class="tune-group-title">' +
+        '<span>' + group.title + '</span>' +
+      '</div>';
 
     if (group.type === 'colors' || group.type === 'underglow') {
       html += '<div class="color-swatch-row">';
       for (const opt of group.options) {
+        const itemId = getTuneItemId(key, opt.val);
+        const hasIt = opt.price === 0 || !!owned[itemId];
         const isSel = opt.val === curVal || (opt.val === null && !curVal);
+
         if (opt.val === null) {
-          html += '<button class="tune-opt-btn' + (isSel ? ' on' : '') + '" data-tune-key="' + key + '" data-tune-val="null" type="button">ВЫКЛ</button>';
+          const btnClass = 'tune-opt-btn' + (isSel ? ' on' : '') + (!hasIt ? ' to-buy' : '');
+          html += '<button class="' + btnClass + '" data-tune-key="' + key + '" data-tune-val="null" type="button">' +
+            (isSel ? 'ВЫКЛ ✓' : 'ВЫКЛ') +
+          '</button>';
         } else {
-          html += '<button class="color-swatch-btn' + (isSel ? ' on' : '') + '" data-tune-key="' + key + '" data-tune-val="' + opt.val + '" style="background:' + opt.val + ';color:' + opt.val + '" title="' + opt.name + '" type="button"></button>';
+          const btnClass = 'color-swatch-btn' + (isSel ? ' on' : '') + (!hasIt ? ' to-buy' : '');
+          const label = opt.name + (hasIt ? (isSel ? ' (Установлено)' : ' (В наличии)') : ' (🪙 ' + opt.price + ')');
+          html += '<button class="' + btnClass + '" data-tune-key="' + key + '" data-tune-val="' + opt.val + '" style="background:' + opt.val + ';color:' + opt.val + '" title="' + label + '" aria-label="' + label + '" type="button"></button>';
         }
       }
       html += '</div>';
     } else {
       html += '<div class="tune-options">';
       for (const opt of group.options) {
+        const itemId = getTuneItemId(key, opt.val);
+        const hasIt = opt.price === 0 || !!owned[itemId];
         const isSel = String(curVal) === String(opt.val) || (curVal == null && opt.val === 0);
-        html += '<button class="tune-opt-btn' + (isSel ? ' on' : '') + '" data-tune-key="' + key + '" data-tune-val="' + opt.val + '" type="button">' + opt.name + '</button>';
+
+        let statusText = '';
+        let btnClass = 'tune-opt-btn';
+        if (isSel) {
+          btnClass += ' on';
+          statusText = ' ✓';
+        } else if (hasIt) {
+          btnClass += ' owned';
+        } else {
+          btnClass += ' to-buy';
+          statusText = ' · 🪙 ' + opt.price;
+        }
+
+        html += '<button class="' + btnClass + '" data-tune-key="' + key + '" data-tune-val="' + opt.val + '" type="button">' +
+          opt.name + statusText +
+        '</button>';
       }
       html += '</div>';
     }
@@ -6925,66 +7275,256 @@ const MISSIONS = [
 ];
 
 const ACHIEVEMENTS = [
-  { id: 'first_race', title: 'ПЕРВЫЙ СТАРТ', desc: 'Совершите свой первый заезд в NEON RACE', icon: '🏁', goal: 1, unit: 'гонка', rewardCoins: 150, rewardPts: 30, getVal: () => (G.meta.runs || G.meta.plays || 0) },
-  { id: 'cars_5', title: 'КОЛЛЕКЦИОНЕР', desc: 'Соберите 5 различных спорткаров в гараже', icon: '🚗', goal: 5, unit: 'машин', rewardCoins: 500, rewardPts: 100, getVal: () => CARS.filter(ownedOf).length },
-  { id: 'cars_15', title: 'ГАРАЖ МЕЧТЫ', desc: 'Соберите 15 спорткаров в своём гараже', icon: '🏎', goal: 15, unit: 'машин', rewardCoins: 1500, rewardPts: 300, getVal: () => CARS.filter(ownedOf).length },
-  { id: 'coins_10k', title: 'НЕОНОВЫЙ МАГНАТ', desc: 'Заработайте суммарно 10 000 монет', icon: '🪙', goal: 10000, unit: 'монет', rewardCoins: 1000, rewardPts: 200, getVal: () => (G.meta.totalCoins || 0) + (G.coins || 0) },
-  { id: 'speed_300', title: 'СВЕРХЗВУКОВОЙ БАРЬЕР', desc: 'Развейте скорость свыше 300 км/ч', icon: '⚡', goal: 300, unit: 'км/ч', rewardCoins: 400, rewardPts: 80, getVal: () => Math.floor(G.meta.maxKmh || 0) },
-  { id: 'drift_master', title: 'КОРОЛЬ ЗАНОСОВ', desc: 'Проведите в непрерывном заносе более 5 секунд', icon: '💨', goal: 5, unit: 'с', rewardCoins: 450, rewardPts: 90, getVal: () => Math.floor(G.meta.maxDriftSec || 0) },
+  { id: 'first_race', title: 'ПЕРВЫЙ СТАРТ', desc: 'Совершите свой первый заезд в NEON RACE', icon: '🏁', goal: 1, unit: 'гонка', rewardCoins: 150, rewardPts: 30, getVal: () => (G.meta.runs || G.meta.plays || (G.running ? 1 : 0) || 0) },
+  { id: 'cars_5', title: 'КОЛЛЕКЦИОНЕР', desc: 'Соберите 5 различных спорткаров в гараже', icon: '🚗', goal: 5, unit: 'машин', rewardCoins: 500, rewardPts: 100, getVal: () => (typeof ownedOf === 'function' ? CARS.filter(ownedOf).length : 0) },
+  { id: 'cars_15', title: 'ГАРАЖ МЕЧТЫ', desc: 'Соберите 15 спорткаров в своём гараже', icon: '🏎', goal: 15, unit: 'машин', rewardCoins: 1500, rewardPts: 300, getVal: () => (typeof ownedOf === 'function' ? CARS.filter(ownedOf).length : 0) },
+  { id: 'coins_10k', title: 'НЕОНОВЫЙ МАГНАТ', desc: 'Заработайте суммарно 10 000 монет', icon: '🪙', goal: 10000, unit: 'монет', rewardCoins: 1000, rewardPts: 200, getVal: () => Math.max((G.meta.totalCoins || 0) + (G.runCoins || 0), G.coins || 0) },
+  { id: 'speed_300', title: 'СВЕРХЗВУКОВОЙ БАРЬЕР', desc: 'Развейте скорость свыше 300 км/ч', icon: '⚡', goal: 300, unit: 'км/ч', rewardCoins: 400, rewardPts: 80, getVal: () => Math.floor(Math.max(G.meta.maxKmh || 0, typeof speedToKmh === 'function' ? speedToKmh(G.speed || 0) : ((G.speed || 0) * 3.6))) },
+  { id: 'drift_master', title: 'КОРОЛЬ ЗАНОСОВ', desc: 'Проведите в непрерывном заносе более 5 секунд', icon: '💨', goal: 5, unit: 'с', rewardCoins: 450, rewardPts: 90, getVal: () => Math.floor(Math.max(G.meta.maxDriftSec || 0, G.driftSec || 0)) },
   { id: 'all_dimensions', title: 'ХОЗЯИН ИЗМЕРЕНИЙ', desc: 'Пройдите через порталы 6 раз', icon: '🌀', goal: 6, unit: 'порталов', rewardCoins: 1200, rewardPts: 250, getVal: () => (G.meta.dimensionsCleared || G.meta.portalsEntered || 0) },
   { id: 'boss_slayer', title: 'НЕУЛОВИМЫЙ ПРИЗРАК', desc: 'Успешно оторвитесь от босса-преследователя 5 раз', icon: '🚨', goal: 5, unit: 'раз', rewardCoins: 800, rewardPts: 150, getVal: () => (G.meta.bossEscapes || 0) },
-  { id: 'distance_50k', title: 'МАРАФОНЕЦ ТРАССЫ', desc: 'Преодолейте суммарную дистанцию 50 000 метров', icon: '🛣', goal: 50000, unit: 'м', rewardCoins: 2000, rewardPts: 400, getVal: () => Math.floor(G.meta.totalDist || 0) },
+  { id: 'distance_50k', title: 'МАРАФОНЕЦ ТРАССЫ', desc: 'Преодолейте суммарную дистанцию 50 000 метров', icon: '🛣', goal: 50000, unit: 'м', rewardCoins: 2000, rewardPts: 400, getVal: () => Math.floor(Math.max(G.meta.totalDist || 0, (G.meta.totalDist || 0) + (G.dist || 0))) },
   { id: 'max_upgrade', title: 'АБСОЛЮТНЫЙ ФОРСАЖ', desc: 'Прокачайте 10 параметров тюнинга', icon: '🔧', goal: 10, unit: 'улучшений', rewardCoins: 1000, rewardPts: 200, getVal: () => (G.meta.upgradesPurchased || 0) },
-  { id: 'score_100k', title: 'ЛЕГЕНДАРНЫЙ СЧЁТ', desc: 'Наберите более 100 000 очков за один заезд', icon: '👑', goal: 100000, unit: 'очков', rewardCoins: 2500, rewardPts: 500, getVal: () => Math.floor(G.meta.best || 0) },
-  { id: 'acct_lvl10', title: 'МАСТЕР NEON RACE', desc: 'Достигните 10 уровня аккаунта', icon: '⭐', goal: 10, unit: 'уровень', rewardCoins: 3000, rewardPts: 600, getVal: () => (ACCT.lvl || 1) }
+  { id: 'score_100k', title: 'ЛЕГЕНДАРНЫЙ СЧЁТ', desc: 'Наберите более 100 000 очков за один заезд', icon: '👑', goal: 100000, unit: 'очков', rewardCoins: 2500, rewardPts: 500, getVal: () => Math.floor(Math.max(G.meta.best || 0, G.score || 0)) },
+  { id: 'acct_lvl10', title: 'МАСТЕР NEON RACE', desc: 'Достигните 10 уровня аккаунта', icon: '⭐', goal: 10, unit: 'уровень', rewardCoins: 3000, rewardPts: 600, getVal: () => (ACCT && ACCT.lvl ? ACCT.lvl : 1) }
 ];
 
-function getMissionState() {
-  return store.get('missions_state', {});
+/* --- ЕЖЕДНЕВНЫЕ МИССИИ (LOCAL TIME RESET AT 00:00 & MIGRATION) --- */
+function getLocalDateKey() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
 }
+
+function getMissionState() {
+  const today = getLocalDateKey();
+  let raw = null;
+  try {
+    raw = store.get('missions_state', null);
+  } catch (e) {
+    raw = null;
+  }
+
+  // 1. Agar ma\'lumot bo\'lmasa yoki noto\'g\'ri turda bo\'lsa
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    const fresh = { lastDate: today, items: {} };
+    store.set('missions_state', fresh);
+    return fresh;
+  }
+
+  // 2. Agar yangi formatda bo\'lsa (lastDate mavjud)
+  if (typeof raw.lastDate === 'string') {
+    if (raw.lastDate === today) {
+      if (!raw.items || typeof raw.items !== 'object' || Array.isArray(raw.items)) {
+        raw.items = {};
+      }
+      return raw;
+    } else {
+      // Sana almashgan! Eski kungi olinmagan mukofotlar yangi kunga ko\'chirilmasin
+      const fresh = { lastDate: today, items: {} };
+      store.set('missions_state', fresh);
+      return fresh;
+    }
+  }
+
+  // 3. Orqaga mos migratsiya (Eski format: { [id]: { cur, done, claimed } })
+  // Joriy progress va bajarilgan lekin olinmagan mukofotlar bugungi kunga saqlab qolinadi
+  const migratedItems = {};
+  for (const k in raw) {
+    if (raw[k] && typeof raw[k] === 'object' && !Array.isArray(raw[k])) {
+      migratedItems[k] = {
+        cur: Number(raw[k].cur) || 0,
+        done: !!raw[k].done,
+        claimed: !!raw[k].claimed,
+        notified: !!raw[k].done
+      };
+    }
+  }
+  const migrated = { lastDate: today, items: migratedItems };
+  store.set('missions_state', migrated);
+  return migrated;
+}
+
 function setMissionState(st) {
+  if (!st || typeof st !== 'object' || Array.isArray(st)) return;
+  if (!st.lastDate) st.lastDate = getLocalDateKey();
+  if (!st.items || typeof st.items !== 'object' || Array.isArray(st.items)) st.items = {};
   store.set('missions_state', st);
 }
+
+let _claimMissionDebounce = false;
 function claimMission(id) {
+  if (_claimMissionDebounce) return;
   const m = MISSIONS.find(x => x.id === id);
   if (!m) return;
+
   const st = getMissionState();
-  const item = st[id] || {};
+  const item = (st.items && st.items[id]) || {};
   if (!item.done || item.claimed) return;
+
+  _claimMissionDebounce = true;
+  setTimeout(() => { _claimMissionDebounce = false; }, 250);
+
+  // Birinchi navbatda claimed holatini saqlaymiz (takroriy mukofot olishning qat\'iy oldini oladi)
   item.claimed = true;
-  st[id] = item;
+  st.items[id] = item;
   setMissionState(st);
-  G.coins += m.rewardCoins;
-  ACCT.pts += m.rewardPts;
+
+  // Valyutalarni berish
+  G.coins += (m.rewardCoins || 0);
+  ACCT.add(m.rewardPts || 0);
   bankCoins();
-  ACCT.save();
+
   Sound.chord([523, 659, 784, 1046], .4, .25);
-  toast('🎉 Задание выполнено! +' + m.rewardCoins + ' 🪙 и +' + m.rewardPts + ' ⭐!');
+  toast('🎉 Задание выполнено! +' + m.rewardCoins + ' 🪙 и +' + m.rewardPts + ' ⭐!', 2500);
   renderMissions();
   menuStats();
 }
 
-function getAchieveState() {
-  return store.get('achieve_state', {});
+let _missionsTimerInterval = null;
+function updateMissionsTimerUI() {
+  const elTimer = document.getElementById('missionsTimerText');
+  if (!elTimer) return;
+
+  const now = new Date();
+  const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+  const diff = Math.max(0, tomorrow.getTime() - now.getTime());
+
+  const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
+  const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+  const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+
+  elTimer.textContent = 'СБРОС: ' + h + ':' + m + ':' + s;
 }
+
+function startMissionsTimer() {
+  if (_missionsTimerInterval) return;
+  updateMissionsTimerUI();
+  _missionsTimerInterval = setInterval(() => {
+    updateMissionsTimerUI();
+    const today = getLocalDateKey();
+    const raw = store.get('missions_state', null);
+    if (raw && raw.lastDate && raw.lastDate !== today) {
+      getMissionState();
+      const tabM = document.getElementById('tabMissions');
+      if (tabM && !tabM.classList.contains('hidden')) {
+        renderMissions();
+      }
+    }
+  }, 1000);
+}
+
+let _lastMissionCheckT = 0;
+function checkMissionsInRace() {
+  if (!G.running || G.paused) return;
+  if (G.t - _lastMissionCheckT < 0.45) return;
+  _lastMissionCheckT = G.t;
+
+  if (typeof getMissionState !== 'function') return;
+  const mSt = getMissionState();
+  if (!mSt || !mSt.items) return;
+
+  let changed = false;
+  for (let i = 0; i < MISSIONS.length; i++) {
+    const m = MISSIONS[i];
+    const item = mSt.items[m.id] || { cur: 0, done: false, claimed: false, notified: false };
+    const val = m.getVal ? m.getVal() : 0;
+    if (val > (item.cur || 0)) {
+      item.cur = val;
+      changed = true;
+    }
+    if (item.cur >= m.goal && !item.done) {
+      item.done = true;
+      changed = true;
+    }
+    if (item.done && !item.notified) {
+      item.notified = true;
+      changed = true;
+      toast('🎯 МИССИЯ ВЫПОЛНЕНА: ' + m.title + '! Заберите награду в меню', 3200);
+      Sound.blip(880, .12, 'triangle', .2);
+    }
+    mSt.items[m.id] = item;
+  }
+  if (changed) setMissionState(mSt);
+}
+
+function getAchieveState() {
+  let raw = null;
+  try {
+    raw = store.get('achieve_state', {});
+  } catch (e) {
+    raw = {};
+  }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    raw = {};
+  }
+  return raw;
+}
+
 function setAchieveState(st) {
+  if (!st || typeof st !== 'object' || Array.isArray(st)) return;
   store.set('achieve_state', st);
 }
+
+let _lastAchieveCheckT = -999;
+function checkAchievementsRealtime(force) {
+  if (!force && G && G.running && typeof G.t === 'number' && _lastAchieveCheckT >= 0) {
+    if (G.t > _lastAchieveCheckT && G.t - _lastAchieveCheckT < 0.45) return;
+  }
+  if (G && typeof G.t === 'number') _lastAchieveCheckT = G.t;
+
+  const st = getAchieveState();
+  let changed = false;
+
+  for (let i = 0; i < ACHIEVEMENTS.length; i++) {
+    const a = ACHIEVEMENTS[i];
+    const item = st[a.id] || { cur: 0, done: false, claimed: false, notified: false };
+    const val = a.getVal ? a.getVal() : 0;
+    if (val > (item.cur || 0)) {
+      item.cur = val;
+      changed = true;
+    }
+    if (item.cur >= a.goal && !item.done) {
+      item.done = true;
+      changed = true;
+    }
+    if (item.done && !item.notified) {
+      item.notified = true;
+      changed = true;
+      toast('🏆 ДОСТИЖЕНИЕ: «' + a.title + '»! Награда: +' + a.rewardCoins + ' 🪙 +' + a.rewardPts + ' ⭐', 3500);
+      Sound.chord([523, 659, 784, 1046, 1318], .4, .22);
+    }
+    st[a.id] = item;
+  }
+  if (changed) setAchieveState(st);
+}
+
+let _claimAchieveDebounce = false;
 function claimAchievement(id) {
+  if (_claimAchieveDebounce) return;
   const a = ACHIEVEMENTS.find(x => x.id === id);
   if (!a) return;
   const st = getAchieveState();
   const item = st[id] || {};
   if (!item.done || item.claimed) return;
+
+  _claimAchieveDebounce = true;
+  setTimeout(() => { _claimAchieveDebounce = false; }, 260);
+
+  // Birinchi navbatda claimed holatini saqlash (takroriy mukofot olishning qat\'iy oldini oladi)
   item.claimed = true;
   st[id] = item;
   setAchieveState(st);
-  G.coins += a.rewardCoins;
-  ACCT.pts += a.rewardPts;
+
+  // Mukofotlarni to\'g\'ri berish (manfiy bo\'lmaslik kafolati)
+  G.coins = Math.max(0, G.coins + (a.rewardCoins || 0));
+  ACCT.add(a.rewardPts || 0);
   bankCoins();
-  ACCT.save();
+
   Sound.chord([523, 659, 784, 1046, 1318], .5, .25);
-  toast('🏆 Достижение получено! +' + a.rewardCoins + ' 🪙 и +' + a.rewardPts + ' ⭐!');
+  toast('🏆 Награда получена! +' + a.rewardCoins + ' 🪙 и +' + a.rewardPts + ' ⭐!', 2500);
   renderAchievements();
   menuStats();
 }
@@ -6992,15 +7532,16 @@ function claimAchievement(id) {
 function renderMissions() {
   const elList = document.getElementById('missionsList');
   if (!elList) return;
+  updateMissionsTimerUI();
   const st = getMissionState();
   elList.innerHTML = MISSIONS.map(m => {
-    const item = st[m.id] || { cur: 0, done: false, claimed: false };
+    const item = (st.items && st.items[m.id]) || { cur: 0, done: false, claimed: false };
     const curVal = Math.max(item.cur || 0, m.getVal ? m.getVal() : 0);
     const isDone = item.done || curVal >= m.goal;
     if (isDone && !item.done) {
       item.done = true;
       item.cur = curVal;
-      st[m.id] = item;
+      if (st.items) st.items[m.id] = item;
       setMissionState(st);
     }
     const isClaimed = !!item.claimed;
@@ -7035,8 +7576,12 @@ function renderAchievements() {
   const elList = document.getElementById('achieveList');
   const countEl = document.getElementById('achieveCountText');
   if (!elList) return;
+
+  // Real vaqt holati bilan tekshiramiz
+  if (typeof checkAchievementsRealtime === 'function') checkAchievementsRealtime();
   const st = getAchieveState();
   let doneCount = 0;
+
   elList.innerHTML = ACHIEVEMENTS.map(a => {
     const item = st[a.id] || { cur: 0, done: false, claimed: false };
     const curVal = Math.max(item.cur || 0, a.getVal ? a.getVal() : 0);
@@ -7054,22 +7599,26 @@ function renderAchievements() {
     const pct = Math.min(100, Math.round((curVal / a.goal) * 100));
 
     let btnHtml = '';
+    let cardStatusClass = 'locked';
     if (isClaimed) {
-      btnHtml = '<button class="claim-btn claimed" type="button" disabled>ВРУЧЕНО ✓</button>';
+      btnHtml = '<button class="claim-btn claimed" type="button" disabled>ПОЛУЧЕНО ✓</button>';
+      cardStatusClass = 'claimed';
     } else if (isDone) {
       btnHtml = '<button class="claim-btn ready" data-claim-achieve="' + a.id + '" type="button">ЗАБРАТЬ</button>';
+      cardStatusClass = 'done';
     } else {
       btnHtml = '<button class="claim-btn locked" type="button" disabled>' + curVal + ' / ' + a.goal + '</button>';
+      cardStatusClass = 'locked';
     }
 
-    return '<div class="mission-card' + (isDone ? ' done' : '') + '">' +
+    return '<div class="mission-card ' + cardStatusClass + '">' +
       '<div class="mission-icon">' + a.icon + '</div>' +
       '<div class="mission-info">' +
         '<div class="mission-title">' + a.title + '</div>' +
         '<div class="mission-desc">' + a.desc + '</div>' +
         '<div class="mission-bar-wrap"><div class="mission-bar" style="width:' + pct + '%"></div></div>' +
         '<div class="mission-meta">' +
-          '<span>ПРОГРЕСС: ' + curVal + ' / ' + a.goal + ' ' + a.unit + ' (' + pct + '%)</span>' +
+          '<span>ПРОГРЕСС: ' + curVal + ' / ' + a.goal + ' ' + (a.unit || '') + ' (' + pct + '%)</span>' +
           '<div class="mission-rewards"><span>🪙 +' + a.rewardCoins + '</span><span>⭐ +' + a.rewardPts + '</span></div>' +
         '</div>' +
       '</div>' +
@@ -7079,6 +7628,31 @@ function renderAchievements() {
   if (countEl) countEl.textContent = doneCount + ' / ' + ACHIEVEMENTS.length + ' ВЫПОЛНЕНО';
 }
 
+function triggerBossChase(customName) {
+  if (G.bossActive) return false;
+  G.bossActive = true;
+  G.bossWarningActive = false;
+  G.bossTimer = 22.0;
+  G.bossDist = 20.0;
+  G.bossZ = 20.0;
+  G.bossLane = (typeof G.lane === 'number' && G.lane >= 0 && G.lane <= 2) ? G.lane : 1;
+  G.bossX = LANES[G.bossLane];
+  G.bossAttackState = 'idle';
+  G.bossAttackTimer = 3.0;
+  G.bossTargetLane = G.bossLane;
+  G.bossName = customName || 'ПЕРЕХВАТЧИК «СПЕКТР-9»';
+  toast('🚨 БОСС-ПОГОНЯ: «' + G.bossName + '» НА ТРАССЕ! УДЕРЖИВАЙТЕ СКОРОСТЬ!', 4000);
+  Sound.bossWarning();
+  const bh = el._bossHud || (el._bossHud = $('#bossHud'));
+  if (bh) {
+    bh.classList.remove('hidden');
+    const bTitle = $('#bossTitle'), bSub = $('#bossSub'), bBar = $('#bossBar');
+    if (bTitle) bTitle.textContent = '🚨 БОСС-ПОГОНЯ: ' + G.bossName;
+    if (bSub) bSub.textContent = 'ДИСТАНЦИЯ: ' + Math.round(G.bossDist) + ' М · ВРЕМЯ: ' + Math.ceil(G.bossTimer) + ' С';
+    if (bBar) bBar.style.width = '70%';
+  }
+  return true;
+}
 function showModal(title, contentHtml) {
   const container = document.getElementById('modalContainer');
   const titleEl = document.getElementById('modalTitle');
@@ -7091,6 +7665,9 @@ function showModal(title, contentHtml) {
 function hideModal() {
   const container = document.getElementById('modalContainer');
   if (container) container.classList.add('hidden');
+  if (typeof cancelCosmeticPreview === 'function' && _cosmeticConfirmState) {
+    cancelCosmeticPreview();
+  }
 }
 
 function renderFullStatistics() {
@@ -7456,7 +8033,11 @@ window.NY3D = {
   buildBackdrop, drawBackdrop, drawSilhouette,
   drawPrev, bankCoins, statHTML, toast, burst, bumpCombo, setHint, nextLesson, lessonEvent, lessonTick,
   CAR_TUNING, CAR_UPG, UPG_DEFS, UPG_KEYS, TUNE_DEFS, renderVisualTuning,
+  getTuneItemId, getCosmeticsOwnership, setCosmeticsOwnership, isCosmeticOwned, openCosmeticBuyModal, executeCosmeticPurchase, cancelCosmeticPreview,
   MISSIONS, ACHIEVEMENTS, renderMissions, renderAchievements, claimMission, claimAchievement,
+  checkAchievementsRealtime, getAchieveState, setAchieveState,
+  triggerBossChase,
+  getMissionState, setMissionState, getLocalDateKey, updateMissionsTimerUI, checkMissionsInRace, startMissionsTimer,
   showModal, hideModal,
   DIMENSIONS, enterDimension, exitDimension, speedToKmh, qualLabel, detectInitialQuality, syncQualityClass, drawPortalActive, drawPortalOpen, drawPortalEntryEffect, drawMagnetArcs,
   DESIGN_SYSTEM, MATERIALS, ASSET_REGISTRY, TUTORIAL_SYSTEM, setMenuView
@@ -7521,14 +8102,29 @@ if (visualListEl) {
     else if (!isNaN(Number(rawVal))) val = Number(rawVal);
 
     const c = CARS[showcaseCarId] || CARS[0];
-    const tune = CAR_TUNING.get(c.id);
-    tune[key] = val;
-    CAR_TUNING.set(c.id, tune);
-    applySkin(c);
+    const group = TUNE_DEFS[key];
+    if (!group) return;
+    const opt = group.options.find(o => String(o.val) === String(val) || (o.val == null && val == null));
+    if (!opt) return;
 
-    renderVisualTuning(c);
-    updateShowcase();
-    Sound.blip(540, .08, 'triangle', .18);
+    const owned = getCosmeticsOwnership();
+    const itemId = getTuneItemId(key, opt.val);
+    const hasIt = opt.price === 0 || !!owned[itemId];
+
+    if (hasIt) {
+      // Sotib olingan — bepul o'rnatiladi
+      const tune = CAR_TUNING.get(c.id);
+      tune[key] = val;
+      CAR_TUNING.set(c.id, tune);
+      applySkin(c);
+      renderVisualTuning(c);
+      updateShowcase();
+      Sound.blip(540, .08, 'triangle', .18);
+    } else {
+      // Sotib olinmagan — preview va tasdiqlash modali ochiladi
+      openCosmeticBuyModal(key, opt, c);
+      Sound.blip(620, .08, 'triangle', .18);
+    }
   });
 }
 
@@ -7588,3 +8184,5 @@ const unlockAudioGesture = () => {
 };
 window.addEventListener('pointerdown', unlockAudioGesture, { passive: true });
 window.addEventListener('keydown', unlockAudioGesture, { passive: true });
+
+startMissionsTimer();
