@@ -88,9 +88,11 @@ class CDPClient {
 }
 
 async function run() {
+  const tmpDir = path.join(process.env.TEMP || 'C:\\Windows\\Temp', 'chrome_vbb_' + Date.now());
   const chrome = spawn(CHROME_PATH, [
     '--headless=new',
     '--remote-debugging-port=' + PORT,
+    '--user-data-dir=' + tmpDir,
     '--disable-gpu',
     '--no-sandbox',
     '--window-size=1280,720',

@@ -6,19 +6,32 @@ const path = require('path');
 function makeCtx(canvas) {
   const calls = { count: 0, fillText: 0 };
   const grad = () => ({ addColorStop() {} });
+  const noop = (...a) => { calls.count++; };
+  const base = {
+    canvas,
+    globalAlpha: 1, fillStyle: '#000', strokeStyle: '#000', lineWidth: 1,
+    font: '', textAlign: '', textBaseline: '', shadowColor: '', shadowBlur: 0,
+    lineCap: '', lineJoin: '', globalCompositeOperation: '',
+    __calls: calls,
+    measureText: () => ({ width: 10 }),
+    createLinearGradient: grad, createRadialGradient: grad, createPattern: grad,
+    getImageData: (x, y, w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }),
+    beginPath: noop, moveTo: noop, lineTo: noop, closePath: noop,
+    fill: noop, stroke: noop, save: noop, restore: noop,
+    arc: noop, ellipse: noop, rect: noop, fillRect: noop, strokeRect: noop, clearRect: noop,
+    quadraticCurveTo: noop, bezierCurveTo: noop, setLineDash: noop, getLineDash: () => [],
+    fillText: (...a) => { calls.count++; calls.fillText++; }, strokeText: noop,
+    drawImage: noop, translate: noop, rotate: noop, scale: noop, transform: noop, setTransform: noop, resetTransform: noop,
+    clip: noop, isPointInPath: () => false, isPointInStroke: () => false
+  };
   const handler = {
     get(t, k) {
-      if (k === 'canvas') return canvas;
-      if (k === 'measureText') return () => ({ width: 10 });
-      if (k === 'createLinearGradient' || k === 'createRadialGradient' || k === 'createPattern') return grad;
-      if (k === 'getImageData') return (x, y, w, h) => ({ data: new Uint8ClampedArray(w * h * 4) });
-      if (k === '__calls') return calls;
       if (k in t) return t[k];
-      return (...a) => { calls.count++; };
+      return noop;
     },
     set(t, k, v) { t[k] = v; return true; },
   };
-  return new Proxy({ globalAlpha: 1, fillStyle: '#000', strokeStyle: '#000', lineWidth: 1, font: '', textAlign: '', shadowColor: '', shadowBlur: 0, lineCap: '', lineJoin: '', globalCompositeOperation: '' }, handler);
+  return new Proxy(base, handler);
 }
 
 function makeEl(tag, id) {
@@ -70,7 +83,8 @@ function buildEnv(src) {
   };
   const listeners = {};
   const canvas = makeEl('canvas', 'gl');
-  canvas.getContext = () => makeCtx(canvas);
+  const ctx2d = makeCtx(canvas);
+  canvas.getContext = () => ctx2d;
   canvas.width = 1280; canvas.height = 720;
   registry.set('#gl', canvas); registry.set('canvas', canvas);
 

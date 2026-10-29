@@ -1,0 +1,23 @@
+{
+  "name": "neorush-trailer",
+  "version": "1.0.0",
+  "description": "NEORUSH - 30s Cinematic Cyberpunk Video Trailer",
+  "private": true,
+  "scripts": {
+    "start": "remotion preview src/index.ts",
+    "build": "remotion render src/index.ts NEORUSH-Trailer out/neorush-trailer.mp4",
+    "still": "remotion still src/index.ts NEORUSH-Trailer out/thumb.png",
+    "list": "remotion compositions src/index.ts"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.218",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.218"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "typescript": "^5.6.3"
+  }
+}

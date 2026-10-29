@@ -1,4 +1,6 @@
 node_modules/
 _dev/shots/
+_dev/*.backup.*
+_dev/temp_chrome_*
 .DS_Store
 Thumbs.db
