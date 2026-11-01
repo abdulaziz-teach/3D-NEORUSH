@@ -117,7 +117,7 @@ const CAM = { x: 0, y: 2.25, z: -8.0, fov: 620 };
 const LIGHT = [0.38, 0.80, -0.46];
 let W = 0, H = 0, DPR = 1, cx = 0, cy = 0, skyGrad = null, FOV_BASE = 620;
 const canvas = document.getElementById('gl');
-let ctx = canvas.getContext('2d', { alpha: false });
+let ctx = canvas.getContext('2d', { alpha: true });
 
 function detectInitialQuality() {
   const saved = store.get('qual', null);
@@ -161,6 +161,9 @@ function resize() {
   skyGrad.addColorStop(0, '#070a20'); skyGrad.addColorStop(.40, '#180b3c');
   skyGrad.addColorStop(.60, '#40104a'); skyGrad.addColorStop(1, '#0a0620');
   syncQualityClass();
+  if (typeof window !== 'undefined' && window.THREE_ENGINE && window.THREE_ENGINE.initialized) {
+    window.THREE_ENGINE.resize(W, H);
+  }
 }
 
 function proj(p, out) {
@@ -7262,6 +7265,10 @@ function exitDimension() {
 
 function startRun() {
   hide(el.scrMenu); hide(el.scrOver); hide(el.scrCards); hide(el.scrPause); hide(el.scrRevive); hide(el.scrHow);
+  if (typeof window !== 'undefined' && window.THREE_ENGINE && !window.THREE_ENGINE.initialized) {
+    window.THREE_ENGINE.init();
+    window.THREE_ENGINE.resize(W, H);
+  }
   for (const o of G.objs) freeObj(o);
   Object.assign(G, {
     running: true, paused: false, over: false, t: 0, dist: 0, score: 0, lives: 4, maxLives: 4,
@@ -12200,6 +12207,33 @@ function drawBoss() {
 
 const _renderList = [];
 function render() {
+  if (typeof window !== 'undefined' && window.THREE_ENGINE && window.THREE_ENGINE.active) {
+    window.THREE_ENGINE.render(G);
+    ctx.clearRect(0, 0, W, H);
+    drawMagnetArcs();
+    drawFloatingTexts();
+    drawBiomeWeather(trackBiome());
+    if (G.boost > .12 && G.quality !== 'low') {
+      ctx.save(); ctx.globalAlpha = G.boost * .45; ctx.strokeStyle = car().acc || '#00e5ff'; ctx.lineWidth = 1.4;
+      const rays = G.quality === 'medium' ? 8 : 14;
+      for (let i = 0; i < rays; i++) {
+        const a = (i / rays) * 6.283 + G.t * 4, r0 = H * .16;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0 * .55);
+        ctx.lineTo(cx + Math.cos(a) * H * .58, cy + Math.sin(a) * H * .32);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    drawPortalEntryEffect();
+    drawTrackTransition();
+    if (G.shake > .01) {
+      const s = G.shake * 8;
+      canvas.style.transform = 'translate(' + ((Math.random() - .5) * s) + 'px,' + ((Math.random() - .5) * s) + 'px)';
+    } else if (canvas.style.transform) canvas.style.transform = '';
+    if (G.invul > 0 && Math.floor(G.t * 14) % 2 === 0) el.flash.style.opacity = .10;
+    return;
+  }
   drawBackdrop();
   ctx.save();
   drawRoad();
@@ -14131,3 +14165,14 @@ window.addEventListener('keydown', unlockAudioGesture, { passive: true });
 
 startMissionsTimer();
 initBiomeSelectionEvents();
+
+if (typeof window !== 'undefined' && window.THREE_ENGINE && !window.THREE_ENGINE.initialized) {
+  try {
+    window.THREE_ENGINE.init();
+    if (typeof W !== 'undefined' && typeof H !== 'undefined') {
+      window.THREE_ENGINE.resize(W, H);
+    }
+  } catch (e) {
+    console.warn('[ThreeEngine] Auto-init skipped:', e);
+  }
+}
