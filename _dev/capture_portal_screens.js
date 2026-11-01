@@ -5,8 +5,12 @@ const path = require('path');
 const WebSocket = require('ws');
 
 const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const PORT = 9225;
+const PORT = 9247;
+const TEMP_DIR = path.join(__dirname, 'temp_chrome_p_' + Date.now());
 const GAME_URL = 'file:///' + path.resolve('index.html').replace(/\\/g, '/');
+const SHOTS_DIR = path.resolve('_dev/shots/portal_redesign');
+
+if (!fs.existsSync(SHOTS_DIR)) fs.mkdirSync(SHOTS_DIR, { recursive: true });
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function getJson(url) {
@@ -67,22 +71,28 @@ class CDPClient {
       window.innerHeight = ${height};
       window.dispatchEvent(new Event('resize'));
     `);
+    await sleep(200);
   }
   async captureScreenshot(filename) {
     const res = await this.send('Page.captureScreenshot', { format: 'png' });
     const buf = Buffer.from(res.data, 'base64');
-    fs.mkdirSync(path.dirname(filename), { recursive: true });
     fs.writeFileSync(filename, buf);
+    console.log(`Saved screenshot: ${filename} (${buf.length} bytes)`);
   }
   close() { if (this.ws) this.ws.close(); }
 }
 
 async function capture() {
+  console.log('Spawning Chrome for visual verification of 3-lane Grand Exit Portal & animations...');
   const chrome = spawn(CHROME_PATH, [
     '--headless=new',
     '--remote-debugging-port=' + PORT,
+    '--remote-allow-origins=*',
+    '--user-data-dir=' + TEMP_DIR,
     '--disable-gpu',
     '--no-sandbox',
+    '--mute-audio',
+    '--no-first-run',
     '--window-size=1280,720',
     GAME_URL
   ]);
@@ -90,13 +100,15 @@ async function capture() {
   let client = null;
   try {
     let targets = null;
-    for (let i = 0; i < 20; i++) {
-      await sleep(400);
+    for (let i = 0; i < 40; i++) {
+      await sleep(250);
       try {
-        targets = await getJson(`http://127.0.0.1:${PORT}/json`);
+        targets = await getJson(`http://127.0.0.1:${PORT}/json/list`);
         if (targets && targets.length) break;
       } catch {}
     }
+    if (!targets || !targets.length) throw new Error('Chrome targets not available');
+
     const page = targets.find(t => t.type === 'page') || targets[0];
     client = new CDPClient(page.webSocketDebuggerUrl);
     await client.connect();
@@ -104,78 +116,85 @@ async function capture() {
     await client.send('Runtime.enable');
     await sleep(600);
 
-    // 1. Desktop start game
     await client.setViewport(1280, 720);
-    await client.evaluate(`document.getElementById('btnPlay').click();`);
-    await sleep(500);
 
-    // Setup active portal at approaching distance z=18
+    // Skip intro modal and start run
     await client.evaluate(`{
-      const g = window.NY3D;
-      g.G.inDimension = false;
-      g.G.nextPortalAt = g.G.dist;
-      g.G.portalSpawned = false;
-      g.update(0.016);
-      const activeP = g.G.objs.find(o => o.kind === 'portal_active');
-      if (activeP) {
-        g.G.x = activeP.x;
-        g.G.lane = activeP.lane;
-        for (const p of g.G.objs.filter(o => o.kind.startsWith('portal_'))) p.z = 18;
+      const btnSkip = document.getElementById('btnIntroSkip');
+      if (btnSkip) btnSkip.click();
+      const modal = document.getElementById('introModal');
+      if (modal) { modal.classList.add('hidden'); modal.style.display = 'none'; }
+      const overlay = document.querySelector('.modal-overlay:not(.hidden)');
+      if (overlay) { overlay.classList.add('hidden'); overlay.style.display = 'none'; }
+      const btnPlay = document.getElementById('btnPlay');
+      if (btnPlay) btnPlay.click();
+      if (window.NY3D) {
+        window.NY3D.startRun();
       }
-      g.render();
     }`);
-    await sleep(200);
-    await client.captureScreenshot('_dev/shots/01_desktop_portal_approach_z18.png');
-    console.log('Saved 01_desktop_portal_approach_z18.png');
+    await sleep(600);
 
-    // Portal directly in front of car at z=3.5 (aperture opening, car visible)
+    // 1. Approaching 3-Lane Grand Exit Portal from Center Lane
     await client.evaluate(`{
       const g = window.NY3D;
-      for (const p of g.G.objs.filter(o => o.kind.startsWith('portal_'))) p.z = 3.5;
+      g.G.portalEntryAnim = 0;
+      g.enterDimension(0);
+      g.G.portalEntryAnim = 0;
+      g.G.dimensionTime = 5.0;
+      g.G.exitPortalSpawned = false;
+      g.G.objs = g.G.objs.filter(o => !o.kind.startsWith('portal_'));
+      g.update(0.016);
+      const exitP = g.G.objs.find(o => o.kind === 'portal_exit');
+      if (exitP) {
+        exitP.z = 24;
+      }
+      g.G.lane = 1;
+      g.G.x = 0;
       g.render();
     }`);
-    await sleep(200);
-    await client.captureScreenshot('_dev/shots/02_desktop_portal_aperture_z3.5.png');
-    console.log('Saved 02_desktop_portal_aperture_z3.5.png');
+    await sleep(250);
+    await client.captureScreenshot(path.join(SHOTS_DIR, '03_dimension_grand_exit_portal_3lanes.png'));
 
-    // Portal crossing / inside threshold z=0.5 (passing through portal arch)
+    // 2. Approaching 3-Lane Grand Exit Portal from Left Lane (x = -2.4m)
     await client.evaluate(`{
       const g = window.NY3D;
-      for (const p of g.G.objs.filter(o => o.kind.startsWith('portal_'))) p.z = 0.5;
+      g.G.lane = 0;
+      g.G.x = -2.4;
+      const exitP = g.G.objs.find(o => o.kind === 'portal_exit');
+      if (exitP) exitP.z = 16;
       g.render();
     }`);
-    await sleep(200);
-    await client.captureScreenshot('_dev/shots/03_desktop_portal_passing_z0.5.png');
-    console.log('Saved 03_desktop_portal_passing_z0.5.png');
+    await sleep(250);
+    await client.captureScreenshot(path.join(SHOTS_DIR, '03b_dimension_grand_exit_portal_lane0.png'));
 
-    // Nitro active with lightning trails
+    // 3. Passing Grand Exit Portal -> High-Energy De-warp Shockwaves & Streamlines
     await client.evaluate(`{
       const g = window.NY3D;
-      g.G.boost = 0.85;
-      g.G.nitroT = 3.0;
+      g.exitDimension();
+      g.G.portalExitAnim = 1.05;
       g.render();
     }`);
-    await sleep(200);
-    await client.captureScreenshot('_dev/shots/04_desktop_nitro_active.png');
-    console.log('Saved 04_desktop_nitro_active.png');
+    await sleep(250);
+    await client.captureScreenshot(path.join(SHOTS_DIR, '04_grand_exit_warp_animation.png'));
 
-    // Mobile narrow 320px test
-    await client.setViewport(320, 568);
+    // 4. Dimensional Iris Collapse & Victory HUD Banner
     await client.evaluate(`{
       const g = window.NY3D;
-      g.G.boost = 0;
-      g.G.nitroT = 0;
-      for (const p of g.G.objs.filter(o => o.kind.startsWith('portal_'))) p.z = 8.0;
+      g.G.portalExitAnim = 0.55;
       g.render();
     }`);
-    await sleep(200);
-    await client.captureScreenshot('_dev/shots/05_mobile320_portal_approach.png');
-    console.log('Saved 05_mobile320_portal_approach.png');
+    await sleep(250);
+    await client.captureScreenshot(path.join(SHOTS_DIR, '05_grand_exit_warp_iris_close.png'));
 
+    console.log('All screenshots captured successfully!');
   } finally {
     if (client) client.close();
     chrome.kill();
+    try { fs.rmSync(TEMP_DIR, { recursive: true, force: true }); } catch {}
   }
 }
 
-capture().then(() => console.log('All Screenshots Saved Successfully!')).catch(console.error);
+capture().catch(e => {
+  console.error(e);
+  process.exit(1);
+});

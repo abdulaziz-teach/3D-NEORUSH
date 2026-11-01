@@ -968,7 +968,8 @@ const OBJ = {
   heart_plus:    { badY: 1.85, patW: 1.05, patL: 1.1, col: '#f43f5e', hit: 1.55, spin: 1.0,  y: 1.0 },
   checkpoint:    { badY: 3.40, patW: 3.80, patL: 0.6, col: '#00e5ff', hit: 0,    spin: 0,    y: 0 },
   portal_active: { badY: 3.20, patW: 1.35, patL: 0.6, col: '#d946ef', hit: 0,    spin: 0,    y: 0 },
-  portal_open:   { badY: 3.00, patW: 1.25, patL: 0.5, col: '#64748b', hit: 0,    spin: 0,    y: 0 }
+  portal_open:   { badY: 3.00, patW: 1.25, patL: 0.5, col: '#64748b', hit: 0,    spin: 0,    y: 0 },
+  portal_exit:   { badY: 3.80, patW: 3.90, patL: 0.8, col: '#ffd166', hit: 0,    spin: 0,    y: 0 }
 };
 
 function speedToKmh(spd) {
@@ -987,6 +988,7 @@ const G = {
   objs: [], parts: [], stars: [], mountains: [], posts: [], biomeAtmo: [],
   trackIdx: 0, trackT: 0, prevTrackIdx: null, trans: 99,
   inDimension: false, dimensionTime: 0, dimensionIdx: 0, portalEntryAnim: 0, portalExitAnim: 0, lastPortalLane: -1, shieldAnim: 0, nitroAnim: 0,
+  exitPortalSpawned: false,
   nextCheckpointAt: 1300, nextPortalAt: 650, checkpointSpawned: false, portalSpawned: false,
   quality: detectInitialQuality(), car: store.get('car', 0), ship: store.get('car', 0),
   meta: store.get('meta', { plays: 0, best: 0, totalCoins: store.get('coins', 0), runs: 0, farthest: 0, bestLevel: 1 }),
@@ -1338,41 +1340,86 @@ const MESH_CHECKPOINT = meshOfBoxes([
 ]);
 /* Active portal frame on single lane — High-tech Cyberpunk Quantum Portal Gate */
 const MESH_PORTAL_ACTIVE = meshOfBoxes([
-  // Asosiy kvant pylon ustunlari (Outer obsidian columns)
-  { p: [-1.32, 1.55, 0], s: [.18, 1.55, .26], c: '#0d0f1e', top: '#00e5ff', side: '#1a103c' },
-  { p: [1.32, 1.55, 0], s: [.18, 1.55, .26], c: '#0d0f1e', top: '#00e5ff', side: '#1a103c' },
+  // Asosiy kvant pylon ustunlari (Outer obsidian columns - perfectly within lane boundary)
+  { p: [-0.96, 1.70, 0], s: [.08, 1.65, .20], c: '#090e1c', top: '#00f5ff', side: '#151d34', front: '#0b1326' },
+  { p: [0.96, 1.70, 0], s: [.08, 1.65, .20], c: '#090e1c', top: '#00f5ff', side: '#151d34', front: '#0b1326' },
   // Ichki neon energiya kanallari (Vertical quantum conduits)
-  { p: [-1.22, 1.55, .04], s: [.06, 1.45, .12], c: '#00e5ff', em: true },
-  { p: [1.22, 1.55, .04], s: [.06, 1.45, .12], c: '#00e5ff', em: true },
-  { p: [-1.36, 1.55, .02], s: [.05, 1.35, .14], c: '#a855f7', em: true },
-  { p: [1.36, 1.55, .02], s: [.05, 1.35, .14], c: '#a855f7', em: true },
+  { p: [-0.89, 1.70, .04], s: [.025, 1.55, .05], c: '#00f5ff', em: true },
+  { p: [0.89, 1.70, .04], s: [.025, 1.55, .05], c: '#00f5ff', em: true },
+  { p: [-0.98, 1.70, .02], s: [.02, 1.45, .07], c: '#d946ef', em: true },
+  { p: [0.98, 1.70, .02], s: [.02, 1.45, .07], c: '#d946ef', em: true },
   // Yon barqarorlashtiruvchi qanotlar (Stabilizer fins)
-  { p: [-1.48, .90, 0], s: [.12, .80, .18], c: '#15122b', top: '#38bdf8' },
-  { p: [1.48, .90, 0], s: [.12, .80, .18], c: '#15122b', top: '#38bdf8' },
+  { p: [-1.02, 1.05, 0], s: [.03, 0.70, .12], c: '#10182c', top: '#d946ef' },
+  { p: [1.02, 1.05, 0], s: [.03, 0.70, .12], c: '#10182c', top: '#d946ef' },
   // Poydevor reaktiv induktorlari (Base anchors)
-  { p: [-1.34, .12, 0], s: [.32, .12, .38], c: '#090a16', top: '#00f5ff' },
-  { p: [1.34, .12, 0], s: [.32, .12, .38], c: '#090a16', top: '#00f5ff' },
+  { p: [-0.96, .12, 0], s: [.12, .12, .30], c: '#060914', top: '#00f5ff', side: '#101626' },
+  { p: [0.96, .12, 0], s: [.12, .12, .30], c: '#060914', top: '#00f5ff', side: '#101626' },
+  // Yuqori kvant kondensator bloklari (Upper capacitor brackets)
+  { p: [-0.96, 3.28, 0], s: [.10, .14, .22], c: '#121a32', top: '#00f5ff' },
+  { p: [0.96, 3.28, 0], s: [.10, .14, .22], c: '#121a32', top: '#00f5ff' },
   // Yuqori kvant arkasi (Overhead primary arch beam)
-  { p: [0, 3.05, 0], s: [1.48, .18, .28], c: '#1b1035', top: '#00e5ff', bot: '#38bdf8' },
+  { p: [0, 3.42, 0], s: [1.04, .15, .22], c: '#0c1224', top: '#00f5ff', bot: '#1a1036', side: '#16203a' },
   // Yuqori neon plazma rezonatori (Overhead emitter strip)
-  { p: [0, 3.05, .05], s: [1.32, .07, .12], c: '#a855f7', em: true },
+  { p: [0, 3.28, .03], s: [0.92, .045, .08], c: '#d946ef', em: true },
   // Markaziy kvant generator yadrosi (Apex core focus)
-  { p: [0, 3.28, 0], s: [.48, .14, .18], c: '#00e5ff', em: true, top: '#ffffff' },
-  { p: [0, 3.42, 0], s: [.18, .08, .12], c: '#ffffff', em: true }
+  { p: [0, 3.68, 0], s: [.38, .14, .18], c: '#150f2e', top: '#ffffff', side: '#221448' },
+  { p: [0, 3.68, .04], s: [.22, .08, .10], c: '#ffffff', em: true },
+  // Yuqori kvant antennalari (Overhead emitters)
+  { p: [-0.60, 3.72, 0], s: [.025, .16, .035], c: '#00f5ff', em: true },
+  { p: [0.60, 3.72, 0], s: [.025, .16, .035], c: '#00f5ff', em: true }
 ]);
 /* Open highway arch on non-portal lanes — Sleek Cyber Highway Bypass Arch */
 const MESH_PORTAL_OPEN = meshOfBoxes([
   // Yengil aerodinamik pylonlar
-  { p: [-1.24, 1.45, 0], s: [.12, 1.45, .18], c: '#09111e', top: '#38bdf8', side: '#1e293b' },
-  { p: [1.24, 1.45, 0], s: [.12, 1.45, .18], c: '#09111e', top: '#38bdf8', side: '#1e293b' },
+  { p: [-0.96, 1.60, 0], s: [.07, 1.55, .16], c: '#07101e', top: '#38bdf8', side: '#132035' },
+  { p: [0.96, 1.60, 0], s: [.07, 1.55, .16], c: '#07101e', top: '#38bdf8', side: '#132035' },
+  // Poydevor barqarorlagichlari
+  { p: [-0.96, .10, 0], s: [.09, .10, .24], c: '#050c18', top: '#38bdf8' },
+  { p: [0.96, .10, 0], s: [.09, .10, .24], c: '#050c18', top: '#38bdf8' },
   // Moviy tranzit neon chiziqlari
-  { p: [-1.24, 1.45, .03], s: [.04, 1.35, .08], c: '#38bdf8', em: true },
-  { p: [1.24, 1.45, .03], s: [.04, 1.35, .08], c: '#38bdf8', em: true },
+  { p: [-0.90, 1.60, .03], s: [.02, 1.45, .05], c: '#38bdf8', em: true },
+  { p: [0.90, 1.60, .03], s: [.02, 1.45, .05], c: '#38bdf8', em: true },
   // Yuqori tranzit to'sini
-  { p: [0, 2.85, 0], s: [1.36, .12, .18], c: '#0f172a', top: '#38bdf8', bot: '#1e293b' },
-  { p: [0, 2.85, .04], s: [.95, .05, .08], c: '#00e5ff', em: true },
+  { p: [0, 3.22, 0], s: [1.02, .12, .18], c: '#0a1426', top: '#38bdf8', bot: '#15243c' },
+  { p: [0, 3.22, .03], s: [.82, .04, .08], c: '#00e5ff', em: true },
   // Tranzit indikatori
-  { p: [0, 3.02, 0], s: [.32, .06, .10], c: '#38bdf8', em: true }
+  { p: [0, 3.38, 0], s: [.24, .05, .09], c: '#38bdf8', em: true }
+]);
+/* 3-Lane Grand Exit Gateway — Massive Celestial Reality Portal spanning all 3 lanes */
+const MESH_PORTAL_EXIT = meshOfBoxes([
+  // Asosiy gigant pylon ustunlari (Outer obsidian columns spanning beyond 3 lanes)
+  { p: [-3.85, 1.95, 0], s: [.24, 1.95, .32], c: '#0b1325', top: '#ffd166', side: '#15223c', front: '#101a30' },
+  { p: [3.85, 1.95, 0], s: [.24, 1.95, .32], c: '#0b1325', top: '#ffd166', side: '#15223c', front: '#101a30' },
+  // Og'ir reaktiv induktor poydevorlari (Heavy base anchors)
+  { p: [-3.85, .15, 0], s: [.36, .15, .48], c: '#060a14', top: '#ffd166', side: '#131e33' },
+  { p: [3.85, .15, 0], s: [.36, .15, .48], c: '#060a14', top: '#ffd166', side: '#131e33' },
+  // Vertikal oltin quyosh energiya kanallari (Vertical solar conduits)
+  { p: [-3.85, 1.95, .16], s: [.06, 1.80, .06], c: '#ffd166', em: true },
+  { p: [3.85, 1.95, .16], s: [.06, 1.80, .06], c: '#ffd166', em: true },
+  // Vertikal moviy kvant kanallari (Vertical celestial cyan conduits)
+  { p: [-3.85, 1.95, -.16], s: [.06, 1.80, .06], c: '#38bdf8', em: true },
+  { p: [3.85, 1.95, -.16], s: [.06, 1.80, .06], c: '#38bdf8', em: true },
+  // Yon barqarorlashtiruvchi qanotlar (Aerodynamic outer fins)
+  { p: [-4.05, 1.20, 0], s: [.05, .90, .20], c: '#15223c', top: '#ffd166' },
+  { p: [4.05, 1.20, 0], s: [.05, .90, .20], c: '#15223c', top: '#ffd166' },
+  // Yuqori kvant kondensator bloklari (Upper capacitor brackets)
+  { p: [-3.85, 3.85, 0], s: [.28, .20, .36], c: '#15223c', top: '#ffffff' },
+  { p: [3.85, 3.85, 0], s: [.28, .20, .36], c: '#15223c', top: '#ffffff' },
+  // 3-Polosali Katta Kvant Arkasi (Overhead mega-arch crossbeam)
+  { p: [0, 3.85, 0], s: [4.10, .24, .36], c: '#0b1325', top: '#ffd166', bot: '#15223c', side: '#101a30' },
+  // Yuqori oltin neon plazma rezonatori (Overhead primary solar strip)
+  { p: [0, 3.85, .14], s: [3.90, .08, .10], c: '#ffd166', em: true },
+  // Pastki moviy rezonans nuri (Under-arch cyan plasma glow)
+  { p: [0, 3.65, 0], s: [3.80, .04, .20], c: '#38bdf8', em: true },
+  // Markaziy kvant generator yadrosi (Apex reality core)
+  { p: [0, 4.30, 0], s: [.60, .22, .24], c: '#15223c', top: '#ffffff', side: '#223254' },
+  { p: [0, 4.30, .08], s: [.36, .12, .14], c: '#ffffff', em: true },
+  // Polosalar ustidagi yo'naltiruvchi kvant antennalari (Overhead spires across lanes)
+  { p: [-2.40, 4.25, 0], s: [.04, .24, .05], c: '#ffd166', em: true },
+  { p: [0, 4.60, 0], s: [.05, .32, .06], c: '#ffffff', em: true },
+  { p: [2.40, 4.25, 0], s: [.04, .24, .05], c: '#ffd166', em: true },
+  { p: [-3.85, 4.20, 0], s: [.05, .25, .05], c: '#38bdf8', em: true },
+  { p: [3.85, 4.20, 0], s: [.05, .25, .05], c: '#38bdf8', em: true }
 ]);
 /* Baland energetik qalqon-devor (sakrab bo'lmaydi): og'ir sanoat ramkasi + lazer panجara */
 const MESH_WALL = meshOfBoxes([
@@ -1553,6 +1600,7 @@ const MESHES = {
   checkpoint: ASSET_REGISTRY.registerMesh('checkpoint', MESH_CHECKPOINT),
   portal_active: ASSET_REGISTRY.registerMesh('portal_active', MESH_PORTAL_ACTIVE),
   portal_open: ASSET_REGISTRY.registerMesh('portal_open', MESH_PORTAL_OPEN),
+  portal_exit: ASSET_REGISTRY.registerMesh('portal_exit', MESH_PORTAL_EXIT),
   boss: ASSET_REGISTRY.registerMesh('boss', MESH_BOSS)
 };
 
@@ -3103,15 +3151,7 @@ const BIOME_3D = {
       return this.riftRoadsideProp(0, 1, arcaneCol || '#c084fc', false);
     },
     quantumPortalRing(col1, col2) {
-      const outerHex = meshOfPrism(3.5, 0.7, 6, col1 || '#00e5ff', '#ffffff');
-      for (const pt of outerHex.v) {
-        const tmp = pt[1]; pt[1] = pt[2] + 2.5; pt[2] = tmp;
-      }
-      const innerHex = meshOfPrism(2.7, 0.9, 6, col2 || '#d946ef', '#ffffff');
-      for (const pt of innerHex.v) {
-        const tmp = pt[1]; pt[1] = pt[2] + 2.5; pt[2] = tmp;
-      }
-      return mergeMesh(outerHex, innerHex);
+      return emptyMesh();
     }
   },
 
@@ -4948,17 +4988,7 @@ const BIOME_3D = {
   },
 
   drawPortal3DRing(o, col1, col2, aperture, prox) {
-    if (o.z > 70 || o.z < 0.4) return;
-    const ringMesh = this.models.quantumPortalRing(col1, col2);
-    if (!ringMesh) return;
-    const rotZ = G.t * (3.5 + prox * 2.0);
-    const faces = facesOf(ringMesh, [o.x, 0, o.z], rotZ, 1.0);
-    faces.sort((a, b) => b.z - a.z);
-    const alpha = Math.max(0.25, 1.0 - aperture * 0.7);
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    for (let i = 0; i < faces.length; i++) drawFace(faces[i]);
-    ctx.restore();
+    // Procedural quantum vortex is handled with full depth & alpha in drawPortalActive
   }
 };
 
@@ -5522,6 +5552,8 @@ function _showToast(msg, ms) {
   if (!el.toast) return;
   _toastBusy = true;
   el.toast.textContent = msg;
+  const isHintActive = el.hint && el.hint.classList.contains('on');
+  el.toast.classList.toggle('hint-offset', isHintActive);
   el.toast.classList.add('on');
   clearTimeout(toast._t);
   toast._t = setTimeout(() => {
@@ -6092,20 +6124,20 @@ const TUTORIAL_SYSTEM = {
       this.tasks.portal = false;
       if (tag) tag.textContent = 'ЭТАП 5/5';
       if (title) title.textContent = 'ПОРТАЛЫ И БИОМЫ';
-      if (desc) desc.innerHTML = '<b>3-полосный квантовый портал!</b> Полоса со светящимся шлейфом и знаком ведёт в секретное измерение. Остальные полосы — транзит.';
+      if (desc) desc.innerHTML = '<b>Квантовый портал!</b> Врата со светящимся шлейфом ведут в секретное измерение. Совершите гипер-прыжок!';
       if (task) task.innerHTML = '<span class="tut-check" id="tutCheckPortal">◯ Войти в портал</span>';
-      if (hint) hint.innerHTML = '🌀 Найдите активную полосу со стрелками и въезжайте!';
+      if (hint) hint.innerHTML = '🌀 Въезжайте прямо в квантовый портал!';
       for (const o of G.objs) if (o.kind.startsWith('portal_') || HAZARD[o.kind]) o.dead = true;
       const targetDim = 1;
       const pGroup = (G.portalGroupSeq = (G.portalGroupSeq || 0) + 1);
       const activeLane = G.lane;
-      for (let l = 0; l < 3; l++) {
-        const p = allocObj(l === activeLane ? 'portal_active' : 'portal_open', LANES[l], 42);
-        p.targetDim = targetDim;
-        p.activeLane = activeLane;
-        p.portalGroupId = pGroup;
-        G.objs.push(p);
-      }
+      const p = allocObj('portal_active', activeLane, 42);
+      p.lane = activeLane;
+      p.x = LANES[activeLane];
+      p.targetDim = targetDim;
+      p.activeLane = activeLane;
+      p.portalGroupId = pGroup;
+      G.objs.push(p);
     }
   },
 
@@ -6327,7 +6359,7 @@ function allocObj(kind, xOrLane, z, opt) {
   const o = POOL.pop() || {};
   let lane = 1;
   let x = 0;
-  if (kind === 'checkpoint') {
+  if (kind === 'checkpoint' || kind === 'portal_exit') {
     lane = 1;
     x = 0;
   } else if (typeof xOrLane === 'number') {
@@ -6354,7 +6386,7 @@ function spawnRow(z) {
   let portalLane = -1;
   for (let i = 0; i < G.objs.length; i++) {
     const po = G.objs[i];
-    if (po.kind === 'portal_active' && !po.dead && Math.abs(po.z - z) < 16) {
+    if ((po.kind === 'portal_active' || po.kind === 'portal_exit') && !po.dead && Math.abs(po.z - z) < 18) {
       portalLane = po.lane;
       break;
     }
@@ -7177,10 +7209,11 @@ function enterDimension(dimIdx) {
   G.inDimension = true;
   G.dimensionIdx = dimIdx;
   G.dimensionTime = 45.0;
-  G.portalEntryAnim = 0.85;
+  G.portalEntryAnim = 1.15;
+  G.exitPortalSpawned = false;
   if (TUTORIAL_SYSTEM.active) TUTORIAL_SYSTEM.onAction('portal');
-  G.flash = 0.40; // Silliq chaqnash, o'yinchining ko'zini qamashtirmaydi va mashinani yo'qotmaydi
-  G.shake = 0.45;
+  G.flash = 0.45; // Giper-sakrash yorqinlik pulsi
+  G.shake = 0.50;
   G.meta.portalsEntered = (G.meta.portalsEntered || 0) + 1;
   store.set('meta', G.meta);
   Sound.chord([440, 660, 880, 1320], 0.7, 0.28);
@@ -7201,6 +7234,7 @@ function exitDimension() {
   const dim = DIMENSIONS[G.dimensionIdx] || DIMENSIONS[0];
   G.inDimension = false;
   G.dimensionTime = 0;
+  G.exitPortalSpawned = false;
   G.meta.dimensionsCleared = (G.meta.dimensionsCleared || 0) + 1;
   G.runDimensionsCleared = (G.runDimensionsCleared || 0) + 1;
   const bonusScore = 10000;
@@ -7208,14 +7242,15 @@ function exitDimension() {
   G.score += bonusScore;
   G.coins += bonusCoins;
   G.runCoins += bonusCoins;
-  G.flash = 0.35; // Silliq chiqish pulsi
-  G.shake = 0.35;
-  G.portalExitAnim = 0.75;
+  G.flash = 0.55; // Chiqish kiber-nuri
+  G.shake = 0.45;
+  G.portalExitAnim = 1.35; // Boy kinematik chiqish giper-sakrash animatsiyasi
   store.set('meta', G.meta);
-  Sound.chord([523, 659, 784, 1046], 0.6, 0.25);
+  Sound.chord([523, 659, 784, 1046, 1318, 1568], 0.75, 0.30);
   toast('✨ ИЗМЕРЕНИЕ ПРОЙДЕНО! Награда: +' + bonusScore + ' очков, +' + bonusCoins + ' 🪙', 4000);
   addFloatingText(G.x, 2.2, 0, '✨ НАГРАДА: +' + bonusScore, '#ffd166');
   for (const o of G.objs) {
+    if (o.kind === 'portal_exit') o.dead = true;
     if (o.z > 0 && o.z < 55 && HAZARD[o.kind]) o.dead = true;
   }
   // Seed return highway coin stream so player never faces a 2-3s barren road
@@ -7244,6 +7279,7 @@ function startRun() {
     checkpointCrossed: false,
     nextPortalAt: 650,
     portalSpawned: false,
+    exitPortalSpawned: false,
     inDimension: false,
     dimensionTime: 0,
     dimensionIdx: 0,
@@ -7395,6 +7431,12 @@ function gameOver() {
     setAchieveState(aSt);
   }
   $('#newBest').classList.toggle('hidden', !rec);
+  const overScoreNum = $('#overScoreNum');
+  if (overScoreNum) overScoreNum.textContent = num(G.score);
+  const overBestScore = $('#overBestScore');
+  if (overBestScore) overBestScore.textContent = num(G.meta.best || 0);
+  const overRecordLine = $('#overRecordLine');
+  if (overRecordLine) overRecordLine.style.display = rec ? 'none' : 'block';
   $('#overStats').innerHTML = statHTML();
   $('#overHint').textContent = tip();
   renderOverAcct(pts, rec);
@@ -7427,22 +7469,27 @@ function tip() {
 }
 function statHTML() {
   const rows = [
-    ['ОЧКИ', num(G.score)],
-    ['РАССТОЯНИЕ', km(G.dist)],
-    ['УРОВЕНЬ', 'УР. ' + G.level],
-    ['МАКС. СКОРОСТЬ', speedToKmh(G.maxSpeed) + ' км/ч'],
-    ['ЛУЧШЕЕ КОМБО', mul(G.bestCombo || 1)],
-    ['МОНЕТЫ', '+' + num(G.runCoins || 0) + ' (всего ' + num(G.coins) + ')'],
-    ['УЛУЧШЕНИЯ', 'получено: ' + Object.keys(G.upgrades).length]
+    ['РАССТОЯНИЕ', km(G.dist), 'nr-ic-gauge'],
+    ['МАКС. СКОРОСТЬ', speedToKmh(G.maxSpeed) + ' км/ч', 'nr-ic-flame'],
+    ['ЛУЧШЕЕ КОМБО', mul(G.bestCombo || 1), 'nr-ic-trophy'],
+    ['МОНЕТЫ', '+' + num(G.runCoins || 0) + ' (всего ' + num(G.coins) + ')', 'nr-ic-star'],
+    ['УЛУЧШЕНИЯ', Object.keys(G.upgrades).length + ' шт.', 'nr-ic-wrench'],
+    ['УРОВЕНЬ', 'УР. ' + G.level, 'nr-ic-zap']
   ];
-  return rows.map(r => '<div class="gs"><small>' + r[0] + '</small><b>' + r[1] + '</b></div>').join('');
+  return rows.map(r => '<div class="gs"><small><svg class="nr-icon nr-icon-xs" aria-hidden="true"><use href="#' + r[2] + '"/></svg>' + r[0] + '</small><b>' + r[1] + '</b></div>').join('');
 }
 
 /* --------------------------- PAUSE / CARDS / REVIVE --------------------------- */
 function togglePause() {
   if (!G.running && !G.paused) return;
   G.paused = !G.paused;
-  if (G.paused) { $('#pauseStats').innerHTML = statHTML(); show(el.scrPause); if (Sound.engineGain) Sound.engineGain.gain.value = 0; }
+  if (G.paused) {
+    const ps = $('#pauseScoreNum');
+    if (ps) ps.textContent = num(G.score);
+    $('#pauseStats').innerHTML = statHTML();
+    show(el.scrPause);
+    if (Sound.engineGain) Sound.engineGain.gain.value = 0;
+  }
   else { hide(el.scrPause); Sound.resume(); }
 }
 function offerCards() {
@@ -7536,6 +7583,9 @@ function updateHUD() {
       el.speed.style.color = '#fff7d6';
       el.speed.style.textShadow = '0 0 12px rgba(0,229,255,.6)';
     }
+    const speedTick = Math.max(0, Math.min(100, (spdKmh / 350) * 100));
+    const tickEl = document.getElementById('speedoTick');
+    if (tickEl) tickEl.style.width = speedTick + '%';
   }
   const bW = Math.round(Math.max(0, Math.min(100, G.energon / G.energonMax * 100))) + '%';
   if (bW !== _hudCache.boostW) { _hudCache.boostW = bW; el.boostBar.style.width = bW; }
@@ -7715,9 +7765,8 @@ function update(dt) {
     }
   }
 
-  // 3-Lane Portal System: 3 visually distinct portals aligned to the 3 lanes;
-  // exactly 1 randomly selected lane leads into the 45s special dimension (`portal_active`),
-  // while the other 2 lanes show non-colliding highway bypass gates (`portal_open`).
+  // Quantum Portal System: Exactly 1 portal spawns on a specific lane (`portal_active`),
+  // leading into the 45s special dimension. The other 2 lanes remain open highway.
   if (!G.inDimension && G.dist >= G.nextPortalAt && !G.portalSpawned) {
     G.portalSpawned = true;
     let activeLane = Math.floor(Math.random() * 3);
@@ -7730,39 +7779,58 @@ function update(dt) {
     for (const o of G.objs) {
       if (Math.abs(o.z - 72) < 16) o.dead = true;
     }
-    for (let l = 0; l < 3; l++) {
-      if (l === activeLane) {
-        const p = allocObj('portal_active', LANES[l], 72);
-        p.targetDim = targetDim;
-        p.activeLane = activeLane;
-        p.approached = false;
-        p.portalGroupId = portalGroupId;
-        G.objs.push(p);
-      } else {
-        const p = allocObj('portal_open', LANES[l], 72);
-        p.targetDim = targetDim;
-        p.activeLane = activeLane;
-        p.portalGroupId = portalGroupId;
-        G.objs.push(p);
-      }
-    }
+    // Spawn ONLY 1 active portal on the active lane
+    const p = allocObj('portal_active', activeLane, 72);
+    p.lane = activeLane;
+    p.x = LANES[activeLane];
+    p.targetDim = targetDim;
+    p.activeLane = activeLane;
+    p.portalGroupId = portalGroupId;
+    p.approached = false;
+    G.objs.push(p);
 
     const laneTitle = activeLane === 0 ? 'ЛЕВАЯ ПОЛОСА' : (activeLane === 1 ? 'ЦЕНТРАЛЬНАЯ ПОЛОСА' : 'ПРАВАЯ ПОЛОСА');
     toast('🌀 ПОРТАЛ ОБНАРУЖЕН: «' + DIMENSIONS[targetDim].name + '» · ' + laneTitle, 3600);
-    addFloatingText(LANES[activeLane], 2.5, 42, '🌀 ПОРТАЛ ОБНАРУЖЕН', DIMENSIONS[targetDim].neon || '#d946ef');
     Sound.chord([580, 870, 1160], .4, .2);
   }
 
-  // 45s Dimension Timer, Portal Entry Animation & Shield Ripple decay
-  if (G.portalEntryAnim > 0) G.portalEntryAnim = Math.max(0, G.portalEntryAnim - dt * 1.4);
-  if (G.portalExitAnim > 0) G.portalExitAnim = Math.max(0, G.portalExitAnim - dt * 1.5);
+  // 45s Dimension Timer, Portal Entry Animation, Exit Portal Lifecycle & Shield Ripple decay
+  if (G.portalEntryAnim > 0) G.portalEntryAnim = Math.max(0, G.portalEntryAnim - dt * 1.0);
+  if (G.portalExitAnim > 0) G.portalExitAnim = Math.max(0, G.portalExitAnim - dt * 1.0);
   if (G.shieldRipple > 0) G.shieldRipple = Math.max(0, G.shieldRipple - dt * 2.2);
   if (G.shieldAnim > 0) G.shieldAnim = Math.max(0, G.shieldAnim - dt * 2.2);
   if (G.nitroAnim > 0) G.nitroAnim = Math.max(0, G.nitroAnim - dt * 2.5);
   if (G.inDimension) {
     if (!G.paused) {
       G.dimensionTime = Math.max(0, G.dimensionTime - dt);
-      if (G.dimensionTime <= 0) exitDimension();
+
+      // Dedicated 3-Lane Grand Exit Gateway: spawns when 7.0 seconds remain across all 3 lanes!
+      if (G.dimensionTime <= 7.0 && !G.exitPortalSpawned) {
+        G.exitPortalSpawned = true;
+        for (const o of G.objs) {
+          if (Math.abs(o.z - 70) < 18) o.dead = true;
+        }
+        const pExit = allocObj('portal_exit', 0, 70);
+        pExit.lane = 1;
+        pExit.x = 0;
+        pExit.approached = false;
+        G.objs.push(pExit);
+
+        toast('🌟 ВЕЛИКИЕ ВРАТА РЕАЛЬНОСТИ ВПЕРЕДИ! ПЕРЕХОД ЧЕРЕЗ ВСЕ ПОЛОСЫ!', 4200);
+        Sound.chord([523, 659, 784, 1046, 1318], 0.6, 0.25);
+      }
+
+      // If Exit Portal is spawned and still ahead, hold dimension from instant abrupt ending!
+      if (G.exitPortalSpawned) {
+        const exitObj = G.objs.find(o => o.kind === 'portal_exit' && !o.dead && !o.taken);
+        if (exitObj && exitObj.z > 0.4) {
+          if (G.dimensionTime < 0.2) G.dimensionTime = 0.2; // Keep at 0.2s until player reaches or passes gate
+        } else if (G.dimensionTime <= 0) {
+          exitDimension();
+        }
+      } else if (G.dimensionTime <= 0) {
+        exitDimension();
+      }
     }
   }
 
@@ -7880,7 +7948,7 @@ function update(dt) {
               Sound.noise(0.25, 0.2);
               Sound.blip(320, 0.14, 'triangle', 0.2);
               toast('🛡 Щит поглотил удар босса!', 1800);
-              addFloatingText(G.x, 2.0, 0, '🛡 ЩИТ ПОГЛОТИЛ УДАР', '#00e5ff');
+              addFloatingText(G.x, 2.0, 0, '🛡 ЩИТ', '#00e5ff');
             } else {
               G.lives--;
               G.invul = 2.0; // Fair invulnerability window prevents instant multi-death
@@ -8128,8 +8196,6 @@ function update(dt) {
     if (o.kind === 'portal_active' && !o.taken) {
       if (!o.approached && o.z < 30 && o.z > 4) {
         o.approached = true;
-        const dim = DIMENSIONS[o.targetDim] || DIMENSIONS[0];
-        addFloatingText(o.x, 2.4, o.z * 0.45, '⚡ ВХОД В ИЗМЕРЕНИЕ ⚡', dim.neon || '#00e5ff');
       }
       if (o.z < 1.15 && o.z > -1.35) {
         o.taken = true;
@@ -8148,6 +8214,30 @@ function update(dt) {
         } else {
           addFloatingText(G.x, 1.8, 0, '🛣 ПРЯМОЙ ПУТЬ', '#94a3b8');
         }
+        continue;
+      }
+    }
+    if (o.kind === 'portal_exit' && !o.taken) {
+      if (!o.approached && o.z < 30 && o.z > 4) {
+        o.approached = true;
+      }
+      if (o.z < 1.15 && o.z > -1.35) {
+        o.taken = true;
+        const directHit = Math.abs(o.x - G.x) <= 3.85;
+        burst(G.x, 1.2, 0, 42, '#ffd166', 2.4);
+        burst(G.x, 1.2, 0, 32, '#ffffff', 2.6);
+        burst(G.x, 1.2, 0, 24, '#38bdf8', 2.0);
+        if (directHit) {
+          toast('🌟 ВЕЛИКИЙ ВЫХОД ИЗ ИЗМЕРЕНИЯ! +10,000 ОЧКОВ!', 3500);
+          G.score += 10000;
+          addFloatingText(G.x, 2.4, 0, '🌟 ВЫХОД +10000', '#ffd166');
+        }
+        exitDimension();
+        continue;
+      }
+      if (o.z <= -1.35) {
+        o.taken = true;
+        exitDimension();
         continue;
       }
     }
@@ -8190,7 +8280,7 @@ function update(dt) {
         if (G.shield > 0) {
           G.shield = 0; G.shieldPlusTimer = 0; G.shieldRipple = 1.0; o.dead = true; bumpCombo(-1); G.invul = .9;
           burst(o.x, 1, o.z, 16, '#00e5ff', 1.5); Sound.blip(660, .18, 'sine', .26);
-          addFloatingText(G.x, 1.8, 0, '🛡 ЩИТ ПОГЛОТИЛ УДАР', '#00e5ff');
+          addFloatingText(G.x, 1.8, 0, '🛡 ЩИТ', '#00e5ff');
           toast('🛡 Щит поглотил удар');
         } else if (G.invul <= 0) {
           o.dead = true; G.lives--; bumpCombo(-1); G.shake = 1.3; G.flash = .9; G.invul = 1.9;
@@ -8220,7 +8310,7 @@ function update(dt) {
         burst(o.x, 1, o.z, 14, '#00e5ff', 1.3);
         burst(o.x, 1.05, o.z, 4, '#ffffff', 1.0);
         Sound.chord([700, 1000], .22, .16); toast('⚡ НИТРО!');
-        addFloatingText(o.x, 1.4, o.z, '⚡ УСКОРЕНИЕ НИТРО', '#00e5ff');
+        addFloatingText(o.x, 1.4, o.z, '⚡ НИТРО', '#00e5ff');
         lessonEvent('nitro');
         if (TUTORIAL_SYSTEM.active) TUTORIAL_SYSTEM.onAction('nitro');
       } else if (o.kind === KIND.SH) {
@@ -8245,8 +8335,8 @@ function update(dt) {
         burst(o.x, 1, o.z, 16, '#22d3ee', 1.3);
         burst(o.x, 1.05, o.z, 6, '#ffd166', 1.1);
         Sound.chord([540, 720, 960], .25, .18);
-        toast('🛡⚡ ЩИТ+ · УСИЛЕННЫЙ ЭНЕРГОЩИТ НА ' + Math.round(dur) + ' С!', 2200);
-        addFloatingText(o.x, 1.4, o.z, '🛡⚡ ЩИТ+ (' + Math.round(dur) + ' с)', '#22d3ee');
+        toast('🛡⚡ ЩИТ+ АКТИВЕН (' + Math.round(dur) + ' с)', 1800);
+        addFloatingText(o.x, 1.4, o.z, '🛡⚡ ЩИТ+', '#22d3ee');
       } else if (o.kind === KIND.MAG_PLUS) {
         const dur = Math.min(25, Math.max(G.magnet + 6, G.magnetMax + 6));
         G.magnet = dur;
@@ -8254,8 +8344,8 @@ function update(dt) {
         burst(o.x, 1, o.z, 16, '#e879f9', 1.3);
         burst(o.x, 1.05, o.z, 6, '#ffd166', 1.1);
         Sound.chord([440, 660, 880], .25, .18);
-        toast('🧲⚡ МАГНИТ+ · СВЕРХСИЛЬНЫЙ МАГНИТ НА ' + Math.round(dur) + ' С!', 2200);
-        addFloatingText(o.x, 1.4, o.z, '🧲⚡ МАГНИТ+ (+50% РАДИУС)', '#e879f9');
+        toast('🧲⚡ МАГНИТ+ АКТИВЕН (' + Math.round(dur) + ' с)', 1800);
+        addFloatingText(o.x, 1.4, o.z, '🧲⚡ МАГНИТ+', '#e879f9');
       } else if (o.kind === KIND.LIFE_PLUS) {
         if (G.lives < G.maxLives) {
           G.lives = Math.min(G.maxLives, G.lives + 1);
@@ -10302,25 +10392,25 @@ function drawTrackTransition() {
     ctx.closePath(); ctx.fill();
   }
 
-  // 5) 3D Holographic Cyberpunk Banner
-  const fs = Math.max(18, Math.min(W * 0.088, H * 0.088));
-  const sm = Math.max(11, fs * 0.42);
+  // 5) Sleek Cinematic Letterbox HUD Banner (Keeps road center 100% visible)
+  const fs = Math.max(13, Math.min(W * 0.042, 22));
+  const sm = Math.max(9.5, fs * 0.48);
   const name = bm.name;
   const lab = '⚡  НОВЫЙ БИОМ ОБНАРУЖЕН  ⚡';
   const stars = '★'.repeat(bm.diff) + '☆'.repeat(Math.max(0, 4 - bm.diff));
   const sub = BAND_NAME[bm.band] + ' СЕКТОР  ·  ' + stars;
 
   ctx.font = '900 ' + fs + 'px ' + UIFONT;
-  if ('letterSpacing' in ctx) ctx.letterSpacing = Math.round(fs * 0.07) + 'px';
+  if ('letterSpacing' in ctx) ctx.letterSpacing = Math.round(fs * 0.06) + 'px';
   const wMain = ctx.measureText(name).width;
   ctx.font = '900 ' + sm + 'px ' + UIFONT;
   const wSub = Math.max(ctx.measureText(sub).width, ctx.measureText(lab).width);
-  const pw = Math.min(W * 0.94, Math.max(wMain, wSub) + fs * 2.6);
-  const ph2 = fs * 2.8;
+  const pw = Math.min(W * 0.76, Math.max(wMain, wSub) + fs * 3.2);
+  const ph2 = Math.max(46, fs * 2.1);
 
-  // Masshtab elastik tushishi (scale punch)
-  const scalePunch = 1 + Math.max(0, 0.4 * (1 - _ease(Math.min(1, t / 0.4))));
-  const px = cx, py = H * (H > W ? 0.30 : 0.26);
+  // Positioned high in the sky zone, safely above road horizon and obstacles
+  const scalePunch = 1 + Math.max(0, 0.15 * (1 - _ease(Math.min(1, t / 0.4))));
+  const px = cx, py = Math.max(ph2 * 0.65 + 62, H * 0.15);
 
   ctx.save();
   ctx.translate(px, py);
@@ -10331,9 +10421,9 @@ function drawTrackTransition() {
   ctx.shadowColor = rgba(bm.neon, 1);
   ctx.shadowBlur = fs * 1.5;
   const bgGrad = ctx.createLinearGradient(-pw / 2, 0, pw / 2, 0);
-  bgGrad.addColorStop(0, 'rgba(4,7,20,0.92)');
-  bgGrad.addColorStop(0.5, 'rgba(10,16,42,0.95)');
-  bgGrad.addColorStop(1, 'rgba(4,7,20,0.92)');
+  bgGrad.addColorStop(0, 'rgba(4,7,20,0.80)');
+  bgGrad.addColorStop(0.5, 'rgba(10,16,42,0.85)');
+  bgGrad.addColorStop(1, 'rgba(4,7,20,0.80)');
   ctx.fillStyle = bgGrad;
   _rrect(-pw / 2, -ph2 / 2, pw, ph2, ph2 * 0.26);
   ctx.fill();
@@ -10689,26 +10779,32 @@ function drawGate(z) {
 /** Suzuvchi 3D matnlar (+150 YONIDAN O'TISH, SAKRASH, COMBO) */
 function drawFloatingTexts() {
   if (!G.texts || !G.texts.length) return;
-  for (const ft of G.texts) {
+  for (let i = 0; i < G.texts.length; i++) {
+    const ft = G.texts[i];
     proj([ft.x, ft.y, ft.z], _a);
     if (!_a.vis) continue;
     const progress = ft.t / ft.l;
     const alpha = Math.max(0, 1 - progress);
-    const scale = 1 + progress * 0.3;
+    const isAlert = ft.text.includes('ЩИТ') || ft.text.includes('НИТРО') || ft.text.includes('МАГНИТ') || ft.text.includes('ОВЕР');
+    // Elevate notification safely above the car & road sightline
+    const yOffset = isAlert ? 36 + progress * 24 : 12 + progress * 16;
+    const drawY = _a.y - yOffset;
+    const scale = 1 + progress * 0.15;
     ctx.save();
-    ctx.globalAlpha = alpha;
-    const fontSize = Math.max(13, Math.min(32, _a.s * 0.42 * scale));
+    ctx.globalAlpha = alpha * 0.95;
+    const maxFs = isAlert ? 16 : 14;
+    const fontSize = Math.max(11, Math.min(maxFs, _a.s * 0.28 * scale));
     ctx.font = '900 ' + (fontSize | 0) + 'px ' + UIFONT;
     ctx.textAlign = 'center';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = Math.max(2.5, fontSize * 0.16);
-    ctx.strokeStyle = 'rgba(4,5,13,.92)';
-    ctx.strokeText(ft.text, _a.x, _a.y);
+    ctx.lineWidth = Math.max(2.0, fontSize * 0.14);
+    ctx.strokeStyle = 'rgba(4,7,18,0.92)';
+    ctx.strokeText(ft.text, _a.x, drawY);
     if (G.quality === 'high') {
-      ctx.shadowColor = ft.col || '#ffd166'; ctx.shadowBlur = fontSize * .55;
+      ctx.shadowColor = ft.col || '#ffd166'; ctx.shadowBlur = fontSize * 0.4;
     }
     ctx.fillStyle = ft.col || '#ffd166';
-    ctx.fillText(ft.text, _a.x, _a.y);
+    ctx.fillText(ft.text, _a.x, drawY);
     ctx.shadowBlur = 0;
     ctx.restore();
   }
@@ -10887,28 +10983,42 @@ function drawPortalActive(o) {
   const col2 = dim.neon || theme.col2;
   const col3 = '#ffffff';
 
-  // 1) Yo'l polosasi bo'ylab faol energiya yo'lagi (Intense energy runway)
-  // CRITICAL FIX: o.z yaqinlashganda yo'lak mashina oldida (z >= 0.6) to'xtaydi, mashina kapotiga chiqmaydi
-  const trailLen = Math.min(32, Math.max(6, o.z));
+  // 1) Yo'l polosasi bo'ylab faol kvant energiya yo'lagi (Hypersonic energy runway)
+  const trailLen = Math.min(28, Math.max(5, o.z));
   const trailStart = Math.max(0.65, o.z - trailLen);
-  const trailEnd = Math.max(trailStart + 0.5, o.z + 1.2);
+  const trailEnd = Math.max(trailStart + 0.5, o.z + 0.8);
   if (o.z > 0.4) {
-    quad(o.x - 1.15, trailStart, o.x + 1.15, trailEnd, 0.02,
-      rgba(col1, 0.22 + 0.14 * Math.sin(G.t * 8)), rgba(col2, 0.65));
+    // Asosiy plazma gilami (Main runway glow strip)
+    quad(o.x - 0.98, trailStart, o.x + 0.98, trailEnd, 0.02,
+      rgba(col1, 0.20 + 0.12 * Math.sin(G.t * 8)), rgba(col2, 0.60));
 
-    // Yo'l bo'ylab yuguruvchi kiber-strelkalar (Forward energy chevrons)
+    // Ikki chekka yo'naltiruvchi neon lazer chiziqlari (Perimeter laser rails)
+    for (const side of [-0.98, 0.98]) {
+      proj([o.x + side, 0.025, trailStart], _a);
+      proj([o.x + side, 0.025, trailEnd], _b);
+      if (_a.vis && _b.vis) {
+        ctx.save();
+        ctx.strokeStyle = col1;
+        ctx.lineWidth = Math.max(1.5, 3.2 * _b.s * 0.04);
+        ctx.globalAlpha = 0.85;
+        ctx.beginPath(); ctx.moveTo(_a.x, _a.y); ctx.lineTo(_b.x, _b.y); ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // Yo'l bo'ylab yuguruvchi kiber-strelkalar (Forward energy chevrons >>>)
     const chevSteps = G.quality === 'low' ? 3 : 5;
     for (let c = 0; c < chevSteps; c++) {
-      const cz = o.z - ((G.t * 18 + c * (trailLen / chevSteps)) % trailLen);
-      if (cz > 1.1 && cz < o.z - 0.7) {
-        proj([o.x - 0.82, 0.04, cz], _a);
-        proj([o.x, 0.04, cz + 1.2], _b);
-        proj([o.x + 0.82, 0.04, cz], _c);
+      const cz = o.z - ((G.t * 20 + c * (trailLen / chevSteps)) % trailLen);
+      if (cz > 1.1 && cz < o.z - 0.6) {
+        proj([o.x - 0.72, 0.04, cz], _a);
+        proj([o.x, 0.04, cz + 1.15], _b);
+        proj([o.x + 0.72, 0.04, cz], _c);
         if (_a.vis && _b.vis && _c.vis) {
           ctx.save();
           ctx.strokeStyle = c % 2 === 0 ? col1 : '#ffffff';
-          ctx.lineWidth = Math.max(1.8, 3.5 * _b.s * 0.04);
-          ctx.globalAlpha = 0.85;
+          ctx.lineWidth = Math.max(1.8, 3.6 * _b.s * 0.04);
+          ctx.globalAlpha = 0.90;
           ctx.beginPath();
           ctx.moveTo(_a.x, _a.y); ctx.lineTo(_b.x, _b.y); ctx.lineTo(_c.x, _c.y);
           ctx.stroke();
@@ -10917,16 +11027,16 @@ function drawPortalActive(o) {
       }
     }
 
-    // Faol yo'lak chetlaridagi vertikal plazma yo'naltiruvchi mayoqlar (Pylon beacons)
-    if (o.z > 2.0 && o.z < 55 && G.quality !== 'low') {
-      for (const side of [-1.15, 1.15]) {
+    // Faol yo'lak chetlaridagi vertikal plazma mayoqlari (Pylon guide beacons)
+    if (o.z > 2.0 && o.z < 52 && G.quality !== 'low') {
+      for (const side of [-0.98, 0.98]) {
         proj([o.x + side, 0.05, o.z], _a);
-        proj([o.x + side, 2.8, o.z], _b);
+        proj([o.x + side, 2.6, o.z], _b);
         if (_a.vis && _b.vis) {
           ctx.save();
           ctx.strokeStyle = col1;
-          ctx.lineWidth = Math.max(1.2, 2.6 * _a.s * 0.03);
-          ctx.globalAlpha = 0.45 + 0.25 * Math.sin(G.t * 10 + side);
+          ctx.lineWidth = Math.max(1.2, 2.5 * _a.s * 0.03);
+          ctx.globalAlpha = 0.45 + 0.30 * Math.sin(G.t * 10 + side * 2);
           ctx.beginPath(); ctx.moveTo(_a.x, _a.y); ctx.lineTo(_b.x, _b.y); ctx.stroke();
           ctx.restore();
         }
@@ -10934,69 +11044,85 @@ function drawPortalActive(o) {
     }
   }
 
-  // 2) Portal markazi va o'lchami
-  proj([o.x, 1.55, o.z], _a);
+  // 2) Portal markazi va o'lchami (Center at y = 1.65m, radius bounded within lane)
+  proj([o.x, 1.65, o.z], _a);
   if (!_a.vis) return;
-  const rx = 1.28 * _a.s;
-  const ry = 1.58 * _a.s;
+  const rx = 1.05 * _a.s;
+  const ry = 1.35 * _a.s;
   const cxP = _a.x, cyP = _a.y;
 
-  // Proximity: yaqinlashgan sari energiya va zarrachalar asta kuchayadi
-  const prox = Math.max(0.4, Math.min(1.6, 1.6 - (o.z / 72) * 1.1));
+  // Proximity: yaqinlashgan sari energiya va aylanma tezligi asta ortadi
+  const prox = Math.max(0.4, Math.min(1.5, 1.5 - (o.z / 72) * 1.0));
 
-  // CRITICAL FIX: Mashina portalga yaqinlashganda markazda aperture (ochiq teshik) paydo bo'ladi
-  // o.z <= 0.35 bo'lganda (mashina darvoza tekisligida yoki orqasida), ichki parda butunlay ochiladi
-  // shunda mashina HECH QACHON ko'rinmay qolmaydi!
+  // Anti-obstruction dynamic aperture:
+  // Mashina yaqinlashganda (z < 6.5) markaz silliq ochiladi, mashina va yo'l hech qachon to'silmaydi!
   const isPassing = o.z <= 0.45;
-  const aperture = isPassing ? 1.0 : (o.z < 7.0 ? Math.max(0, 1 - (o.z - 0.45) / 6.55) : 0);
+  const aperture = isPassing ? 1.0 : (o.z < 6.5 ? Math.max(0, 1 - (o.z - 0.45) / 6.05) : 0);
 
   ctx.save();
 
-  // A) Tashqi dinamik neon aura (o.z > 0.45 da nozik, ekranni qoplamaydi)
+  // A) Kvant anamorfiya va tashqi radial volumetrik aura (Volumetric quantum corona)
   if (G.quality !== 'low' && !isPassing) {
-    const auraAlpha = (1 - aperture * 0.7) * Math.min(0.70, 0.42 * prox);
+    const auraAlpha = (1 - aperture * 0.75) * Math.min(0.65, 0.38 * prox);
     if (auraAlpha > 0.02) {
-      const aura = ctx.createRadialGradient(cxP, cyP, rx * 0.2, cxP, cyP, rx * 1.55);
+      // 1. Orqa keng yumshoq yorug'lik nuri (Soft backdrop bloom)
+      const aura = ctx.createRadialGradient(cxP, cyP, rx * 0.2, cxP, cyP, rx * 1.65);
       aura.addColorStop(0, rgba(col1, auraAlpha));
-      aura.addColorStop(0.55, rgba(col2, auraAlpha * 0.55));
+      aura.addColorStop(0.50, rgba(col2, auraAlpha * 0.55));
       aura.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = aura;
-      ctx.beginPath(); ctx.ellipse(cxP, cyP, rx * 1.55, ry * 1.48, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cxP, cyP, rx * 1.65, ry * 1.55, 0, 0, Math.PI * 2); ctx.fill();
+
+      // 2. Anamorfik gorizontal kiber-chaqnash chizig'i (Horizontal cinematic flare)
+      const flareLen = rx * 2.2;
+      const flareGrad = ctx.createLinearGradient(cxP - flareLen, cyP, cxP + flareLen, cyP);
+      flareGrad.addColorStop(0, 'rgba(0,0,0,0)');
+      flareGrad.addColorStop(0.35, rgba(col1, auraAlpha * 0.6));
+      flareGrad.addColorStop(0.50, rgba('#ffffff', auraAlpha * 0.95));
+      flareGrad.addColorStop(0.65, rgba(col2, auraAlpha * 0.6));
+      flareGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.strokeStyle = flareGrad;
+      ctx.lineWidth = Math.max(1.5, 3.0 * _a.s * 0.04);
+      ctx.beginPath();
+      ctx.moveTo(cxP - flareLen, cyP);
+      ctx.lineTo(cxP + flareLen, cyP);
+      ctx.stroke();
     }
   }
 
-  // B) Chuqurlik hissi beruvchi giper-fazoviy girdob (Hyperspace Depth Vortex Rings)
-  // Girdob ichkariga kirib boruvchi 4-qavatli konsentrik qatlamlardan iborat
+  // B) Kvant hodisalar ufqi va singulyarlik girdobi (Event Horizon & Singularity Core)
   if (!isPassing) {
-    const vortexAlpha = Math.max(0, (1 - aperture * 0.85));
+    const vortexAlpha = Math.max(0, (1 - aperture * 0.88));
     if (vortexAlpha > 0.03) {
+      // Chuqur fazoviy singulyarlik tubi (Deep Hyperspace Abyss)
       const coreGrad = ctx.createRadialGradient(
-        cxP, cyP, rx * (0.15 + aperture * 0.65),
-        cxP, cyP, Math.max(rx, ry) * 0.92
+        cxP, cyP, rx * (0.12 + aperture * 0.68),
+        cxP, cyP, Math.max(rx, ry) * 0.95
       );
-      coreGrad.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
-      coreGrad.addColorStop(0.28, rgba(col3, 0.55 * vortexAlpha));
-      coreGrad.addColorStop(0.62, rgba(col1, 0.68 * vortexAlpha));
-      coreGrad.addColorStop(0.88, rgba(col2, 0.50 * vortexAlpha));
-      coreGrad.addColorStop(1, rgba(theme.colDark || '#000', 0.18 * vortexAlpha));
+      coreGrad.addColorStop(0, 'rgba(3, 1, 11, 0.0)');
+      coreGrad.addColorStop(0.18, rgba('#03010b', 0.85 * vortexAlpha));
+      coreGrad.addColorStop(0.48, rgba(col2, 0.65 * vortexAlpha));
+      coreGrad.addColorStop(0.78, rgba(col1, 0.80 * vortexAlpha));
+      coreGrad.addColorStop(0.94, rgba('#ffffff', 0.90 * vortexAlpha));
+      coreGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = coreGrad;
-      ctx.beginPath(); ctx.ellipse(cxP, cyP, rx * 0.92, ry * 0.92, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cxP, cyP, rx * 0.95, ry * 0.95, 0, 0, Math.PI * 2); ctx.fill();
     }
 
-    // Aylanuvchi spiral energiya yoylari (Logarithmic Vortex Spiral Arms)
-    const spinSpeed = 3.2 + prox * 2.2;
-    const armCount = 3;
+    // Aylanuvchi spiral gravitatsion qo'llar (Logarithmic Accretion Spiral Arms)
+    const spinSpeed = 3.4 + prox * 2.0;
+    const armCount = 4;
     ctx.save();
     ctx.translate(cxP, cyP);
     for (let a = 0; a < armCount; a++) {
       const armAng = G.t * spinSpeed + a * (Math.PI * 2 / armCount);
-      ctx.strokeStyle = a === 0 ? '#ffffff' : rgba(col1, 0.80 * (1 - aperture * 0.6));
-      ctx.lineWidth = Math.max(1.2, 2.6 * _a.s * 0.038);
+      ctx.strokeStyle = a % 2 === 0 ? rgba('#ffffff', 0.85 * (1 - aperture * 0.65)) : rgba(col1, 0.75 * (1 - aperture * 0.65));
+      ctx.lineWidth = Math.max(1.2, 2.5 * _a.s * 0.036);
       ctx.beginPath();
-      for (let st = 0; st <= 8; st++) {
-        const frac = (st / 8);
-        const rStep = (aperture * 0.5 + frac * (0.88 - aperture * 0.5)) * rx;
-        const thStep = armAng + frac * 2.4;
+      for (let st = 0; st <= 9; st++) {
+        const frac = (st / 9);
+        const rStep = (aperture * 0.45 + frac * (0.88 - aperture * 0.45)) * rx;
+        const thStep = armAng + frac * 2.5;
         const px = Math.cos(thStep) * rStep;
         const py = Math.sin(thStep) * (rStep * (ry / rx));
         if (st === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
@@ -11005,55 +11131,68 @@ function drawPortalActive(o) {
     }
     ctx.restore();
 
-    // Aylanuvchi konsentrik energiya halqalari (Concentric Rotating Energy Rings)
-    const ringCount = G.quality === 'low' ? 2 : 4;
+    // Qarama-qarshi aylanuvchi segmentlangan kvant tezlatkich halqalari (Counter-Rotating Accelerator Rings)
+    const ringCount = G.quality === 'low' ? 2 : 3;
     for (let r = 0; r < ringCount; r++) {
-      const frac = 0.35 + (r / ringCount) * 0.58;
-      if (frac < aperture * 0.7) continue; // Aperture ochilganda ichki halqa silliq yo'qoladi
-      const rot = G.t * (r % 2 === 0 ? 3.4 : -2.8) * prox + r * 1.25;
+      const frac = 0.45 + (r / ringCount) * 0.48;
+      if (frac < aperture * 0.75) continue;
+      const rot = G.t * (r % 2 === 0 ? 3.6 : -3.2) * prox + r * 1.4;
       ctx.save();
       ctx.translate(cxP, cyP);
       ctx.scale(rx * frac, ry * frac);
       ctx.rotate(rot);
-      ctx.strokeStyle = r % 2 === 0 ? '#ffffff' : col2;
-      ctx.lineWidth = Math.max(0.06, 0.11 / frac);
+      ctx.strokeStyle = r === 0 ? '#ffffff' : (r % 2 === 1 ? col1 : col2);
+      ctx.lineWidth = Math.max(0.045, 0.09 / frac);
+      if (ctx.setLineDash) ctx.setLineDash(r % 2 === 0 ? [0.6, 0.35] : [0.4, 0.25]);
       ctx.beginPath();
-      ctx.arc(0, 0, 1, 0, Math.PI * 1.35);
+      ctx.arc(0, 0, 1, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(0, 0, 0.82, Math.PI, Math.PI * 2.15);
-      ctx.stroke();
+      if (ctx.setLineDash) ctx.setLineDash([]);
+
+      // Kvant faza markerlari (8 perimeter node crystals on outer ring)
+      if (r === ringCount - 1 && G.quality !== 'low') {
+        const nodeCount = 8;
+        for (let n = 0; n < nodeCount; n++) {
+          const nAng = n * (Math.PI * 2 / nodeCount);
+          const nx = Math.cos(nAng);
+          const ny = Math.sin(nAng);
+          ctx.fillStyle = n % 2 === 0 ? '#ffffff' : col1;
+          ctx.beginPath();
+          ctx.arc(nx, ny, 0.055, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
       ctx.restore();
     }
 
-    // Ichkariga so'riluvchi neon kvant zarrachalar (Inward-Swirling Particles)
-    const sparkCount = G.quality === 'low' ? 5 : 8;
+    // Ichkariga so'riluvchi kvant mikrozarrachalar (Inward Graviton Accretion Particles)
+    const sparkCount = G.quality === 'low' ? 6 : 14;
     for (let s = 0; s < sparkCount; s++) {
-      const spPhase = ((G.t * (1.3 + s * 0.18) + s * 0.37) % 1);
-      const spAng = G.t * (3.0 + s * 0.5) + s * (Math.PI * 2 / sparkCount);
-      const spDist = (1 - spPhase * 0.78);
+      const spPhase = ((G.t * (1.2 + s * 0.15) + s * 0.29) % 1);
+      const spAng = G.t * (2.8 + s * 0.4) + s * (Math.PI * 2 / sparkCount);
+      const spDist = (1 - Math.pow(spPhase, 1.4) * 0.85);
       if (spDist < aperture * 0.6) continue;
       const spX = cxP + Math.cos(spAng) * rx * spDist;
       const spY = cyP + Math.sin(spAng) * ry * spDist;
       ctx.fillStyle = s % 2 === 0 ? '#ffffff' : (s % 3 === 0 ? col1 : col2);
-      ctx.globalAlpha = Math.sin(spPhase * Math.PI) * 0.85;
+      ctx.globalAlpha = Math.sin(spPhase * Math.PI) * 0.90;
       ctx.beginPath();
-      ctx.arc(spX, spY, Math.max(1.2, 2.6 * _a.s * 0.038), 0, Math.PI * 2);
+      ctx.arc(spX, spY, Math.max(1.2, 2.5 * _a.s * 0.036), 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
 
-    // Kvant chaqmoq yoylari (faqat o'rta va yuqori sifatda)
-    if (G.quality !== 'low' && o.z < 44 && o.z > 1.2) {
+    // Kvant chaqmoq yoylari (Crackling Tesla Filaments across inner opening)
+    if (G.quality !== 'low' && o.z < 42 && o.z > 1.2) {
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = Math.max(1.2, rx * 0.042);
-      const arcCount = o.z < 20 ? 4 : 3;
+      ctx.lineWidth = Math.max(1.2, rx * 0.038);
+      const arcCount = o.z < 22 ? 4 : 2;
       for (let a = 0; a < arcCount; a++) {
-        const ang = G.t * 4.2 + a * (6.283 / arcCount);
+        const ang = G.t * 4.8 + a * (6.283 / arcCount);
         const x1 = cxP + Math.cos(ang) * rx * 0.92;
         const y1 = cyP + Math.sin(ang) * ry * 0.92;
-        const xm = cxP + Math.cos(ang + 0.32) * rx * (0.48 + 0.2 * Math.sin(G.t * 18 + a));
-        const ym = cyP + Math.sin(ang + 0.32) * ry * (0.48 + 0.2 * Math.cos(G.t * 16 + a));
+        const xm = cxP + Math.cos(ang + 0.28) * rx * (0.50 + 0.18 * Math.sin(G.t * 18 + a));
+        const ym = cyP + Math.sin(ang + 0.28) * ry * (0.50 + 0.18 * Math.cos(G.t * 16 + a));
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.lineTo(xm, ym);
@@ -11065,11 +11204,7 @@ function drawPortalActive(o) {
 
   ctx.restore();
 
-  if (typeof BIOME_3D !== 'undefined' && BIOME_3D.drawPortal3DRing) {
-    BIOME_3D.drawPortal3DRing(o, col1, col2, aperture, prox);
-  }
-
-  // 3) 3D Portal ustunlari va arkasi (Arka ichi ochiq, mashina erkin o'tadi)
+  // 3) 3D Kvant Darvoza Arkasi (High-Tech 3D Portal Frame)
   const mesh = MESHES.portal_active;
   if (mesh) {
     const faces = facesOf(mesh, [o.x, 0, o.z], 0, 1);
@@ -11077,24 +11212,76 @@ function drawPortalActive(o) {
     for (const f of faces) drawFace(f);
   }
 
-  // 4) Holografik Entry Signage (o.z > 1.0 da ko'rinadi, yaqinda ekranni to'smaydi)
+  // 4) Premium Cyber Glass Holographic HUD Signage (Yuqoridagi info-panel)
   if (o.z < 52 && o.z > 1.2) {
-    proj([o.x, 3.65, o.z], _d);
+    proj([o.x, 4.18, o.z], _d);
     if (_d.vis) {
       ctx.save();
-      const fs = Math.max(10, Math.min(20, _d.s * 0.32));
-      ctx.font = '900 ' + (fs | 0) + 'px ' + UIFONT;
+      const scaleF = Math.max(0.7, Math.min(1.35, _d.s * 0.028));
+      const fsTitle = Math.max(9, Math.min(17, 13 * scaleF));
+      const fsSub = Math.max(7, Math.min(12, 9.5 * scaleF));
+
+      ctx.font = '900 ' + (fsTitle | 0) + 'px ' + UIFONT;
+      const titleText = '🌀 ' + dim.name.toUpperCase();
+      const subText = '⚡ ВХОД В ИЗМЕРЕНИЕ · ×' + dim.scoreMul.toFixed(1);
+      const titleW = ctx.measureText(titleText).width;
+      ctx.font = '800 ' + (fsSub | 0) + 'px ' + UIFONT;
+      const subW = ctx.measureText(subText).width;
+      const padX = 14 * scaleF;
+      const padY = 7 * scaleF;
+      const boxW = Math.max(titleW, subW) + padX * 2;
+      const boxH = fsTitle + fsSub + padY * 2.2;
+      const boxX = _d.x - boxW / 2;
+      const boxY = _d.y - boxH / 2;
+
+      // Kiber-shisha panel foni (Translucent dark glass)
+      ctx.fillStyle = 'rgba(6, 12, 28, 0.90)';
+      ctx.strokeStyle = col1;
+      ctx.lineWidth = Math.max(1.2, 1.8 * scaleF);
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(boxX, boxY, boxW, boxH, 8 * scaleF);
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.fillRect(boxX, boxY, boxW, boxH);
+        ctx.strokeRect(boxX, boxY, boxW, boxH);
+      }
+
+      // Kiber-burchaklar (Corner ticks)
+      const cLen = 5 * scaleF;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      // Yuqori chap
+      ctx.moveTo(boxX, boxY + cLen); ctx.lineTo(boxX, boxY); ctx.lineTo(boxX + cLen, boxY);
+      // Yuqori o'ng
+      ctx.moveTo(boxX + boxW - cLen, boxY); ctx.lineTo(boxX + boxW, boxY); ctx.lineTo(boxX + boxW, boxY + cLen);
+      // Quyi chap
+      ctx.moveTo(boxX, boxY + boxH - cLen); ctx.lineTo(boxX, boxY + boxH); ctx.lineTo(boxX + cLen, boxY + boxH);
+      // Quyi o'ng
+      ctx.moveTo(boxX + boxW - cLen, boxY + boxH); ctx.lineTo(boxX + boxW, boxY + boxH); ctx.lineTo(boxX + boxW, boxY + boxH - cLen);
+      ctx.stroke();
+
+      // Matnlar (Texts)
       ctx.textAlign = 'center';
+      ctx.font = '900 ' + (fsTitle | 0) + 'px ' + UIFONT;
       ctx.fillStyle = '#ffffff';
-      if (G.quality === 'high') { ctx.shadowColor = col1; ctx.shadowBlur = 12; }
-      ctx.fillText('🌀 ' + dim.name.toUpperCase(), _d.x, _d.y);
-      ctx.font = '800 ' + Math.max(8, (fs * 0.70) | 0) + 'px ' + UIFONT;
+      if (G.quality === 'high') { ctx.shadowColor = col1; ctx.shadowBlur = 10; }
+      ctx.fillText(titleText, _d.x, boxY + padY + fsTitle * 0.88);
+
+      ctx.font = '800 ' + (fsSub | 0) + 'px ' + UIFONT;
       ctx.fillStyle = col1;
-      ctx.fillText('⚡ ВХОД В ИЗМЕРЕНИЕ · ×' + dim.scoreMul.toFixed(1), _d.x, _d.y + fs * 1.05);
+      if (G.quality === 'high') { ctx.shadowColor = col2; ctx.shadowBlur = 6; }
+      ctx.fillText(subText, _d.x, boxY + padY + fsTitle + fsSub * 0.95);
+      ctx.shadowBlur = 0;
+
+      // Yo'naltiruvchi miltillovchi neon strelka (Pulsing cyber arrow)
       const arrowFlash = Math.sin(G.t * 10);
-      if (arrowFlash > 0 && o.z < 35) {
+      if (arrowFlash > 0 && o.z < 38) {
+        ctx.font = '900 ' + Math.max(9, (fsTitle * 0.95) | 0) + 'px ' + UIFONT;
         ctx.fillStyle = '#fef08a';
-        ctx.fillText('▼ ВХОД ▼', _d.x, _d.y + fs * 2.0);
+        ctx.fillText('▼ ВХОД ▼', _d.x, boxY + boxH + fsTitle * 0.95);
       }
       ctx.restore();
     }
@@ -11102,7 +11289,7 @@ function drawPortalActive(o) {
 }
 
 /** 3-Polosali O'lcham Portali — Ochiq Trassa Tranzit Portali (`portal_open`):
- *  Xavfsiz to'g'ri yo'l ko'rsatkichi, sokin moviy energiya pardasi va yo'naltiruvchi chiziqlar bilan */
+ *  Xavfsiz to'g'ri yo'l ko'rsatkichi, sokin moviy lazer pardasi va yo'naltiruvchi kiber-belgilar */
 function drawPortalOpen(o) {
   if (o.z > 70 || o.z < -2.5) return;
   const l = (o.lane != null) ? o.lane : (o.x < -0.8 ? 0 : (o.x > 0.8 ? 2 : 1));
@@ -11110,39 +11297,39 @@ function drawPortalOpen(o) {
   const col1 = theme.col1;
   const col2 = theme.col2;
 
-  // 1) Yo'l polosasi bo'ylab tinch tranzit izi (Mashina oldiga chiqmaydi)
+  // 1) Yo'l polosasi bo'ylab sokin tranzit izi (Mashina oldiga chiqmaydi)
   if (o.z > 0.4) {
-    quad(o.x - 0.98, Math.max(0.65, o.z - 12), o.x + 0.98, o.z + 0.8, 0.015,
-      rgba(col1, 0.08), rgba(col1, 0.32));
+    quad(o.x - 0.96, Math.max(0.65, o.z - 12), o.x + 0.96, o.z + 0.8, 0.015,
+      rgba(col1, 0.06), rgba(col1, 0.28));
   }
 
   // 2) Portal markazi va o'lchami
-  proj([o.x, 1.48, o.z], _a);
+  proj([o.x, 1.55, o.z], _a);
   if (!_a.vis) return;
-  const rx = 1.20 * _a.s;
-  const ry = 1.50 * _a.s;
+  const rx = 1.02 * _a.s;
+  const ry = 1.30 * _a.s;
   const cxP = _a.x, cyP = _a.y;
   const isPassing = o.z <= 0.45;
 
   ctx.save();
-  // Sokin tranzit pardasi (Mashina o'tayotganda markazi to'liq ochiq)
+  // Sokin himoya/tranzit pardasi (Mashina o'tayotganda markazi to'liq ochiq)
   if (!isPassing) {
     const memGrad = ctx.createRadialGradient(cxP, cyP, rx * 0.35, cxP, cyP, Math.max(rx, ry));
     memGrad.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
-    memGrad.addColorStop(0.40, rgba(col1, 0.25));
-    memGrad.addColorStop(0.80, rgba(col2, 0.12));
+    memGrad.addColorStop(0.40, rgba(col1, 0.18));
+    memGrad.addColorStop(0.80, rgba(col2, 0.08));
     memGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = memGrad;
-    ctx.beginPath(); ctx.ellipse(cxP, cyP, rx * 0.90, ry * 0.90, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cxP, cyP, rx * 0.88, ry * 0.88, 0, 0, Math.PI * 2); ctx.fill();
 
     // Aylanuvchi sokin energiya halqasi
     ctx.save();
     ctx.translate(cxP, cyP);
-    ctx.rotate(G.t * 1.6);
-    ctx.strokeStyle = rgba(col1, 0.55);
-    ctx.lineWidth = Math.max(1, 2.2 * _a.s * 0.035);
+    ctx.rotate(G.t * 1.4);
+    ctx.strokeStyle = rgba(col1, 0.45);
+    ctx.lineWidth = Math.max(1, 2.0 * _a.s * 0.032);
     ctx.beginPath();
-    ctx.ellipse(0, 0, rx * 0.86, ry * 0.86, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, rx * 0.84, ry * 0.84, 0, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
   }
@@ -11156,82 +11343,492 @@ function drawPortalOpen(o) {
   }
   ctx.restore();
 
-  // 4) Trassa yo'nalish ko'rsatkichi
-  if (o.z < 44 && o.z > 1.2) {
-    proj([o.x, 3.25, o.z], _d);
+  // 4) Trassa sokin tranzit indikatori (Sleek minimalist status pill on arch)
+  if (o.z < 38 && o.z > 2.0) {
+    proj([o.x, 3.42, o.z], _d);
     if (_d.vis) {
       ctx.save();
-      const fs = Math.max(8, Math.min(14, _d.s * 0.22));
+      const scaleF = Math.max(0.6, Math.min(1.0, _d.s * 0.024));
+      const fs = Math.max(7, Math.min(11, 9 * scaleF));
       ctx.font = '800 ' + (fs | 0) + 'px ' + UIFONT;
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#cbd5e1';
-      ctx.fillText('🛣 ТРАНЗИТ ТРАССЫ', _d.x, _d.y);
-      ctx.font = '700 ' + Math.max(7, (fs * 0.72) | 0) + 'px ' + UIFONT;
-      ctx.fillStyle = rgba(col1, 0.85);
-      ctx.fillText('[ ПРЯМОЙ ПУТЬ ]', _d.x, _d.y + fs * 0.95);
+      ctx.fillStyle = 'rgba(8, 18, 36, 0.85)';
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 1;
+      const bw = 84 * scaleF, bh = 18 * scaleF;
+      if (ctx.roundRect) {
+        ctx.beginPath(); ctx.roundRect(_d.x - bw / 2, _d.y - bh / 2, bw, bh, 4 * scaleF); ctx.fill(); ctx.stroke();
+      } else {
+        ctx.fillRect(_d.x - bw / 2, _d.y - bh / 2, bw, bh); ctx.strokeRect(_d.x - bw / 2, _d.y - bh / 2, bw, bh);
+      }
+      ctx.fillStyle = '#34d399';
+      ctx.fillText('🟢 ТРАНЗИТ', _d.x, _d.y + fs * 0.35);
       ctx.restore();
     }
   }
 }
 
-/** Portal ichiga kirgandagi va o'lchamdan chiqqandagi silliq giper-sakrash vizual effekti */
+/** 3-Polosali Katta Chiqish Portali (`portal_exit`):
+ *  - Butun trassani (3 ta yo'lakni) qamrab oluvchi ulkan Kvant Chiqish Vratasi (Grand Reality Gateway)
+ *  - Oltin (#ffd166), quyosh oqi (#ffffff) va osmon-moviy (#38bdf8) kosmik rezonans girdobi
+ *  - Har bir yo'lak bo'ylab alohida yo'naltiruvchi oltin strelkalar va kiber lazer chegaralari
+ *  - Barcha 3 yo'lakdan o'tuvchi ulkan aylanuvchi energiya halqalari va dinamik apertura
+ *  - Markaziy kiber-shisha axborot tablosi: [ 🌟 ВЕЛИКИЕ ВРАТА РЕАЛЬНОСТИ // GRAND REALITY GATE ]
+ */
+function drawPortalExit(o) {
+  if (o.z > 72 || o.z < -2.5) return;
+  const col1 = '#ffd166';
+  const col2 = '#38bdf8';
+  const col3 = '#ffffff';
+
+  // 1) Butun 3-polosali trassa bo'ylab oltin-moviy gipersonik yo'l (3-Lane Grand Runway)
+  const trailLen = Math.min(32, Math.max(6, o.z));
+  const trailStart = Math.max(0.65, o.z - trailLen);
+  const trailEnd = Math.max(trailStart + 0.5, o.z + 0.9);
+  if (o.z > 0.4) {
+    // 3 ta yo'lakni to'liq qoplovchi oltin plazma gilami (x: -3.95m .. +3.95m)
+    quad(-3.95, trailStart, 3.95, trailEnd, 0.02,
+      rgba(col1, 0.22 + 0.12 * Math.sin(G.t * 8)), rgba(col2, 0.65));
+
+    // Ikki tashqi chekka yo'naltiruvchi neon lazer chiziqlari (x = ±3.95m)
+    for (const side of [-3.95, 3.95]) {
+      proj([side, 0.025, trailStart], _a);
+      proj([side, 0.025, trailEnd], _b);
+      if (_a.vis && _b.vis) {
+        ctx.save();
+        ctx.strokeStyle = col1;
+        ctx.lineWidth = Math.max(2.0, 4.2 * _b.s * 0.04);
+        ctx.globalAlpha = 0.90;
+        ctx.beginPath(); ctx.moveTo(_a.x, _a.y); ctx.lineTo(_b.x, _b.y); ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // Ichki yo'lak ajratuvchi moviy lazer chiziqlari (x = ±1.30m)
+    for (const divX of [-1.30, 1.30]) {
+      proj([divX, 0.025, trailStart], _a);
+      proj([divX, 0.025, trailEnd], _b);
+      if (_a.vis && _b.vis) {
+        ctx.save();
+        ctx.strokeStyle = col2;
+        ctx.lineWidth = Math.max(1.2, 2.4 * _b.s * 0.035);
+        ctx.globalAlpha = 0.60;
+        ctx.beginPath(); ctx.moveTo(_a.x, _a.y); ctx.lineTo(_b.x, _b.y); ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // Har 3 ta yo'lak markazi bo'ylab yo'naltiruvchi oltin strelkalar (Arrival directional chevrons on all 3 lanes)
+    const chevStep = 4.8;
+    const startChev = Math.ceil(trailStart / chevStep) * chevStep;
+    for (let cz = startChev; cz < o.z - 1.2; cz += chevStep) {
+      for (const lx of [-2.4, 0, 2.4]) {
+        proj([lx, 0.03, cz], _c);
+        if (_c.vis) {
+          const cw = 0.52 * _c.s;
+          ctx.save();
+          ctx.strokeStyle = col3;
+          ctx.lineWidth = Math.max(1.5, 2.6 * _c.s * 0.035);
+          ctx.globalAlpha = Math.min(0.9, Math.max(0.18, (1 - (o.z - cz) / trailLen)));
+          ctx.beginPath();
+          ctx.moveTo(_c.x - cw, _c.y + 4);
+          ctx.lineTo(_c.x, _c.y - 4);
+          ctx.lineTo(_c.x + cw, _c.y + 4);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    }
+  }
+
+  // 2) 3-Polosali Portal markazi va o'lchami (Center at x=0, spans across all 3 lanes)
+  proj([0, 1.85, o.z], _a);
+  if (!_a.vis) return;
+  const rx = 3.95 * _a.s; // Butun 3 ta yo'lak kengligi
+  const ry = 2.15 * _a.s; // Katta balandlik
+  const cxP = _a.x, cyP = _a.y;
+  const isPassing = o.z <= 0.45;
+  const prox = Math.max(0, Math.min(1, 1 - (o.z - 0.4) / 14));
+  const openFactor = isPassing ? 1.0 : (prox * 0.88);
+
+  ctx.save();
+
+  // 3) Butun Trassani Qoplovchi Kosmik Quyosh Girdobi (Grand 3-Lane Reality Vortex)
+  if (!isPassing) {
+    // Ulkan orqa fon nurlanishi
+    const backGrad = ctx.createRadialGradient(cxP, cyP, rx * 0.15, cxP, cyP, Math.max(rx, ry) * 1.30);
+    backGrad.addColorStop(0, rgba(col3, 0.95 * (1 - openFactor * 0.45)));
+    backGrad.addColorStop(0.35, rgba(col1, 0.75));
+    backGrad.addColorStop(0.70, rgba(col2, 0.48));
+    backGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = backGrad;
+    ctx.beginPath();
+    ctx.ellipse(cxP, cyP, rx * 1.12, ry * 1.15, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Aylanuvchi ko'p qavatli energetik halqalar (3-polosali keng qamrov)
+    const numRings = G.quality === 'low' ? 3 : 5;
+    for (let r = 0; r < numRings; r++) {
+      const ringScale = 0.50 + r * 0.14 + (openFactor * 0.18);
+      const ringRx = rx * ringScale;
+      const ringRy = ry * ringScale;
+      const spinDir = (r % 2 === 0 ? 1 : -1);
+      const rot = G.t * (2.4 - r * 0.4) * spinDir;
+
+      ctx.save();
+      ctx.translate(cxP, cyP);
+      ctx.rotate(rot);
+
+      ctx.strokeStyle = r === 0 ? col3 : (r % 2 === 1 ? col1 : col2);
+      ctx.lineWidth = Math.max(2.0, (4.5 - r * 0.6) * _a.s * 0.038);
+      ctx.globalAlpha = Math.max(0.25, (0.88 - r * 0.11) * (1 - openFactor * 0.45));
+
+      const segs = 8;
+      for (let s = 0; s < segs; s++) {
+        const startA = (s / segs) * Math.PI * 2;
+        const endA = startA + (Math.PI * 2 / segs) * 0.70;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, ringRx, ringRy, 0, startA, endA);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // Markaziy Kvant Singulyarligi / Kengayuvchi Apertura
+    if (openFactor < 0.95) {
+      const coreApertureX = rx * (0.22 + openFactor * 0.68);
+      const coreApertureY = ry * (0.22 + openFactor * 0.68);
+      const coreGrad = ctx.createRadialGradient(cxP, cyP, coreApertureX * 0.2, cxP, cyP, coreApertureX);
+      coreGrad.addColorStop(0, '#ffffff');
+      coreGrad.addColorStop(0.40, rgba(col1, 0.85));
+      coreGrad.addColorStop(1, 'rgba(255, 209, 102, 0)');
+      ctx.fillStyle = coreGrad;
+      ctx.beginPath();
+      ctx.ellipse(cxP, cyP, coreApertureX, coreApertureY, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // 4) 3D Chiqish Portali Arkasi (Mesh spanning all 3 lanes)
+  const mesh = MESHES.portal_exit;
+  if (mesh) {
+    const faces = facesOf(mesh, [0, 0, o.z], 0, 1);
+    faces.sort((a, b) => b.z - a.z);
+    for (const f of faces) drawFace(f);
+  }
+  ctx.restore();
+
+  // 5) Cyber Glass Golografik Info-Tablo: [ 🌟 ВЕЛИКИЕ ВРАТА РЕАЛЬНОСТИ ]
+  if (o.z < 48 && o.z > 1.8) {
+    proj([0, 4.60, o.z], _d);
+    if (_d.vis) {
+      ctx.save();
+      const scaleF = Math.max(0.75, Math.min(1.45, _d.s * 0.030));
+      const fsTitle = Math.max(10, Math.min(19, 14 * scaleF));
+      const fsSub = Math.max(8, Math.min(13, 10 * scaleF));
+
+      ctx.font = '900 ' + (fsTitle | 0) + 'px ' + UIFONT;
+      const titleText = '🌟 ВЕЛИКИЕ ВРАТА РЕАЛЬНОСТИ';
+      const subText = '⚡ ВОЗВРАТ В ОСНОВНУЮ ВСЕЛЕННУЮ · +10,000 PTS';
+      const titleW = ctx.measureText(titleText).width;
+      ctx.font = '800 ' + (fsSub | 0) + 'px ' + UIFONT;
+      const subW = ctx.measureText(subText).width;
+      const padX = 16 * scaleF;
+      const padY = 8 * scaleF;
+      const boxW = Math.max(titleW, subW) + padX * 2;
+      const boxH = fsTitle + fsSub + padY * 2.2;
+      const boxX = _d.x - boxW / 2;
+      const boxY = _d.y - boxH / 2;
+
+      ctx.fillStyle = 'rgba(10, 16, 28, 0.94)';
+      ctx.strokeStyle = col1;
+      ctx.lineWidth = Math.max(1.4, 2.0 * scaleF);
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(boxX, boxY, boxW, boxH, 8 * scaleF);
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.fillRect(boxX, boxY, boxW, boxH);
+        ctx.strokeRect(boxX, boxY, boxW, boxH);
+      }
+
+      // Kiber-burchaklar
+      const cLen = 6 * scaleF;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(boxX, boxY + cLen); ctx.lineTo(boxX, boxY); ctx.lineTo(boxX + cLen, boxY);
+      ctx.moveTo(boxX + boxW - cLen, boxY); ctx.lineTo(boxX + boxW, boxY); ctx.lineTo(boxX + boxW, boxY + cLen);
+      ctx.moveTo(boxX, boxY + boxH - cLen); ctx.lineTo(boxX, boxY + boxH); ctx.lineTo(boxX + cLen, boxY + boxH);
+      ctx.moveTo(boxX + boxW - cLen, boxY + boxH); ctx.lineTo(boxX + boxW, boxY + boxH); ctx.lineTo(boxX + boxW, boxY + boxH - cLen);
+      ctx.stroke();
+
+      // Matnlar
+      ctx.textAlign = 'center';
+      ctx.font = '900 ' + (fsTitle | 0) + 'px ' + UIFONT;
+      ctx.fillStyle = '#ffffff';
+      if (G.quality === 'high') { ctx.shadowColor = col1; ctx.shadowBlur = 12; }
+      ctx.fillText(titleText, _d.x, boxY + padY + fsTitle * 0.88);
+
+      ctx.font = '800 ' + (fsSub | 0) + 'px ' + UIFONT;
+      ctx.fillStyle = col1;
+      if (G.quality === 'high') { ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 8; }
+      ctx.fillText(subText, _d.x, boxY + padY + fsTitle + fsSub * 0.95);
+      ctx.shadowBlur = 0;
+
+      // Yo'naltiruvchi miltillovchi strelka
+      const arrowFlash = Math.sin(G.t * 10);
+      if (arrowFlash > 0 && o.z < 42) {
+        ctx.font = '900 ' + Math.max(9, (fsTitle * 0.95) | 0) + 'px ' + UIFONT;
+        ctx.fillStyle = '#fef08a';
+        ctx.fillText('▼ ВЫХОД ЧЕРЕЗ ЛЮБУЮ ПОЛОСУ ▼', _d.x, boxY + boxH + fsTitle * 0.95);
+      }
+      ctx.restore();
+    }
+  }
+}
+
+/** Portal ichiga kirgandagi va o'lchamdan chiqqandagi kinematik giper-sakrash vizual effekti */
 function drawPortalEntryEffect() {
-  // 1) Kirish giper-sakrash effekti (Entry hyper-warp transition)
+  // 1) Kirish kinematik giper-sakrash effekti (Entry hyper-warp transition)
   if (G.portalEntryAnim && G.portalEntryAnim > 0) {
-    const p = G.portalEntryAnim / 0.85;
+    const p = Math.min(1, G.portalEntryAnim / 1.15);
     const validDimIdx = (G.dimensionIdx >= 0 && G.dimensionIdx < DIMENSIONS.length) ? G.dimensionIdx : 0;
     const dim = DIMENSIONS[validDimIdx] || DIMENSIONS[0];
     const col1 = dim.neon || '#00f5ff';
     const col2 = dim.curbc || '#d946ef';
+    const col3 = '#ffffff';
     ctx.save();
     ctx.translate(cx, cy);
 
-    // Giper-tezlik nurlari (Radial speedlines)
-    const rays = G.quality === 'low' ? 24 : 40;
+    // a) Giper-fazoviy tunnel koridorlari (Concentric geometric warp tunnel corridors)
+    const tunnels = G.quality === 'low' ? 4 : 7;
+    for (let t = 0; t < tunnels; t++) {
+      const tp = ((1 - p) * 1.8 + t * 0.15) % 1;
+      const tw = Math.pow(tp, 1.4) * Math.max(W, H) * 0.95;
+      ctx.save();
+      ctx.strokeStyle = t % 2 === 0 ? col1 : (t % 3 === 0 ? col2 : col3);
+      ctx.lineWidth = Math.max(2, (1 - tp) * 12 * p);
+      ctx.globalAlpha = Math.sin(tp * Math.PI) * p * 0.75;
+      ctx.rotate(Math.sin(tp * 3 + G.t * 2) * 0.08);
+      // Octagonal corridor frame
+      const r = tw * 0.5;
+      ctx.beginPath();
+      for (let a = 0; a < 8; a++) {
+        const ang = (a / 8) * Math.PI * 2 + Math.PI / 8;
+        const px = Math.cos(ang) * r;
+        const py = Math.sin(ang) * (r * 0.65);
+        if (a === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // b) Giper-tezlik nurlari (Radial speedlines)
+    const rays = G.quality === 'low' ? 28 : 48;
     for (let i = 0; i < rays; i++) {
-      const ang = (i / rays) * Math.PI * 2 + Math.sin(i * 7) * 0.1;
-      const rayProg = ((1 - p) * 2.5 + i * 0.17) % 1;
-      const r1 = Math.pow(rayProg, 1.8) * Math.max(W, H) * 0.85;
-      const r2 = r1 + (20 + rayProg * 140);
-      ctx.strokeStyle = i % 2 === 0 ? col1 : (i % 3 === 0 ? col2 : '#ffffff');
-      ctx.lineWidth = Math.max(1.5, (1 + rayProg * 3.5));
-      ctx.globalAlpha = Math.sin(rayProg * Math.PI) * p * 0.80;
+      const ang = (i / rays) * Math.PI * 2 + Math.sin(i * 7) * 0.12;
+      const rayProg = ((1 - p) * 2.8 + i * 0.17) % 1;
+      const r1 = Math.pow(rayProg, 1.7) * Math.max(W, H) * 0.85;
+      const r2 = r1 + (30 + rayProg * 180);
+      ctx.strokeStyle = i % 2 === 0 ? col1 : (i % 3 === 0 ? col2 : col3);
+      ctx.lineWidth = Math.max(1.8, (1.2 + rayProg * 4.2));
+      ctx.globalAlpha = Math.sin(rayProg * Math.PI) * p * 0.85;
       ctx.beginPath();
       ctx.moveTo(Math.cos(ang) * r1, Math.sin(ang) * r1);
       ctx.lineTo(Math.cos(ang) * r2, Math.sin(ang) * r2);
       ctx.stroke();
     }
 
-    // Kvant to'lqin halqalari (Expanding shockwave rings)
-    const rings = G.quality === 'low' ? 3 : 5;
-    for (let r = 0; r < rings; r++) {
-      const rp = ((1 - p) * 1.6 + r * 0.2) % 1;
-      const rad = Math.pow(rp, 0.75) * Math.max(W, H) * 0.8;
-      ctx.strokeStyle = r % 2 === 0 ? col1 : '#ffffff';
-      ctx.lineWidth = Math.max(2, (1 - rp) * 10 * p);
-      ctx.globalAlpha = Math.sin(rp * Math.PI) * p * 0.65;
-      ctx.beginPath();
-      ctx.arc(0, 0, rad, 0, Math.PI * 2);
-      ctx.stroke();
+    // c) Markaziy gravitatsion singulyarlik va portlash (Center singularity flare)
+    const flareR = Math.max(20, Math.sin(p * Math.PI) * 140);
+    const flareGrad = ctx.createRadialGradient(0, 0, 5, 0, 0, flareR);
+    flareGrad.addColorStop(0, '#ffffff');
+    flareGrad.addColorStop(0.3, rgba(col1, 0.85 * p));
+    flareGrad.addColorStop(0.7, rgba(col2, 0.50 * p));
+    flareGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = flareGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, flareR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // d) Ekran chetidagi xromatik vinyetka (Screen edge chromatic border glow)
+    ctx.restore();
+    ctx.save();
+    const vigGrad = ctx.createRadialGradient(cx, cy, Math.min(W, H) * 0.45, cx, cy, Math.max(W, H) * 0.75);
+    vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
+    vigGrad.addColorStop(0.7, rgba(col1, 0.25 * p));
+    vigGrad.addColorStop(1, rgba(col2, 0.65 * p));
+    ctx.fillStyle = vigGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // e) Kiber Golografik Sakrash Statusi (Cyber Jump HUD overlay)
+    if (p > 0.25 && p < 0.95) {
+      const hudAlpha = Math.sin(((p - 0.25) / 0.70) * Math.PI);
+      ctx.save();
+      ctx.textAlign = 'center';
+      const hudY = H * 0.28;
+      const fsMain = Math.max(14, Math.min(26, W * 0.038));
+      const fsSub = Math.max(10, Math.min(16, W * 0.022));
+
+      // Orqa fon xira plitasi
+      const bW = Math.min(W * 0.85, 460);
+      const bH = fsMain + fsSub + 32;
+      ctx.fillStyle = 'rgba(6, 12, 28, ' + (0.88 * hudAlpha).toFixed(2) + ')';
+      ctx.strokeStyle = col1;
+      ctx.lineWidth = 1.8;
+      ctx.globalAlpha = hudAlpha;
+      if (ctx.roundRect) {
+        ctx.beginPath(); ctx.roundRect(cx - bW / 2, hudY - bH / 2, bW, bH, 10); ctx.fill(); ctx.stroke();
+      } else {
+        ctx.fillRect(cx - bW / 2, hudY - bH / 2, bW, bH);
+        ctx.strokeRect(cx - bW / 2, hudY - bH / 2, bW, bH);
+      }
+
+      ctx.font = '900 ' + (fsMain | 0) + 'px ' + UIFONT;
+      ctx.fillStyle = '#ffffff';
+      if (G.quality === 'high') { ctx.shadowColor = col1; ctx.shadowBlur = 12; }
+      ctx.fillText('⚡ СВЕРХСВЕТОВОЙ ПЕРЕХОД // WARP JUMP ⚡', cx, hudY - 2);
+
+      ctx.font = '800 ' + (fsSub | 0) + 'px ' + UIFONT;
+      ctx.fillStyle = col1;
+      if (G.quality === 'high') { ctx.shadowColor = col2; ctx.shadowBlur = 8; }
+      ctx.fillText('ВХОД В ИЗМЕРЕНИЕ: «' + dim.name.toUpperCase() + '» · ×' + dim.scoreMul.toFixed(1) + ' МНОЖИТЕЛЬ', cx, hudY + fsSub + 6);
+      ctx.restore();
     }
     ctx.restore();
   }
 
-  // 2) Chiqish silliq de-warp effekti (Exit smooth transition)
+  // 2) KATTA CHIQISH KINEMATIK GIPER-DE-WARP EFFEKTI (Breathtaking Grand Exit Reality Warp)
   if (G.portalExitAnim && G.portalExitAnim > 0) {
-    const xp = G.portalExitAnim / 0.75;
+    const xp = Math.min(1, G.portalExitAnim / 1.35);
     ctx.save();
     ctx.translate(cx, cy);
-    const exitRings = G.quality === 'low' ? 2 : 4;
+
+    // a) Kengayuvchi Oltin va Kosmik-Moviy Kvant To'lqinlari (Grand Shockwave Fronts)
+    const exitRings = G.quality === 'low' ? 4 : 7;
     for (let r = 0; r < exitRings; r++) {
-      const xprog = ((1 - xp) * 1.4 + r * 0.25) % 1;
-      const xrad = Math.pow(xprog, 0.85) * Math.max(W, H) * 0.7;
-      ctx.strokeStyle = r % 2 === 0 ? '#38bdf8' : '#ffffff';
-      ctx.lineWidth = Math.max(1.5, (1 - xprog) * 7 * xp);
-      ctx.globalAlpha = Math.sin(xprog * Math.PI) * xp * 0.50;
+      const xprog = ((1 - xp) * 1.6 + r * 0.16) % 1;
+      const xrad = Math.pow(xprog, 0.72) * Math.max(W, H) * 0.98;
+      ctx.save();
+      ctx.strokeStyle = r % 3 === 0 ? '#ffffff' : (r % 2 === 0 ? '#ffd166' : '#38bdf8');
+      ctx.lineWidth = Math.max(2.2, (1 - xprog) * 14 * xp);
+      ctx.globalAlpha = Math.sin(xprog * Math.PI) * xp * 0.75;
+      ctx.rotate(Math.sin(xprog * 4 + G.t) * 0.05);
+
+      // Oktagonal fazoviy yoriq to'lqini
+      const rOuter = xrad;
       ctx.beginPath();
-      ctx.arc(0, 0, xrad, 0, Math.PI * 2);
+      for (let a = 0; a < 8; a++) {
+        const ang = (a / 8) * Math.PI * 2 + Math.PI / 8;
+        const px = Math.cos(ang) * rOuter;
+        const py = Math.sin(ang) * (rOuter * 0.68);
+        if (a === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
       ctx.stroke();
+      ctx.restore();
+    }
+
+    // b) Gipersonik Tormozlanish Oltin Nurlari (Stardust Deceleration Streamlines)
+    const rays = G.quality === 'low' ? 24 : 48;
+    for (let i = 0; i < rays; i++) {
+      const ang = (i / rays) * Math.PI * 2 + Math.cos(i * 5) * 0.08;
+      const prog = ((1 - xp) * 2.4 + i * 0.14) % 1;
+      const r1 = Math.pow(prog, 1.4) * Math.max(W, H) * 0.88;
+      const r2 = r1 + (25 + (1 - prog) * 140);
+      ctx.strokeStyle = i % 3 === 0 ? '#ffffff' : (i % 2 === 0 ? '#ffd166' : '#38bdf8');
+      ctx.lineWidth = Math.max(1.6, 3.8 * (1 - prog));
+      ctx.globalAlpha = Math.sin(prog * Math.PI) * xp * 0.70;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(ang) * r1, Math.sin(ang) * (r1 * 0.7));
+      ctx.lineTo(Math.cos(ang) * r2, Math.sin(ang) * (r2 * 0.7));
+      ctx.stroke();
+    }
+
+    // c) Markaziy Quyosh Koronasi va Yorqinlik Chaqnashi (Solar Corona Lens Bloom)
+    const exitFlareR = Math.max(25, Math.sin(xp * Math.PI) * 160);
+    const exitFlareGrad = ctx.createRadialGradient(0, 0, 8, 0, 0, exitFlareR);
+    exitFlareGrad.addColorStop(0, '#ffffff');
+    exitFlareGrad.addColorStop(0.30, rgba('#ffd166', 0.85 * xp));
+    exitFlareGrad.addColorStop(0.65, rgba('#38bdf8', 0.50 * xp));
+    exitFlareGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = exitFlareGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, exitFlareR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // d) Faza yopilishi — Yopiluvchi Kvant Pardasi (Dimensional Rift Closing Iris)
+    if (xp > 0.40) {
+      const irisProg = (xp - 0.40) / 0.60;
+      const irisR = (1 - Math.pow(irisProg, 1.5)) * Math.max(W, H) * 0.60;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = Math.max(2, 6 * irisProg);
+      ctx.globalAlpha = Math.sin(irisProg * Math.PI) * 0.85;
+      ctx.beginPath();
+      ctx.arc(0, 0, irisR, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+    ctx.save();
+
+    // e) Ekran chegaralaridagi Oltin-Moviy Xromatik Vinyetka (Border Prismatic Glow)
+    const vigGrad = ctx.createRadialGradient(cx, cy, Math.min(W, H) * 0.42, cx, cy, Math.max(W, H) * 0.80);
+    vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
+    vigGrad.addColorStop(0.70, rgba('#ffd166', 0.30 * xp));
+    vigGrad.addColorStop(1, rgba('#0284c7', 0.70 * xp));
+    ctx.fillStyle = vigGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // f) Golografik Chiqish va G'alaba Ekrani (Grand Reality Cleared HUD Banner)
+    if (xp > 0.15 && xp < 0.95) {
+      const hudAlpha = Math.sin(((xp - 0.15) / 0.80) * Math.PI);
+      ctx.save();
+      ctx.textAlign = 'center';
+      const hudY = H * 0.28;
+      const fsMain = Math.max(14, Math.min(26, W * 0.038));
+      const fsSub = Math.max(10, Math.min(16, W * 0.022));
+
+      const bW = Math.min(W * 0.90, 500);
+      const bH = fsMain + fsSub + 34;
+      ctx.fillStyle = 'rgba(8, 14, 26, ' + (0.92 * hudAlpha).toFixed(2) + ')';
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 2.0;
+      ctx.globalAlpha = hudAlpha;
+      if (ctx.roundRect) {
+        ctx.beginPath(); ctx.roundRect(cx - bW / 2, hudY - bH / 2, bW, bH, 12); ctx.fill(); ctx.stroke();
+      } else {
+        ctx.fillRect(cx - bW / 2, hudY - bH / 2, bW, bH);
+        ctx.strokeRect(cx - bW / 2, hudY - bH / 2, bW, bH);
+      }
+
+      // Kiber-burchaklar
+      const cL = 8;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.8;
+      const bx0 = cx - bW / 2, by0 = hudY - bH / 2;
+      ctx.beginPath();
+      ctx.moveTo(bx0, by0 + cL); ctx.lineTo(bx0, by0); ctx.lineTo(bx0 + cL, by0);
+      ctx.moveTo(bx0 + bW - cL, by0); ctx.lineTo(bx0 + bW, by0); ctx.lineTo(bx0 + bW, by0 + cL);
+      ctx.moveTo(bx0, by0 + bH - cL); ctx.lineTo(bx0, by0 + bH); ctx.lineTo(bx0 + cL, by0 + bH);
+      ctx.moveTo(bx0 + bW - cL, by0 + bH); ctx.lineTo(bx0 + bW, by0 + bH); ctx.lineTo(bx0 + bW, by0 + bH - cL);
+      ctx.stroke();
+
+      ctx.font = '900 ' + (fsMain | 0) + 'px ' + UIFONT;
+      ctx.fillStyle = '#ffffff';
+      if (G.quality === 'high') { ctx.shadowColor = '#ffd166'; ctx.shadowBlur = 14; }
+      ctx.fillText('✨ ВОЗВРАТ В РЕАЛЬНОСТЬ // REALITY RESTORED ✨', cx, hudY - 2);
+
+      ctx.font = '800 ' + (fsSub | 0) + 'px ' + UIFONT;
+      ctx.fillStyle = '#ffd166';
+      if (G.quality === 'high') { ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 10; }
+      ctx.fillText('ВСЕЛЕННАЯ СТАБИЛИЗИРОВАНА · НАГРАДА: +10,000 PTS · +50 🪙', cx, hudY + fsSub + 7);
+      ctx.restore();
     }
     ctx.restore();
   }
@@ -11240,6 +11837,10 @@ function drawObj(o) {
   if (o.z > 66) return;
   if (o.kind === 'portal_active') {
     drawPortalActive(o);
+    return;
+  }
+  if (o.kind === 'portal_exit') {
+    drawPortalExit(o);
     return;
   }
   if (o.kind === 'portal_open') {
@@ -11367,20 +11968,10 @@ function drawShip() {
     ctx.globalAlpha = .42 - Math.min(.32, G.y * .1); ctx.fillStyle = '#000';
     ctx.beginPath(); ctx.ellipse(_b.x, _b.y, 1.25 * _b.s, .3 * _b.s, 0, 0, 6.283); ctx.fill();
 
-    /* "SIZ" belgisi: o'yinchi mashinasi skin rangidan qat'iy nazar
-       doim bitta neon halqa + chet belgilari bilan ko'rsatiladi. */
-    ctx.globalAlpha = .9;
-    ctx.strokeStyle = '#7dffe4'; ctx.lineWidth = 2.2;
-    ctx.beginPath(); ctx.ellipse(_b.x, _b.y, 1.58 * _b.s, .48 * _b.s, 0, 0, 6.283); ctx.stroke();
-    ctx.fillStyle = '#7dffe4';
-    for (const side of [-1, 1]) {
-      const ex = _b.x + side * 1.58 * _b.s;
-      ctx.beginPath();
-      ctx.moveTo(ex, _b.y);
-      ctx.lineTo(ex + side * 10, _b.y - 5.5);
-      ctx.lineTo(ex + side * 10, _b.y + 5.5);
-      ctx.closePath(); ctx.fill();
-    }
+    /* Refined Cyberpunk Ground Contact Aura: subtle, non-intrusive neon track outline */
+    ctx.globalAlpha = .32;
+    ctx.strokeStyle = '#00f0ff'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.ellipse(_b.x, _b.y, 1.42 * _b.s, .42 * _b.s, 0, 0, 6.283); ctx.stroke();
     ctx.restore();
   }
 
@@ -11501,14 +12092,14 @@ function drawShip() {
       const rx = 1.25 * _d.s, ry = 0.96 * _d.s;
       if (G.shield > 0) {
         const pulse = .48 + .24 * Math.sin(G.t * 8);
-        // Geksagonal yarim shaffof himoya gumbazi (Hexagonal translucent dome fill)
-        ctx.globalAlpha = pulse * 0.32;
+        // Ultra-sheer energetic protective dome (preserves car & road clarity)
+        ctx.globalAlpha = pulse * 0.08;
         ctx.fillStyle = '#00e5ff';
         ctx.beginPath(); ctx.ellipse(_d.x, _d.y, rx, ry, 0, 0, 6.283); ctx.fill();
 
-        // Tashqi energetik qobiq (Outer energetic field boundary)
-        ctx.globalAlpha = pulse + 0.22;
-        ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 2.4;
+        // Crisp energetic field boundary
+        ctx.globalAlpha = pulse * 0.75 + 0.15;
+        ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 1.6;
         ctx.beginPath(); ctx.ellipse(_d.x, _d.y, rx, ry, 0, 0, 6.283); ctx.stroke();
 
         // Aylanuvchi zumrad magnit orbita (Rotating emerald containment orbit)
@@ -12049,10 +12640,24 @@ function carStartingShield(c) {
   const permanentShield = PERM.n('shield') > 0 ? 6 : 0;
   return Math.max(c.shieldStart + accountShield, permanentShield);
 }
+let carRarityFilter = 'all';
+function setCarRarityFilter(rarity) {
+  carRarityFilter = rarity || 'all';
+  const rFilter = $('#carRarityFilter');
+  if (rFilter && rFilter.querySelectorAll) {
+    rFilter.querySelectorAll('.filter-chip').forEach(c => {
+      const match = (c.className || '').match(/rarity-(\w+)/);
+      const cRarity = (c.dataset && c.dataset.rarity) || (c.getAttribute && c.getAttribute('data-rarity')) || (match ? match[1] : 'all');
+      c.classList.toggle('on', cRarity === carRarityFilter);
+    });
+  }
+  renderShips();
+}
 function renderShips() {
   const list = $('#shipList'); if (!list) return;
   const rNames = { rare: 'РЕДКАЯ', epic: 'ЭПИЧЕСКАЯ', mythic: 'МИФИЧЕСКАЯ', legendary: 'ЛЕГЕНДАРНАЯ', common: 'РЕДКАЯ' };
-  list.innerHTML = CARS.map(c => {
+  const filteredCars = carRarityFilter === 'all' ? CARS : CARS.filter(c => c.rarity === carRarityFilter);
+  list.innerHTML = filteredCars.map(c => {
     const owned = ownedOf(c), selected = G.car === c.id, locked = !lvlOk(c);
     const affordable = !owned && !locked && carAffordable(c);
     let status = 'ОТКРЫТА';
@@ -13198,6 +13803,37 @@ if (scBtn) {
     renderShips(); menuStats();
   });
 }
+const btnScPrev = $('#btnShowcasePrev');
+if (btnScPrev) {
+  btnScPrev.addEventListener('click', (e) => {
+    e.stopPropagation();
+    Sound.ensure(); Sound.blip(400, .06, 'triangle', .14);
+    showcaseCarId = (showcaseCarId - 1 + CARS.length) % CARS.length;
+    renderShips();
+    updateShowcase();
+  });
+}
+const btnScNext = $('#btnShowcaseNext');
+if (btnScNext) {
+  btnScNext.addEventListener('click', (e) => {
+    e.stopPropagation();
+    Sound.ensure(); Sound.blip(440, .06, 'triangle', .14);
+    showcaseCarId = (showcaseCarId + 1) % CARS.length;
+    renderShips();
+    updateShowcase();
+  });
+}
+const rFilter = $('#carRarityFilter');
+if (rFilter) {
+  rFilter.addEventListener('click', (e) => {
+    const chip = (e.target && e.target.classList && e.target.classList.contains('filter-chip')) ? e.target : (e.target.closest ? e.target.closest('.filter-chip') : null);
+    if (!chip) return;
+    Sound.ensure(); Sound.blip(480, .05, 'sine', .12);
+    const rMatch = (chip.className || '').match(/rarity-(\w+)/);
+    const r = (chip.dataset && chip.dataset.rarity) || (chip.getAttribute && chip.getAttribute('data-rarity')) || (rMatch ? rMatch[1] : 'all');
+    setCarRarityFilter(r);
+  });
+}
 const scBtn2 = $('#btnSelectCarPts');
 if (scBtn2) {
   scBtn2.addEventListener('click', () => {
@@ -13271,6 +13907,14 @@ $('#btnAgain').addEventListener('click', () => startRun());
 $('#btnMenu').addEventListener('click', () => { bankCoins(); hide(el.scrOver); show(el.scrMenu); setMenuView('home'); menuStats(); renderShips(); G.running = false; G.over = false; });
 $('#btnHowBack').addEventListener('click', () => { hide(el.scrHow); show(el.scrMenu); menuStats(); });
 $('#btnResume').addEventListener('click', togglePause);
+const btnPauseRestart = $('#btnPauseRestart');
+if (btnPauseRestart) {
+  btnPauseRestart.addEventListener('click', () => {
+    G.paused = false;
+    hide(el.scrPause);
+    startRun();
+  });
+}
 $('#btnQuit').addEventListener('click', () => { G.paused = false; hide(el.scrPause); G.running = false; setHint(-1); show(el.scrMenu); setMenuView('home'); menuStats(); renderShips(); });
 $('#btnSnd').addEventListener('click', () => { Sound.ensure(); Sound.set(!Sound.on); menuStats(); });
 $('#btnMus').addEventListener('click', () => { Sound.ensure(); Sound.setMusic(!Sound.musicOn); menuStats(); });
@@ -13324,7 +13968,7 @@ window.NY3D = {
   quad, proj, facesOf, drawFace, shade, meshOfBoxes, meshOfWedges, meshOfRing, meshOfPrism, meshOfOcta, meshOfCone, meshOfCoin, buildCar,
   skinIdx, skinOf, skinKey, palOf, applySkin, renderSkinPicker, updateShowcase, fitShowcase, frameMesh,
   jump, moveLane, pickCard, offerCards, togglePause, gameOver, maybeRevive, updateHUD, renderLives,
-  menuStats, renderShips, renderPerks, renderAcct, renderAcctBar, renderOverAcct, activateTab, ownedOf, lvlOk,
+  menuStats, renderShips, setCarRarityFilter, renderPerks, renderAcct, renderAcctBar, renderOverAcct, activateTab, ownedOf, lvlOk,
   tryBuy, takeCar, applyPerk, PERKS, PERK_KEYS, reviveNow, BIOMES, TRACK_SEC, TRANS_DUR, BAND_NAME,
   currentBiome, trackBiome, difficultyBand, nextTrack, mixColor, drawTrackTransition,
   levelNeed, diff01, km, num, mul,
@@ -13338,7 +13982,7 @@ window.NY3D = {
   BIOME_EVENTS, triggerBiomeEvent, drawBiomeWeather, initBiomeEventParticles, updateBiomeEventParticles,
   getMissionState, setMissionState, getLocalDateKey, updateMissionsTimerUI, checkMissionsInRace, startMissionsTimer,
   showModal, hideModal,
-  DIMENSIONS, enterDimension, exitDimension, speedToKmh, qualLabel, detectInitialQuality, syncQualityClass, drawPortalActive, drawPortalOpen, drawPortalEntryEffect, drawMagnetArcs,
+  DIMENSIONS, enterDimension, exitDimension, speedToKmh, qualLabel, detectInitialQuality, syncQualityClass, drawPortalActive, drawPortalOpen, drawPortalExit, drawPortalEntryEffect, drawMagnetArcs,
   selectedStartingBiome, getSelectedStartingBiome, selectStartingBiome, renderBiomesMenu, drawBiomeCardPreview,
   DESIGN_SYSTEM, MATERIALS, ASSET_REGISTRY, BIOME_3D, TUTORIAL_SYSTEM, setMenuView
 };
