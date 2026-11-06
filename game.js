@@ -7453,6 +7453,14 @@ function gameOver() {
     setAchieveState(aSt);
   }
   $('#newBest').classList.toggle('hidden', !rec);
+  const btnDoubleEl = $('#btnDoubleCoins');
+  if (btnDoubleEl) {
+    btnDoubleEl.classList.remove('claimed');
+    const txtEl = $('#doubleCoinsText');
+    if (txtEl) txtEl.textContent = 'УДВОИТЬ МОНЕТЫ x2 (РЕКЛАМА)';
+    const adRow = $('#adDoubleCoinsRow');
+    if (adRow) adRow.style.display = G.runCoins > 0 ? 'block' : 'none';
+  }
   const overScoreNum = $('#overScoreNum');
   if (overScoreNum) overScoreNum.textContent = num(G.score);
   const overBestScore = $('#overBestScore');
@@ -14117,6 +14125,28 @@ $('#btnQual').addEventListener('click', () => {
 });
 $('#btnCtl').addEventListener('click', () => { document.body.classList.toggle('touch'); menuStats(); });
 $('#btnTut').addEventListener('click', () => { G.tutDone = false; store.set('tutDone', false); toast('🎓 Обучение начнётся в следующей гонке'); });
+// Yandex Games Rewarded 2x Coins
+const btnDoubleCoins = $('#btnDoubleCoins');
+if (btnDoubleCoins) {
+  btnDoubleCoins.addEventListener('click', async () => {
+    if (btnDoubleCoins.classList.contains('claimed')) return;
+    let ok = true;
+    if (YA.ready) ok = await YA.rewarded();
+    if (!ok) { toast('Реклама не завершена'); return; }
+    const bonus = Math.max(10, Math.floor(G.runCoins || 25));
+    G.coins += bonus;
+    G.runCoins += bonus;
+    G.meta.totalCoins = (G.meta.totalCoins || 0) + bonus;
+    bankCoins();
+    store.set('meta', G.meta);
+    if (YA.ready) YA.submit(G.score);
+    btnDoubleCoins.classList.add('claimed');
+    const txt = $('#doubleCoinsText');
+    if (txt) txt.textContent = 'УДВОЕНО: +' + bonus + ' 🪙';
+    toast('💰 НАГРАДА: +' + bonus + ' МОНЕТ НАЧИСЛЕНО!');
+    Sound.chord([523, 659, 784, 1046], .35, .20);
+  });
+}
 $('#btnReviveNo').addEventListener('click', () => { hide(el.scrRevive); gameOver(); });
 $('#btnReviveAd').addEventListener('click', async () => {
   hide(el.scrRevive);

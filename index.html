@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#05060f">
 <title>NEORUSH — Киберпанк 3D Гонки</title>
+<!-- Yandex Games SDK v2 -->
+<script src="https://yandex.ru/games/sdk/v2"></script>
 <link  classname:width="30",height="30" rel="icon" type="image/png" href="./images/5d997498-e071-4b73-afd1-f5aa2370bbbc.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1610,6 +1612,38 @@ h1.logo span{display:block;font-size:.34em;letter-spacing:.38em;color:#8df5ff;-w
 }
 .results-acct .money b {
   color: #ffd166;
+}
+
+/* Results 2X Coins Rewarded Ad Button */
+.results-ad-row {
+  margin: 10px 0 4px 0;
+  width: 100%;
+}
+.results-ad-row .btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  border: 1px solid rgba(255, 209, 102, 0.55);
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.14), rgba(255, 140, 0, 0.08));
+  color: #ffd166;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  transition: all 0.2s ease;
+}
+.results-ad-row .btn:hover {
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.25), rgba(255, 140, 0, 0.18));
+  box-shadow: 0 0 16px rgba(255, 209, 102, 0.35);
+  border-color: #ffd166;
+}
+.results-ad-row .btn.claimed {
+  opacity: 0.5;
+  pointer-events: none;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Results Action Buttons */
@@ -5706,6 +5740,13 @@ body.qual-low #fx{display:none}
         <button class="btn sm pink hidden" id="btnOverUp">⭐ УЛУЧШИТЬ</button>
       </div>
 
+            <!-- Yandex Rewarded Ad: 2X Coins -->
+      <div class="results-ad-row" id="adDoubleCoinsRow">
+        <button class="btn btn-secondary" id="btnDoubleCoins" type="button">
+          <svg class="nr-icon nr-icon-sm" aria-hidden="true"><use href="#nr-ic-coin"/></svg>
+          <span id="doubleCoinsText">УДВОИТЬ МОНЕТЫ x2 (РЕКЛАМА)</span>
+        </button>
+      </div>
       <div class="row results-actions">
         <button class="btn btn-primary" id="btnAgain"><svg class="nr-icon nr-icon-sm" aria-hidden="true"><use href="#nr-ic-restart"/></svg> ЕЩЁ РАЗ</button>
         <button class="btn ghost btn-menu-link" id="btnMenu"><svg class="nr-icon nr-icon-sm" aria-hidden="true"><use href="#nr-ic-home"/></svg> В МЕНЮ</button>
