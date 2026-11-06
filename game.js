@@ -945,11 +945,11 @@ const YA = {
 const LANES = [-2.4, 0, 2.4];
 const ROADH = 3.7;          // yo'l yarim kengligi
 const HAZARD = { car: 1, truck: 1, bar: 1, wall: 1, cone: 1 };
-const GOOD = { coin: 1, nitro: 1, shield: 1, magnet: 1, life: 1, magnet_plus: 1, shield_plus: 1, heart_plus: 1 };
+const GOOD = { coin: 1, nitro: 1, shield: 1, magnet: 1, life: 1, magnet_plus: 1, shield_plus: 1, heart_plus: 1, emp_pickup: 1 };
 const JUMPABLE = { bar: 1, cone: 1 };
 const KIND = { CAR: 'car', TRUCK: 'truck', BAR: 'bar', WALL: 'wall', CONE: 'cone',
   COIN: 'coin', NITRO: 'nitro', SH: 'shield', MAG: 'magnet', LIFE: 'life',
-  MAG_PLUS: 'magnet_plus', SH_PLUS: 'shield_plus', LIFE_PLUS: 'heart_plus' };
+  MAG_PLUS: 'magnet_plus', SH_PLUS: 'shield_plus', LIFE_PLUS: 'heart_plus', EMP: 'emp_pickup' };
 
 /* har bir tur uchun: badge balandligi, yo'l dog'i kengligi, rang, urish radiusi */
 const OBJ = {
@@ -966,6 +966,7 @@ const OBJ = {
   magnet_plus:   { badY: 1.80, patW: 1.05, patL: 1.1, col: '#e879f9', hit: 1.55, spin: 1.4,  y: 0.9 },
   shield_plus:   { badY: 1.85, patW: 1.05, patL: 1.1, col: '#22d3ee', hit: 1.55, spin: 1.2,  y: 0.05 },
   heart_plus:    { badY: 1.85, patW: 1.05, patL: 1.1, col: '#f43f5e', hit: 1.55, spin: 1.0,  y: 1.0 },
+  emp_pickup:    { badY: 1.85, patW: 1.10, patL: 1.1, col: '#00f5ff', hit: 1.60, spin: 2.2,  y: 0.95 },
   checkpoint:    { badY: 3.40, patW: 3.80, patL: 0.6, col: '#00e5ff', hit: 0,    spin: 0,    y: 0 },
   portal_active: { badY: 3.20, patW: 1.35, patL: 0.6, col: '#d946ef', hit: 0,    spin: 0,    y: 0 },
   portal_open:   { badY: 3.00, patW: 1.25, patL: 0.5, col: '#64748b', hit: 0,    spin: 0,    y: 0 },
@@ -3151,7 +3152,15 @@ const BIOME_3D = {
       return this.riftRoadsideProp(0, 1, arcaneCol || '#c084fc', false);
     },
     quantumPortalRing(col1, col2) {
-      return emptyMesh();
+      const outerHex = meshOfPrism(3.5, 0.7, 6, col1 || '#00e5ff', '#ffffff');
+      for (const pt of outerHex.v) {
+        const tmp = pt[1]; pt[1] = pt[2] + 2.5; pt[2] = tmp;
+      }
+      const innerHex = meshOfPrism(2.7, 0.9, 6, col2 || '#d946ef', '#ffffff');
+      for (const pt of innerHex.v) {
+        const tmp = pt[1]; pt[1] = pt[2] + 2.5; pt[2] = tmp;
+      }
+      return mergeMesh(outerHex, innerHex);
     }
   },
 
@@ -4997,7 +5006,7 @@ const BIOME_3D = {
    30 уникальных спорткаров с индивидуальными улучшениями и перками. */
 const PERKS = {
   steady:      { ic: '🌱', name: 'Плавный старт', desc: 'Скорость растёт на 30% плавнее — проще маневрировать' },
-  drain:       { ic: '⚡', name: 'Экономное нитро', desc: 'Энергия расходуется на 45% медленнее' },
+  drain:       { ic: '⚡', name: 'Плазма-форсаж', desc: 'Нитро расходуется на 50% медленнее — форсаж длится в 2 раза дольше!' },
   score:       { ic: '🏆', name: 'Рекордсмен', desc: 'На 28% больше очков за каждый метр дистанции' },
   coin:        { ic: '🪙', name: 'Золотая жила', desc: 'Каждая монета приносит дополнительную ценность' },
   magnetup:    { ic: '🧲', name: 'Долгий магнит', desc: 'Магнит работает на 6 секунд дольше' },
@@ -5006,6 +5015,7 @@ const PERKS = {
   luck:        { ic: '🍀', name: 'Удача', desc: 'На трассе значительно чаще появляются бонусы' },
   combo:       { ic: '🔥', name: 'Мастер комбо', desc: 'Комбо угасает на 50% медленнее' },
   smash:       { ic: '💥', name: 'Мощный бампер', desc: 'Тараньте препятствия на нитро и получайте +250 очков' },
+  crusher:     { ic: '🔨', name: 'Сокрушитель препятствий', desc: 'Ударная броня: сокрушает любые препятствия и барьеры (+500 очков)!' },
   brakes:      { ic: '🛑', name: 'Точный поворот', desc: 'Быстрее перестраивайтесь между полосами' },
   sregen:      { ic: '♻', name: 'Восстановление щита', desc: 'Щит автоматически восстанавливается после окончания' },
   djump:       { ic: '🦘', name: 'Двойной прыжок', desc: 'Возможность совершить второй прыжок в воздухе' },
@@ -5016,14 +5026,13 @@ const PERKS = {
   aero:        { ic: '✈', name: 'Аэродинамика', desc: 'Прижимная сила: идеальный контроль на высокой скорости' },
   shockwave:   { ic: '🌊', name: 'Ударная волна', desc: 'Щит притягивает ближайшие монеты к машине' },
   goldrush:    { ic: '👑', name: 'Золотая лихорадка', desc: 'Монеты временно ускоряют перезарядку нитро' },
-  warp:        { ic: '🌀', name: 'Варп-мастер', desc: 'Двойные очки в специальных измерениях' },
+  warp:        { ic: '🌀', name: 'Мастер порталов', desc: 'Двойные очки во всех порталах и измерениях (2x множитель) и +2,500 при выходе!' },
   collector:   { ic: '🧲', name: 'Коллекционер', desc: 'Магнит притягивает кристаллы и бонусы издалека' },
   boostmaster: { ic: '🔥', name: 'Мастер форсажа', desc: 'Нитро расходуется значительно экономнее' },
   titan:       { ic: '🛡', name: 'Титановый бампер', desc: 'Бронированный корпус снижает силу ударов' },
   photon:      { ic: '💡', name: 'Фотонный луч', desc: 'Опасные зоны подсвечиваются на большем расстоянии' },
   energy:      { ic: '🔋', name: 'Энергогенератор', desc: 'Пассивная регенерация энергии в ходе гонки' },
   hyperdrive:  { ic: '🚀', name: 'Гипердрайв', desc: 'Сверхвысокая предельная скорость на максимальных оборотах' },
-  driftking:   { ic: '🏎', name: 'Король дрифта', desc: 'Мгновенное перестроение между полосами' },
   specter:     { ic: '👻', name: 'Спектральный щит', desc: 'При потере жизни даётся 3 секунды неуязвимости' },
   apex:        { ic: '👑', name: 'Апекс-мастер', desc: 'Максимальный множитель очков на рекордных скоростях' }
 };
@@ -5040,13 +5049,13 @@ const CARS = [
   { id: 1, name: 'VOLT', rarity: 'rare', cost: 450, pcost: 90, lvl: 2, shape: 'sport',
     body: '#00e5ff', roof: '#041f33', glass: '#dff6ff', acc: '#38bdf8',
     stripe: 2, stripeColor: '#ffffff', underglow: '#00e5ff', canards: 1, wing: 2, headlights: 'quad',
-    boost: 1.45, shieldStart: 0, magnet: 1.25, tag: 'Электрический форсаж и плазменные контуры', perk: 'drain' },
+    boost: 1.45, shieldStart: 0, magnet: 1.25, tag: 'Плазменный форсаж: расходует нитро на 50% медленнее', perk: 'drain' },
 
   // 3. PHANTOM (Редкая, УР. 3)
   { id: 2, name: 'PHANTOM', rarity: 'rare', cost: 900, pcost: 180, lvl: 3, shape: 'muscle',
     body: '#a855f7', roof: '#24083b', glass: '#f3e8ff', acc: '#e879f9',
     blower: 1, widebody: 1, underglow: '#c084fc', sideExhaust: 1, wing: 1, splitter: 1,
-    boost: 1.40, shieldStart: 6, magnet: 1.40, tag: 'Призрачный фиолетовый неон и аэродинамика', perk: 'score' },
+    boost: 1.40, shieldStart: 6, magnet: 1.40, tag: 'Неон Фантом: удваивает все очки в порталах (2x)', perk: 'warp' },
 
   // 4. RAZOR (Редкая, УР. 4)
   { id: 3, name: 'RAZOR', rarity: 'rare', cost: 1400, pcost: 280, lvl: 4, shape: 'sport',
@@ -5079,16 +5088,16 @@ const CARS = [
     boost: 1.90, shieldStart: 2, magnet: 1.35, tag: 'Титановый монокок со сверхзвуковым ускорением', perk: 'turbo' },
 
   // 9. AURORA (Эпическая, УР. 9)
-  { id: 8, name: 'AURORA', rarity: 'epic', cost: 4600, pcost: 920, lvl: 9, shape: 'drift',
+  { id: 8, name: 'AURORA', rarity: 'epic', cost: 4600, pcost: 920, lvl: 9, shape: 'sport',
     body: '#06b6d4', roof: '#083344', glass: '#cffafe', acc: '#2dd4bf',
     wing: 4, canards: 1, underglow: '#06b6d4', sideExhaust: 1, splitter: 2,
-    boost: 1.62, shieldStart: 4, magnet: 1.50, tag: 'Полярное сияние: градиент северного ветра', perk: 'driftking' },
+    boost: 1.62, shieldStart: 4, magnet: 1.50, tag: 'Полярное сияние: градиент северного ветра', perk: 'apex' },
 
-  // 10. DRIFT (Эпическая, УР. 10)
-  { id: 9, name: 'DRIFT', rarity: 'epic', cost: 5500, pcost: 1100, lvl: 10, shape: 'muscle',
-    body: '#d946ef', roof: '#3b0736', glass: '#fae8ff', acc: '#f43f5e', rails: 0,
-    widebody: 1, blower: 1, underglow: '#ff2fb9', diffuser: 2, wing: 4,
-    boost: 1.35, shieldStart: 18, magnet: 1.45, tag: 'Мастер неонового заноса и дымных виражей', perk: 'armor' },
+  // 10. CYBERTRUCK (Эпическая, УР. 10)
+  { id: 9, name: 'CYBERTRUCK', rarity: 'epic', cost: 5500, pcost: 1100, lvl: 10, shape: 'muscle',
+    body: '#78716c', roof: '#292524', glass: '#e7e5e4', acc: '#38bdf8', rails: 1,
+    widebody: 1, underglow: '#38bdf8', diffuser: 2, wing: 1,
+    boost: 1.40, shieldStart: 20, magnet: 1.45, tag: 'Бронированный кибертрак: сокрушает любые препятствия', perk: 'crusher' },
 
   // 11. VORTEX (Эпическая, УР. 12)
   { id: 10, name: 'VORTEX', rarity: 'epic', cost: 7000, pcost: 1400, lvl: 12, shape: 'sport',
@@ -5423,10 +5432,10 @@ const ship = car;
 function applyPerk(p) {
   G.perk = p || null;
   G.drainMul = 1; G.shieldRegen = false; G.extraJumps = 0; G.jumpsLeft = 0;
-  G.shieldRt = 0; G.luck = false; G.ghost = false;
+  G.shieldRt = 0; G.luck = false; G.ghost = false; G.obstacleCrusher = false; G.dimensionScoreMult = 1.0;
   G.rampMul = 1; G.scoreMul = 1; G.reviveFree = 0;
   if (!p || !PERKS[p]) return false;
-  if (p === 'drain') G.drainMul = .55;
+  if (p === 'drain') G.drainMul = .50;
   else if (p === 'steady') G.rampMul = .7;
   else if (p === 'score') G.scoreMul = 1.28;
   else if (p === 'coin') G.coinMult = Math.round(G.coinMult * 1.4 * 100) / 100;
@@ -5435,6 +5444,11 @@ function applyPerk(p) {
   else if (p === 'magnetup') G.magnetMax = Math.round((G.magnetMax + 2) * 10) / 10;
   else if (p === 'brakes') G.brakePow += .9;
   else if (p === 'smash') G.smashBonus += 250;
+  else if (p === 'crusher') {
+    G.obstacleCrusher = true;
+    G.smashBonus += 500;
+    G.maxLives++;
+  }
   else if (p === 'sregen') G.shieldRegen = true;
   else if (p === 'djump') G.extraJumps = 1;
   else if (p === 'luck') G.luck = true;
@@ -5465,6 +5479,7 @@ function applyPerk(p) {
     G.drainMul = .7;
   }
   else if (p === 'warp') {
+    G.dimensionScoreMult = 2.0;
     G.scoreMul = 1.35;
     G.ghost = true;
   }
@@ -5491,10 +5506,6 @@ function applyPerk(p) {
   else if (p === 'hyperdrive') {
     G.baseSpeed = Math.round(G.baseSpeed * 1.12 * 100) / 100;
     G.extraJumps = 1;
-  }
-  else if (p === 'driftking') {
-    G.brakePow += 1.2;
-    G.comboHold = Math.round(G.comboHold * 1.6 * 10) / 10;
   }
   else if (p === 'specter') {
     G.ghost = true;
@@ -7287,8 +7298,10 @@ function startRun() {
     carAccelMul: 1,
     nitroDrainBonus: 1,
     carHandlingMul: 1,
-    driftControlMul: 1,
     magnetRadiusBonus: 0,
+    camMode: G.camMode || 'chase',
+    obstacleCrusher: false,
+    dimensionScoreMult: 1.0,
     bossActive: false,
     bossWarningActive: false,
     bossWarningTimer: 0,
@@ -7301,6 +7314,11 @@ function startRun() {
     bossAttackState: 'idle',
     bossAttackTimer: 0,
     bossTargetLane: 1,
+    bossHp: 3,
+    bossMaxHp: 3,
+    bossStunTimer: 0,
+    nextEmpSpawn: 4.0,
+    empFiring: null,
     nextBossAt: 2200,
     bossEscaped: 0,
     biomeEventActive: false,
@@ -7309,9 +7327,6 @@ function startRun() {
     biomeEventKey: '',
     biomeEventName: '',
     biomeEventProps: '',
-    drifting: false,
-    driftTime: 0,
-    driftScore: 0,
     nitroUses: 0,
     runCoins: 0,
     runNitroCount: 0,
@@ -7896,6 +7911,11 @@ function update(dt) {
       'КВАНТОВЫЙ ДЕСТРОЙЕР «НЕКСУС»'
     ];
     G.bossName = bNames[G.trackIdx % bNames.length] || 'ПЕРЕХВАТЧИК «СПЕКТР-9»';
+    G.bossHp = 3;
+    G.bossMaxHp = 3;
+    G.bossStunTimer = 0;
+    G.nextEmpSpawn = 4.0;
+    G.empFiring = null;
     toast('🚨 БОСС-ПОГОНЯ: «' + G.bossName + '» НА ТРАССЕ! УДЕРЖИВАЙТЕ СКОРОСТЬ!', 4000);
     Sound.bossWarning();
     G.flash = 0.45; G.shake = 0.4;
@@ -7904,75 +7924,135 @@ function update(dt) {
     if (!G.paused) {
       G.bossTimer -= dt;
 
+      // EMP Homing Missile projectile progress
+      if (G.empFiring) {
+        G.empFiring.t += dt;
+        if (G.empFiring.t >= G.empFiring.dur) {
+          const bX = G.bossX || 0, bZ = G.bossZ || 18;
+          burst(bX, 1.5, bZ, 45, '#00f5ff', 2.2);
+          burst(bX, 1.8, bZ, 30, '#ffd166', 2.0);
+          G.shake = 1.0; G.flash = 0.6;
+          Sound.noise(0.45, 0.4);
+          Sound.blip(130, 0.25, 'sawtooth', 0.4);
+
+          G.bossHp = (G.bossHp != null ? G.bossHp : 3) - 1;
+          G.bossDist = Math.min(28, G.bossDist + 6.0);
+          G.bossStunTimer = 3.2;
+          G.bossAttackState = 'idle';
+          G.bossAttackTimer = 4.5;
+          G.score += 2500;
+          bumpCombo(1);
+          G.meta.empHits = (G.meta.empHits || 0) + 1;
+
+          addFloatingText(bX, 2.8, bZ, '⚡ ЭМП-УДАР! -1 HP', '#00f5ff');
+          toast('⚡ ЭМП ПОРАЗИЛ БОССА! -1 HP · СИСТЕМЫ ПЕРЕХВАТЧИКА ОТКЛЮЧЕНЫ!', 2600);
+
+          if (G.bossHp <= 0) {
+            burst(bX, 1.5, bZ, 70, '#ff2b43', 2.6);
+            burst(bX, 2.0, bZ, 45, '#ffd166', 2.8);
+            Sound.chord([523, 659, 784, 1046, 1318], 0.6, 0.35);
+            const rCoins = 500, rPts = 250, rScore = 12000;
+            G.coins += rCoins; G.runCoins += rCoins; ACCT.add(rPts); G.score += rScore;
+            toast('💥 БОСС УНИЧТОЖЕН ИМПУЛЬСОМ! Награда: +' + rCoins + ' 🪙, +' + rPts + ' ⭐, +' + rScore + ' очков!', 4500);
+            addFloatingText(bX, 3.2, bZ, '💥 БОСС УНИЧТОЖЕН! +' + rScore, '#ffd166');
+            G.bossActive = false;
+            G.bossWarningActive = false;
+            G.bossEscaped = (G.bossEscaped || 0) + 1;
+            G.meta.bossEscapes = (G.meta.bossEscapes || 0) + 1;
+            const bh = el._bossHud || (el._bossHud = $('#bossHud'));
+            if (bh) bh.classList.add('hidden');
+          }
+          G.empFiring = null;
+        }
+      }
+
+      // Boss Stun status & EMP spawning
+      if (G.bossStunTimer > 0) {
+        G.bossStunTimer = Math.max(0, G.bossStunTimer - dt);
+        if (Math.random() < 0.35) burst(G.bossX + (Math.random() - .5) * 1.5, 1.2, G.bossZ, 3, '#00f5ff', 0.8);
+      } else if (G.bossActive && G.bossHp > 0) {
+        G.nextEmpSpawn = (G.nextEmpSpawn || 4.0) - dt;
+        if (G.nextEmpSpawn <= 0) {
+          G.nextEmpSpawn = 6.5;
+          const hasEmp = G.objs.some(o => o.kind === 'emp_pickup' && !o.dead && !o.taken);
+          if (!hasEmp) {
+            const empLane = Math.floor(Math.random() * 3);
+            allocObj('emp_pickup', empLane, Math.min(G.bossDist + 12, 48));
+            toast('⚡ ЭМП-ЗАРЯД НА ТРАССЕ! ПОДБЕРИТЕ ДЛЯ УДАРА ПО БОССУ!', 2500);
+            Sound.blip(880, 0.12, 'sine', 0.18);
+          }
+        }
+      }
+
       // Distance control based on player speed
       if (G.speed > 26 || G.boostOn) G.bossDist = Math.min(32, G.bossDist + dt * 2.8);
       else if (G.speed < 22) G.bossDist = Math.max(5, G.bossDist - dt * 2.2);
 
       G.bossZ = G.bossDist;
 
-      // Attack State Machine: idle -> aiming (fair telegraph) -> strike -> idle
-      G.bossAttackTimer -= dt;
+      // Attack State Machine: disabled while stunned!
+      if (G.bossStunTimer <= 0) {
+        G.bossAttackTimer -= dt;
 
-      if (G.bossAttackState === 'idle') {
-        if (Math.random() < 0.02) G.bossLane = Math.floor(Math.random() * 3);
-        const targetBossX = LANES[G.bossLane];
-        G.bossX += (targetBossX - G.bossX) * Math.min(1, dt * 3.5);
+        if (G.bossAttackState === 'idle') {
+          if (Math.random() < 0.02) G.bossLane = Math.floor(Math.random() * 3);
+          const targetBossX = LANES[G.bossLane];
+          G.bossX += (targetBossX - G.bossX) * Math.min(1, dt * 3.5);
 
-        if (G.bossAttackTimer <= 0) {
-          G.bossAttackState = 'aiming';
-          G.bossAttackTimer = 1.4; // Fair 1.4s window for player to dodge lane
-          G.bossTargetLane = (typeof G.lane === 'number' && G.lane >= 0 && G.lane <= 2) ? G.lane : 1;
-          Sound.blip(660, 0.12, 'square', 0.15);
-          addFloatingText(LANES[G.bossTargetLane], 2.4, 18, '⚠️ ЗАХВАТ ЦЕЛИ!', '#ff2b43');
-        }
-      } else if (G.bossAttackState === 'aiming') {
-        const targetBossX = LANES[G.bossTargetLane];
-        G.bossX += (targetBossX - G.bossX) * Math.min(1, dt * 5.0);
-
-        if (G.bossAttackTimer <= 0) {
-          G.bossAttackState = 'strike';
-          G.bossAttackTimer = 0.6; // strike beam display duration
-          Sound.blip(220, 0.25, 'sawtooth', 0.3);
-
-          const playerInLane = Math.abs(G.x - LANES[G.bossTargetLane]) < 0.85;
-          const playerIsHighJump = G.y > 1.25;
-
-          if (playerInLane && !playerIsHighJump && G.invul <= 0) {
-            // Hit by boss strike: shield absorbs first, otherwise lose life
-            if (G.shield > 0) {
-              G.shield = 0;
-              G.shieldPlusTimer = 0;
-              G.shieldRipple = 1.0;
-              G.invul = 1.2;
-              bumpCombo(-1);
-              Sound.noise(0.25, 0.2);
-              Sound.blip(320, 0.14, 'triangle', 0.2);
-              toast('🛡 Щит поглотил удар босса!', 1800);
-              addFloatingText(G.x, 2.0, 0, '🛡 ЩИТ', '#00e5ff');
-            } else {
-              G.lives--;
-              G.invul = 2.0; // Fair invulnerability window prevents instant multi-death
-              G.shake = 0.8;
-              G.flash = 0.5;
-              bumpCombo(-1);
-              Sound.noise(0.4, 0.3);
-              toast('💥 УДАР БОССА! Потеряна жизнь!', 2000);
-              renderLives();
-              if (G.lives <= 0) maybeRevive();
-            }
-          } else {
-            // Successfully dodged!
-            toast('💨 ВЫ УКЛОНИЛИСЬ ОТ УДАРА БОССА!', 1800);
-            addFloatingText(G.x, 2.2, 0, '💨 УКЛОНЕНИЕ!', '#7dff9b');
-            Sound.blip(520, 0.1, 'triangle', 0.15);
-            G.runNearMisses = (G.runNearMisses || 0) + 1;
-            bumpCombo(1);
+          if (G.bossAttackTimer <= 0) {
+            G.bossAttackState = 'aiming';
+            G.bossAttackTimer = 1.4; // Fair 1.4s window for player to dodge lane
+            G.bossTargetLane = (typeof G.lane === 'number' && G.lane >= 0 && G.lane <= 2) ? G.lane : 1;
+            Sound.blip(660, 0.12, 'square', 0.15);
+            addFloatingText(LANES[G.bossTargetLane], 2.4, 18, '⚠️ ЗАХВАТ ЦЕЛИ!', '#ff2b43');
           }
-        }
-      } else if (G.bossAttackState === 'strike') {
-        if (G.bossAttackTimer <= 0) {
-          G.bossAttackState = 'idle';
-          G.bossAttackTimer = 4.2; // 4.2s interval between attacks
+        } else if (G.bossAttackState === 'aiming') {
+          const targetBossX = LANES[G.bossTargetLane];
+          G.bossX += (targetBossX - G.bossX) * Math.min(1, dt * 5.0);
+
+          if (G.bossAttackTimer <= 0) {
+            G.bossAttackState = 'strike';
+            G.bossAttackTimer = 0.6; // strike beam display duration
+            Sound.blip(220, 0.25, 'sawtooth', 0.3);
+
+            const playerInLane = Math.abs(G.x - LANES[G.bossTargetLane]) < 0.85;
+            const playerIsHighJump = G.y > 1.25;
+
+            if (playerInLane && !playerIsHighJump && G.invul <= 0) {
+              if (G.shield > 0) {
+                G.shield = 0;
+                G.shieldPlusTimer = 0;
+                G.shieldRipple = 1.0;
+                G.invul = 1.2;
+                bumpCombo(-1);
+                Sound.noise(0.25, 0.2);
+                Sound.blip(320, 0.14, 'triangle', 0.2);
+                toast('🛡 Щит поглотил удар босса!', 1800);
+                addFloatingText(G.x, 2.0, 0, '🛡 ЩИТ', '#00e5ff');
+              } else {
+                G.lives--;
+                G.invul = 2.0;
+                G.shake = 0.8;
+                G.flash = 0.5;
+                bumpCombo(-1);
+                Sound.noise(0.4, 0.3);
+                toast('💥 УДАР БОССА! Потеряна жизнь!', 2000);
+                renderLives();
+                if (G.lives <= 0) maybeRevive();
+              }
+            } else {
+              toast('💨 ВЫ УКЛОНИЛИСЬ ОТ УДАРА БОССА!', 1800);
+              addFloatingText(G.x, 2.2, 0, '💨 УКЛОНЕНИЕ!', '#7dff9b');
+              Sound.blip(520, 0.1, 'triangle', 0.15);
+              G.runNearMisses = (G.runNearMisses || 0) + 1;
+              bumpCombo(1);
+            }
+          }
+        } else if (G.bossAttackState === 'strike') {
+          if (G.bossAttackTimer <= 0) {
+            G.bossAttackState = 'idle';
+            G.bossAttackTimer = 4.2;
+          }
         }
       }
 
@@ -8006,9 +8086,20 @@ function update(dt) {
         bh.classList.remove('hidden');
         const bTitle = $('#bossTitle'), bSub = $('#bossSub'), bBar = $('#bossBar');
         if (bTitle) bTitle.textContent = '🚨 БОСС-ПОГОНЯ: ' + G.bossName;
-        const attackHint = G.bossAttackState === 'aiming' ? ' · ⚠️ ЗАХВАТ!' : '';
+        const attackHint = G.bossStunTimer > 0 ? ' · ⚡ FALAJLANGAN' : (G.bossAttackState === 'aiming' ? ' · ⚠️ ЗАХВАТ!' : '');
         if (bSub) bSub.textContent = 'ДИСТАНЦИЯ: ' + Math.round(G.bossDist) + ' М · ВРЕМЯ: ' + Math.ceil(G.bossTimer) + ' С' + attackHint;
         if (bBar) bBar.style.width = Math.max(0, Math.min(100, (G.bossDist / 28) * 100)) + '%';
+
+        const hpCells = $('#bossHpCells');
+        if (hpCells) {
+          let cellsHtml = '';
+          const maxHp = G.bossMaxHp || 3;
+          const curHp = G.bossHp != null ? G.bossHp : maxHp;
+          for (let i = 0; i < maxHp; i++) {
+            cellsHtml += '<span class="hp-cell ' + (i < curHp ? 'alive' : 'dead') + '"></span>';
+          }
+          hpCells.innerHTML = cellsHtml;
+        }
       }
 
       if (G.bossTimer <= 0 || G.bossDist >= 28) {
@@ -8022,7 +8113,6 @@ function update(dt) {
         G.coins += rCoins; G.runCoins += rCoins; ACCT.add(rPts); G.score += rScore;
         bankCoins(); store.set('meta', G.meta);
 
-        // Real-time achievements & missions notification
         if (typeof checkAchievementsRealtime === 'function') checkAchievementsRealtime();
         if (typeof checkMissionsInRace === 'function') checkMissionsInRace();
 
@@ -8037,42 +8127,6 @@ function update(dt) {
   } else {
     const bh = el._bossHud || (el._bossHud = $('#bossHud'));
     if (bh && !bh.classList.contains('hidden')) bh.classList.add('hidden');
-  }
-
-  // Drift System (keyboard or mobile touch brake button)
-  const steerInput = (keys['a'] || keys['d'] || keys['arrowleft'] || keys['arrowright'] || Math.abs(G.tilt) > 0.12);
-  const brakeInput = (keys['s'] || keys['arrowdown'] || keys['shift'] || G.touchBrake);
-  if ((steerInput || G.touchBrake) && brakeInput && G.speed > 16 && G.onGround) {
-    if (!G.drifting) {
-      G.drifting = true;
-      Sound.tireSqueal();
-    }
-    G.driftTime = (G.driftTime || 0) + dt;
-    G.runContinuousDrift = (G.runContinuousDrift || 0) + dt;
-    G.meta.maxDriftSec = Math.max(G.meta.maxDriftSec || 0, Math.floor(G.runContinuousDrift || 0));
-    G.runMaxDriftCombo = Math.max(G.runMaxDriftCombo || 0, G.combo || 1);
-    const dPts = dt * 140 * G.combo * (G.driftControlMul || 1);
-    G.driftScore = (G.driftScore || 0) + dPts;
-    G.score += dPts;
-    if (Math.random() < (G.quality === 'low' ? 0.25 : 0.65)) burst(G.x + (G.tilt > 0 ? -0.85 : 0.85), 0.05, -0.9, 2, car().acc || '#00e5ff', 0.45);
-    G.energon = Math.min(G.energonMax, G.energon + dt * 10);
-    const dtTag = el._driftTag || (el._driftTag = $('#driftTag'));
-    if (dtTag) {
-      dtTag.classList.remove('hidden');
-      dtTag.innerHTML = '🏎 ДРИФТ ×' + G.combo + ' <b>+' + Math.round(G.driftScore) + '</b>';
-    }
-    if (G.driftTime > 1.0) {
-      bumpCombo(1);
-      G.driftTime = 0.2;
-    }
-  } else if (G.drifting) {
-    G.drifting = false;
-    G.runContinuousDrift = 0;
-    const dtTag = el._driftTag || (el._driftTag = $('#driftTag'));
-    if (dtTag) dtTag.classList.add('hidden');
-    if (G.driftScore > 120) addFloatingText(G.x, 1.8, 0, 'ЧИСТЫЙ ДРИФТ! +' + Math.round(G.driftScore), '#00e5ff');
-    G.driftScore = 0;
-    G.driftTime = 0;
   }
 
   /* --- YO'L ALMASHINUVI: checkpointdan alohida, reja bo'yicha --- */
@@ -8261,13 +8315,15 @@ function update(dt) {
           }
           continue;
         }
-        if (G.boost > .45 && o.kind !== 'wall' && o.kind !== 'truck') {
+        if (G.obstacleCrusher || (G.boost > .45 && o.kind !== 'wall' && o.kind !== 'truck')) {
           o.dead = true;
-          const smashPts = 150 + G.smashBonus;
+          const smashPts = G.obstacleCrusher ? (350 + G.smashBonus) : (150 + G.smashBonus);
           G.score += smashPts; bumpCombo(1);
-          burst(o.x, 1, o.z, 20, '#ff2fb9', 1.8); Sound.noise(.2, .35); Sound.blip(200, .12, 'square', .26);
-          addFloatingText(o.x, 1.8, o.z, '💥 ТАРАН! +' + smashPts, '#ff2fb9');
-          G.shake = 0.7;
+          burst(o.x, 1, o.z, 24, '#f59e0b', 2.0);
+          burst(o.x, 1, o.z, 14, '#ffffff', 1.6);
+          Sound.noise(.25, .35); Sound.blip(180, .14, 'square', .28);
+          addFloatingText(o.x, 1.8, o.z, '💥 ' + (G.obstacleCrusher ? 'PARCHALASH! +' : 'ТАРАН! +') + smashPts, '#f59e0b');
+          G.shake = 0.8;
           lessonEvent('avoid');
           continue;
         }
@@ -8398,6 +8454,18 @@ function update(dt) {
         Sound.chord([660, 880, 1100, 1320], .35, .20);
         toast('❤ +1 ЖИЗНЬ · СЕРДЦЕ ВОССТАНОВЛЕНО!', 2500);
         addFloatingText(o.x, 1.4, o.z, '❤ +1 ЖИЗНЬ', '#ff2b43');
+      } else if (o.kind === KIND.EMP || o.kind === 'emp_pickup') {
+        Sound.chord([440, 880, 1320], 0.35, 0.4);
+        Sound.noise(0.25, 0.3);
+        burst(o.x, 1.2, o.z, 24, '#00f5ff', 1.8);
+        burst(o.x, 1.2, o.z, 16, '#ffd166', 1.5);
+        toast('⚡ ЭМП-ЗАРЯД ЗАПУЩЕН! УДАР ПО БОССУ!', 2200);
+        addFloatingText(o.x, 1.6, o.z, '⚡ ЭМП ЗАПУСК!', '#00f5ff');
+        G.empFiring = {
+          x: G.x, y: 1.0, z: 0,
+          targetX: G.bossX || 0, targetY: 1.5, targetZ: G.bossZ || 18,
+          t: 0, dur: 0.32
+        };
       }
     }
   }
@@ -11833,8 +11901,56 @@ function drawPortalEntryEffect() {
     ctx.restore();
   }
 }
+function drawEmpPickup(o) {
+  if (o.z > 66) return;
+  drawGroundPatch(o);
+  const bob = Math.sin(G.t * 4.5 + o.z * 0.8) * 0.15;
+  const pos = [o.x, 0.95 + bob, o.z];
+  drawGlow(pos, '#00f5ff', 2.2);
+
+  proj(pos, _b);
+  if (!_b.vis) return;
+
+  ctx.save();
+  const s = _b.s;
+  const rot = G.t * 3.5;
+
+  ctx.strokeStyle = '#00f0ff';
+  ctx.lineWidth = Math.max(1.5, 2.5 * s);
+  ctx.beginPath();
+  ctx.arc(_b.x, _b.y, 18 * s, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#ffd166';
+  ctx.lineWidth = Math.max(1, 2 * s);
+  for (let i = 0; i < 4; i++) {
+    const a = rot + (i * Math.PI) / 2;
+    ctx.beginPath();
+    ctx.moveTo(_b.x + Math.cos(a) * 10 * s, _b.y + Math.sin(a) * 10 * s);
+    ctx.lineTo(_b.x + Math.cos(a) * 24 * s, _b.y + Math.sin(a) * 24 * s);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(_b.x, _b.y, 8 * s, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.font = '900 ' + Math.max(9, Math.round(11 * s)) + 'px ' + UIFONT;
+  ctx.fillStyle = '#00f0ff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('⚡ EMP', _b.x, _b.y - 20 * s);
+
+  ctx.restore();
+}
+
 function drawObj(o) {
   if (o.z > 66) return;
+  if (o.kind === 'emp_pickup') {
+    drawEmpPickup(o);
+    return;
+  }
   if (o.kind === 'portal_active') {
     drawPortalActive(o);
     return;
@@ -12356,9 +12472,21 @@ function menuStats() {
       UPGRADES.reduce(function (s, u) { return s + PERM.rankMax(u); }, 0) + ' уровень'],
     ['Кадры/с', G.fps + ' · качество: ' + qualLabel(G.quality).toLowerCase()]
   ].map(r => '<kbd>' + r[0] + '</kbd><span>' + r[1] + '</span>').join('');
-  $('#btnSnd').textContent = Sound.on ? 'ВКЛ' : 'ВЫКЛ';
-  $('#btnMus').textContent = Sound.musicOn ? 'ВКЛ' : 'ВЫКЛ';
-  $('#btnQual').textContent = qualLabel(G.quality);
+  const btnSnd = $('#btnSnd'), btnMus = $('#btnMus'), btnQual = $('#btnQual'), btnCtl = $('#btnCtl');
+  if (btnSnd) {
+    btnSnd.textContent = Sound.on ? 'ВКЛ' : 'ВЫКЛ';
+    btnSnd.classList.toggle('on', !!Sound.on);
+  }
+  if (btnMus) {
+    btnMus.textContent = Sound.musicOn ? 'ВКЛ' : 'ВЫКЛ';
+    btnMus.classList.toggle('on', !!Sound.musicOn);
+  }
+  if (btnQual) btnQual.textContent = qualLabel(G.quality);
+  if (btnCtl) {
+    const isTouch = document.body.classList.contains('touch');
+    btnCtl.textContent = isTouch ? 'КНОПКИ + СВАЙПЫ' : 'АВТОМАТИЧЕСКИ';
+    btnCtl.classList.toggle('on', isTouch);
+  }
   renderAcct();
   updateHomeCar();
 }
@@ -13443,23 +13571,36 @@ function renderMissions() {
     const pct = Math.min(100, Math.round((curVal / m.goal) * 100));
 
     let btnHtml = '';
+    let cardStatusClass = 'state-active';
+    let badgeHtml = '<span class="mission-badge active">В ПРОЦЕССЕ</span>';
+
     if (isClaimed) {
-      btnHtml = '<button class="claim-btn claimed" type="button" disabled>ВРУЧЕНО ✓</button>';
+      btnHtml = '<button class="claim-btn claimed" type="button" disabled><svg class="nr-icon nr-icon-xs" aria-hidden="true"><use href="#nr-ic-check"/></svg> ВРУЧЕНО ✓</button>';
+      cardStatusClass = 'claimed state-claimed';
+      badgeHtml = '<span class="mission-badge claimed">ВЫПОЛНЕНО</span>';
     } else if (isDone) {
-      btnHtml = '<button class="claim-btn ready" data-claim-mission="' + m.id + '" type="button">ЗАБРАТЬ</button>';
+      btnHtml = '<button class="claim-btn ready" data-claim-mission="' + m.id + '" type="button"><svg class="nr-icon nr-icon-xs" aria-hidden="true"><use href="#nr-ic-star"/></svg> ЗАБРАТЬ</button>';
+      cardStatusClass = 'done state-ready';
+      badgeHtml = '<span class="mission-badge ready">ГОТОВО</span>';
     } else {
       btnHtml = '<button class="claim-btn locked" type="button" disabled>' + curVal + ' / ' + m.goal + '</button>';
     }
 
-    return '<div class="mission-card' + (isDone ? ' done' : '') + '">' +
+    return '<div class="mission-card ' + cardStatusClass + '">' +
       '<div class="mission-icon">' + m.icon + '</div>' +
       '<div class="mission-info">' +
-        '<div class="mission-title">' + m.title + '</div>' +
+        '<div class="mission-top-row">' +
+          badgeHtml +
+          '<div class="mission-title">' + m.title + '</div>' +
+        '</div>' +
         '<div class="mission-desc">' + m.desc + '</div>' +
         '<div class="mission-bar-wrap"><div class="mission-bar" style="width:' + pct + '%"></div></div>' +
         '<div class="mission-meta">' +
-          '<span>ПРОГРЕСС: ' + curVal + ' / ' + m.goal + ' ' + m.unit + ' (' + pct + '%)</span>' +
-          '<div class="mission-rewards"><span>🪙 +' + m.rewardCoins + '</span><span>⭐ +' + m.rewardPts + '</span></div>' +
+          '<span>ПРОГРЕСС: ' + curVal + ' / ' + m.goal + ' ' + (m.unit || '') + ' (' + pct + '%)</span>' +
+          '<div class="mission-rewards">' +
+            '<span class="reward-tag coin"><svg class="nr-icon nr-icon-xs" aria-hidden="true"><use href="#nr-ic-coin"/></svg> +' + m.rewardCoins + '</span>' +
+            '<span class="reward-tag xp"><svg class="nr-icon nr-icon-xs" aria-hidden="true"><use href="#nr-ic-star"/></svg> +' + m.rewardPts + '</span>' +
+          '</div>' +
         '</div>' +
       '</div>' +
       btnHtml +
@@ -13493,28 +13634,41 @@ function renderAchievements() {
     const isClaimed = !!item.claimed;
     const pct = Math.min(100, Math.round((curVal / a.goal) * 100));
 
+    const tier = a.rewardPts >= 250 ? 'legendary' : a.rewardPts >= 150 ? 'gold' : a.rewardPts >= 75 ? 'silver' : 'bronze';
+    const tierName = tier === 'legendary' ? 'ЛЕГЕНДАРНОЕ' : tier === 'gold' ? 'ЗОЛОТО' : tier === 'silver' ? 'СЕРЕБРО' : 'БРОНЗА';
+
     let btnHtml = '';
-    let cardStatusClass = 'locked';
+    let cardStatusClass = 'locked state-active';
+    let badgeHtml = '<span class="achieve-tier-tag tier-' + tier + '">' + tierName + '</span>';
+
     if (isClaimed) {
-      btnHtml = '<button class="claim-btn claimed" type="button" disabled>ПОЛУЧЕНО ✓</button>';
-      cardStatusClass = 'claimed';
+      btnHtml = '<button class="claim-btn claimed" type="button" disabled><svg class="nr-icon nr-icon-xs" aria-hidden="true"><use href="#nr-ic-check"/></svg> ПОЛУЧЕНО ✓</button>';
+      cardStatusClass = 'claimed state-claimed';
+      badgeHtml += '<span class="mission-badge claimed">ВЫПОЛНЕНО</span>';
     } else if (isDone) {
-      btnHtml = '<button class="claim-btn ready" data-claim-achieve="' + a.id + '" type="button">ЗАБРАТЬ</button>';
-      cardStatusClass = 'done';
+      btnHtml = '<button class="claim-btn ready" data-claim-achieve="' + a.id + '" type="button"><svg class="nr-icon nr-icon-xs" aria-hidden="true"><use href="#nr-ic-trophy"/></svg> ЗАБРАТЬ</button>';
+      cardStatusClass = 'done state-ready';
+      badgeHtml += '<span class="mission-badge ready">ГОТОВО</span>';
     } else {
       btnHtml = '<button class="claim-btn locked" type="button" disabled>' + curVal + ' / ' + a.goal + '</button>';
-      cardStatusClass = 'locked';
+      badgeHtml += '<span class="mission-badge active">В ПРОЦЕССЕ</span>';
     }
 
-    return '<div class="mission-card ' + cardStatusClass + '">' +
-      '<div class="mission-icon">' + a.icon + '</div>' +
+    return '<div class="mission-card achieve-card tier-' + tier + ' ' + cardStatusClass + '">' +
+      '<div class="mission-icon achieve-halo tier-' + tier + '">' + a.icon + '</div>' +
       '<div class="mission-info">' +
-        '<div class="mission-title">' + a.title + '</div>' +
+        '<div class="mission-top-row">' +
+          badgeHtml +
+          '<div class="mission-title">' + a.title + '</div>' +
+        '</div>' +
         '<div class="mission-desc">' + a.desc + '</div>' +
         '<div class="mission-bar-wrap"><div class="mission-bar" style="width:' + pct + '%"></div></div>' +
         '<div class="mission-meta">' +
           '<span>ПРОГРЕСС: ' + curVal + ' / ' + a.goal + ' ' + (a.unit || '') + ' (' + pct + '%)</span>' +
-          '<div class="mission-rewards"><span>🪙 +' + a.rewardCoins + '</span><span>⭐ +' + a.rewardPts + '</span></div>' +
+          '<div class="mission-rewards">' +
+            '<span class="reward-tag coin"><svg class="nr-icon nr-icon-xs" aria-hidden="true"><use href="#nr-ic-coin"/></svg> +' + a.rewardCoins + '</span>' +
+            '<span class="reward-tag xp"><svg class="nr-icon nr-icon-xs" aria-hidden="true"><use href="#nr-ic-star"/></svg> +' + a.rewardPts + '</span>' +
+          '</div>' +
         '</div>' +
       '</div>' +
       btnHtml +

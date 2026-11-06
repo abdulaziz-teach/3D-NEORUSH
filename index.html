@@ -660,6 +660,31 @@ canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
   box-shadow:0 0 14px var(--c1-glow);
 }
 
+.tbtn.tbtn-cam{
+  height:32px;padding:0 8px;gap:5px;
+  background:linear-gradient(145deg, rgba(12,20,44,.9), rgba(6,10,24,.95));
+  border:1px solid rgba(0,240,255,.36);
+  border-radius:10px;
+  color:#00f0ff;
+  font-family:var(--font-heading, "Orbitron", sans-serif);
+  font-size:10.5px;font-weight:900;letter-spacing:.05em;
+  display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;pointer-events:auto;user-select:none;
+  box-shadow:0 4px 14px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1);
+  transition:all .18s ease;
+}
+.tbtn.tbtn-cam:hover{
+  background:rgba(0,240,255,.16);
+  border-color:#00f0ff;
+  box-shadow:0 0 12px var(--c1-glow);
+  transform:translateY(-1px);
+}
+.tbtn.tbtn-cam:active{
+  transform:scale(.94);
+  box-shadow:0 0 16px var(--c1-glow);
+}
+.tbtn.tbtn-cam svg{width:13px;height:13px;fill:currentColor}
+
 /* Power-up Bars (#powerRow) */
 #powerRow{
   position:absolute;
@@ -3960,6 +3985,12 @@ body.touch #touch{display:block}
 .boss-hud-sub{font-size:10px;font-weight:800;color:#ffd166;letter-spacing:.05em;margin-top:2px}
 .boss-hud-bar-wrap{width:100%;height:6px;background:rgba(0,0,0,.6);border:1px solid rgba(255,43,67,.4);border-radius:99px;margin-top:4px;overflow:hidden}
 .boss-hud-bar{height:100%;width:50%;background:linear-gradient(90deg,#7dff9b,#ffd166,#ff2b43);transition:width .2s ease}
+.boss-hud-hp-wrap{display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap;}
+.boss-hp-label{font-size:9.5px;font-weight:900;letter-spacing:.08em;color:#00f0ff;text-shadow:0 0 6px #00f0ff;}
+.boss-hp-cells{display:inline-flex;gap:4px;}
+.hp-cell{width:16px;height:7px;border-radius:2px;background:rgba(255,43,67,.2);border:1px solid rgba(255,43,67,.5);transition:all .2s ease;}
+.hp-cell.alive{background:#00f0ff;border-color:#00f0ff;box-shadow:0 0 8px #00f0ff;}
+.boss-emp-hint{font-size:9px;color:#a5f3fc;font-weight:700;margin-left:auto;}
 
 /* --- Drift & Checkpoint HUD --- */
 .drift-tag{position:absolute;top:32%;left:50%;transform:translate(-50%,-50%);padding:7px 18px;border-radius:99px;
@@ -3991,23 +4022,395 @@ body.touch #touch{display:block}
 .color-swatch-btn.to-buy{position:relative}
 .color-swatch-btn.to-buy::after{content:'';position:absolute;inset:2px;border:1.5px dashed rgba(255,255,255,.65);border-radius:50%}
 
-/* --- Missions & Achievements Cards --- */
-.mission-card{display:flex;align-items:center;gap:12px;background:rgba(12,18,40,.82);border:1px solid rgba(111,158,229,.25);border-radius:14px;padding:12px 14px;margin-bottom:8px;text-align:left}
-.mission-card.done{border-color:rgba(125,255,155,.45);background:rgba(125,255,155,.08)}
-.mission-icon{font-size:26px;width:34px;text-align:center;flex-shrink:0}
-.mission-info{flex:1;min-width:0}
-.mission-title{font-size:13px;font-weight:900;color:#fff;letter-spacing:.04em}
-.mission-desc{font-size:11px;color:#94a3b8;margin-top:2px}
-.mission-bar-wrap{height:6px;border-radius:99px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);margin-top:6px;overflow:hidden}
-.mission-bar{height:100%;width:0;background:linear-gradient(90deg,#00e5ff,#7dff9b);transition:width .3s}
-.mission-meta{display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:10px;font-weight:800;color:#7fe9ff}
-.mission-rewards{display:flex;gap:8px;font-size:11px;font-weight:900;color:#ffd166}
-.claim-btn{padding:8px 14px;border-radius:10px;font-size:11px;font-weight:900;letter-spacing:.08em;cursor:pointer;border:none;flex-shrink:0;transition:.15s}
-.claim-btn.ready{background:linear-gradient(135deg,#ffe600,#ff9a3d);color:#080e18;box-shadow:0 0 15px rgba(255,209,102,.5)}
-.claim-btn.ready:hover{transform:scale(1.05)}
-.claim-btn.claimed{background:rgba(125,255,155,.12);color:#7dff9b;border:1px solid rgba(125,255,155,.3);cursor:default}
-.claim-btn.locked{background:rgba(255,255,255,.05);color:#64748b;cursor:not-allowed}
-.mission-card.claimed{opacity:.82;border-color:rgba(125,255,155,.25)}
+/* --- Missions, Achievements & Settings Redesign (Stage 6) --- */
+.mission-card{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  background:linear-gradient(135deg,rgba(15,22,48,.88),rgba(8,12,30,.94));
+  border:1px solid rgba(0,229,255,.18);
+  border-radius:14px;
+  padding:14px 16px;
+  margin-bottom:10px;
+  text-align:left;
+  transition:border-color .2s ease,box-shadow .2s ease,transform .15s ease;
+  box-shadow:0 4px 18px rgba(0,0,0,.32);
+}
+.mission-card:hover{
+  border-color:rgba(0,229,255,.35);
+}
+.mission-card.done, .mission-card.state-ready{
+  border-color:rgba(255,209,102,.45);
+  background:linear-gradient(135deg,rgba(26,28,40,.92),rgba(18,16,32,.96));
+  box-shadow:0 4px 22px rgba(255,209,102,.12);
+}
+.mission-card.claimed, .mission-card.state-claimed{
+  opacity:.82;
+  border-color:rgba(125,255,155,.25);
+  background:linear-gradient(135deg,rgba(12,24,32,.78),rgba(8,16,24,.85));
+}
+.mission-icon{
+  font-size:24px;
+  width:44px;
+  height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.45);
+  border:1px solid rgba(0,229,255,.2);
+  border-radius:12px;
+  flex-shrink:0;
+  box-shadow:inset 0 0 12px rgba(0,229,255,.08);
+}
+.mission-card.state-ready .mission-icon{
+  border-color:rgba(255,209,102,.4);
+  box-shadow:inset 0 0 12px rgba(255,209,102,.15);
+}
+.mission-card.state-claimed .mission-icon{
+  border-color:rgba(125,255,155,.3);
+  box-shadow:inset 0 0 12px rgba(125,255,155,.1);
+}
+.mission-info{
+  flex:1;
+  min-width:0;
+}
+.mission-top-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:3px;
+  flex-wrap:wrap;
+}
+.mission-badge{
+  font-size:9.5px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:2px 7px;
+  border-radius:6px;
+  line-height:1.2;
+}
+.mission-badge.active{
+  background:rgba(0,229,255,.12);
+  color:#00e5ff;
+  border:1px solid rgba(0,229,255,.3);
+}
+.mission-badge.ready{
+  background:rgba(255,209,102,.15);
+  color:#ffd166;
+  border:1px solid rgba(255,209,102,.4);
+}
+.mission-badge.claimed{
+  background:rgba(125,255,155,.12);
+  color:#7dff9b;
+  border:1px solid rgba(125,255,155,.3);
+}
+.mission-title{
+  font-size:13.5px;
+  font-weight:900;
+  color:#fff;
+  letter-spacing:.04em;
+}
+.mission-desc{
+  font-size:11.5px;
+  color:#94a3b8;
+  margin-top:2px;
+  line-height:1.35;
+}
+.mission-bar-wrap{
+  height:7px;
+  border-radius:99px;
+  background:rgba(0,0,0,.6);
+  border:1px solid rgba(255,255,255,.12);
+  margin-top:8px;
+  overflow:hidden;
+}
+.mission-bar{
+  height:100%;
+  width:0;
+  background:linear-gradient(90deg,#00e5ff,#7dff9b);
+  box-shadow:0 0 10px rgba(0,229,255,.5);
+  transition:width .3s ease;
+}
+.mission-card.state-ready .mission-bar{
+  background:linear-gradient(90deg,#ffd166,#ff9a3d);
+  box-shadow:0 0 10px rgba(255,209,102,.5);
+}
+.mission-meta{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:6px;
+  font-size:10.5px;
+  font-weight:800;
+  color:#7fe9ff;
+}
+.mission-rewards{
+  display:flex;
+  gap:8px;
+  font-size:11px;
+  font-weight:900;
+  align-items:center;
+}
+.reward-tag{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:2px 7px;
+  border-radius:6px;
+  font-weight:900;
+  font-size:11px;
+}
+.reward-tag.coin{
+  background:rgba(255,209,102,.12);
+  color:#ffd166;
+  border:1px solid rgba(255,209,102,.25);
+}
+.reward-tag.xp{
+  background:rgba(125,255,155,.12);
+  color:#7dff9b;
+  border:1px solid rgba(125,255,155,.25);
+}
+.claim-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:9px 16px;
+  border-radius:10px;
+  font-size:11.5px;
+  font-weight:900;
+  letter-spacing:.08em;
+  cursor:pointer;
+  border:none;
+  flex-shrink:0;
+  min-height:40px;
+  min-width:110px;
+  transition:all .18s ease;
+}
+.claim-btn.ready{
+  background:linear-gradient(135deg,#ffe600,#ff9a3d);
+  color:#080e18;
+  box-shadow:0 0 18px rgba(255,209,102,.55);
+}
+.claim-btn.ready:hover{
+  transform:translateY(-1px) scale(1.03);
+  box-shadow:0 0 24px rgba(255,209,102,.7);
+}
+.claim-btn.claimed{
+  background:rgba(125,255,155,.12);
+  color:#7dff9b;
+  border:1px solid rgba(125,255,155,.3);
+  cursor:default;
+}
+.claim-btn.locked{
+  background:rgba(255,255,255,.06);
+  color:#64748b;
+  border:1px solid rgba(255,255,255,.08);
+  cursor:not-allowed;
+}
+
+/* --- Career Achievements Specialization --- */
+.achieve-card{
+  background:linear-gradient(135deg,rgba(16,22,46,.9),rgba(9,13,32,.95));
+  border:1px solid rgba(111,158,229,.25);
+}
+.achieve-halo.tier-bronze{
+  border-color:rgba(205,127,50,.45);
+  background:rgba(205,127,50,.1);
+  box-shadow:inset 0 0 14px rgba(205,127,50,.2);
+}
+.achieve-halo.tier-silver{
+  border-color:rgba(192,208,224,.5);
+  background:rgba(192,208,224,.1);
+  box-shadow:inset 0 0 14px rgba(192,208,224,.2);
+}
+.achieve-halo.tier-gold{
+  border-color:rgba(255,215,0,.5);
+  background:rgba(255,215,0,.12);
+  box-shadow:inset 0 0 14px rgba(255,215,0,.25);
+}
+.achieve-halo.tier-legendary{
+  border-color:rgba(217,70,239,.55);
+  background:rgba(217,70,239,.12);
+  box-shadow:inset 0 0 14px rgba(217,70,239,.25);
+}
+.achieve-tier-tag{
+  font-size:9.5px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:2px 7px;
+  border-radius:6px;
+  line-height:1.2;
+}
+.achieve-tier-tag.tier-bronze{
+  background:rgba(205,127,50,.15);
+  color:#e6a16d;
+  border:1px solid rgba(205,127,50,.35);
+}
+.achieve-tier-tag.tier-silver{
+  background:rgba(192,208,224,.15);
+  color:#e2e8f0;
+  border:1px solid rgba(192,208,224,.35);
+}
+.achieve-tier-tag.tier-gold{
+  background:rgba(255,215,0,.15);
+  color:#ffd166;
+  border:1px solid rgba(255,215,0,.4);
+}
+.achieve-tier-tag.tier-legendary{
+  background:rgba(217,70,239,.15);
+  color:#f0abfc;
+  border:1px solid rgba(217,70,239,.4);
+}
+
+/* --- Settings Panel (Stage 6) --- */
+.settings-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  text-align:left;
+}
+.settings-group{
+  background:linear-gradient(135deg,rgba(15,22,46,.85),rgba(8,12,30,.92));
+  border:1px solid rgba(0,229,255,.18);
+  border-radius:14px;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  box-shadow:0 4px 18px rgba(0,0,0,.3);
+}
+.settings-group-header{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  padding-bottom:10px;
+}
+.settings-group-header .nr-icon{
+  color:#00e5ff;
+}
+.settings-group-header h4{
+  margin:0;
+  font-size:12.5px;
+  font-weight:900;
+  letter-spacing:.08em;
+  color:#fff;
+  text-transform:uppercase;
+}
+.settings-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:4px 0;
+}
+.settings-label-wrap{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+}
+.settings-label{
+  font-size:13px;
+  font-weight:800;
+  color:#e2e8f0;
+  letter-spacing:.02em;
+}
+.settings-sub{
+  font-size:11px;
+  color:#64748b;
+  line-height:1.3;
+}
+.settings-toggle-btn{
+  min-width:82px;
+  min-height:38px;
+  padding:7px 14px;
+  border-radius:10px;
+  font-size:11.5px;
+  font-weight:900;
+  letter-spacing:.08em;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);
+  color:#94a3b8;
+  transition:all .18s ease;
+  flex-shrink:0;
+  text-align:center;
+}
+.settings-toggle-btn.on{
+  background:linear-gradient(135deg,rgba(0,229,255,.25),rgba(0,180,255,.15));
+  border-color:#00e5ff;
+  color:#00e5ff;
+  box-shadow:0 0 14px rgba(0,229,255,.35);
+}
+.settings-cycle-btn{
+  min-width:130px;
+  min-height:38px;
+  padding:7px 14px;
+  border-radius:10px;
+  font-size:11.5px;
+  font-weight:900;
+  letter-spacing:.06em;
+  cursor:pointer;
+  border:1px solid rgba(0,229,255,.25);
+  background:rgba(0,229,255,.1);
+  color:#7fe9ff;
+  transition:all .18s ease;
+  flex-shrink:0;
+  text-align:center;
+}
+.settings-cycle-btn:hover{
+  border-color:#00e5ff;
+  background:rgba(0,229,255,.18);
+  box-shadow:0 0 14px rgba(0,229,255,.3);
+}
+.settings-action-btn{
+  min-width:120px;
+  min-height:38px;
+  padding:7px 14px;
+  border-radius:10px;
+  font-size:11.5px;
+  font-weight:900;
+  letter-spacing:.06em;
+  cursor:pointer;
+  border:1px solid rgba(255,209,102,.35);
+  background:rgba(255,209,102,.12);
+  color:#ffd166;
+  transition:all .18s ease;
+  flex-shrink:0;
+  text-align:center;
+}
+.settings-action-btn:hover{
+  background:rgba(255,209,102,.22);
+  box-shadow:0 0 14px rgba(255,209,102,.35);
+}
+.settings-footer-info{
+  margin-top:6px;
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.06);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.sys-badge{
+  font-size:9.5px;
+  font-weight:900;
+  letter-spacing:.08em;
+  padding:2px 7px;
+  border-radius:5px;
+  background:rgba(125,255,155,.12);
+  color:#7dff9b;
+  border:1px solid rgba(125,255,155,.3);
+}
+.sys-note{
+  font-size:11px;
+  color:#64748b;
+}
 
 /* --- Modals --- */
 .modal-overlay{position:fixed;inset:0;background:rgba(3,5,14,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;pointer-events:auto}
@@ -4488,6 +4891,18 @@ body.qual-low #fx{display:none}
   .intro-btn-learn,.intro-btn-skip{width:100%;min-width:0;padding:12px 14px;box-sizing:border-box}
 }
 
+
+@media(max-width:768px){
+  .settings-grid{grid-template-columns:1fr;gap:10px}
+  .mission-card{padding:12px 14px}
+}
+@media(max-width:480px){
+  .settings-row{flex-direction:column;align-items:flex-start;gap:8px}
+  .settings-toggle-btn, .settings-cycle-btn, .settings-action-btn{width:100%}
+  .mission-card{flex-wrap:wrap;gap:10px;padding:12px}
+  .mission-info{width:calc(100% - 58px)}
+  .claim-btn{width:100%;margin-top:4px}
+}
 </style>
 </head>
 <body>
@@ -4611,6 +5026,35 @@ body.qual-low #fx{display:none}
       <path d="M4 17c3-3 7-5 13-5h3M4 12c3-3 6-4 12-4h4M7 6h13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
       <circle cx="5" cy="17" r="1.5" fill="currentColor"/>
     </symbol>
+  
+    <!-- Coin / Credits -->
+    <symbol id="nr-ic-coin" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="1.2"/>
+      <polygon points="12,7 13.5,10.5 17,12 13.5,13.5 12,17 10.5,13.5 7,12 10.5,10.5" fill="currentColor"/>
+    </symbol>
+    <!-- Sound FX / Volume -->
+    <symbol id="nr-ic-volume" viewBox="0 0 24 24">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <!-- Music / Melody -->
+    <symbol id="nr-ic-music" viewBox="0 0 24 24">
+      <path d="M9 18V5l12-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="6" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="18" cy="16" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+    </symbol>
+    <!-- Display / Monitor -->
+    <symbol id="nr-ic-display" viewBox="0 0 24 24">
+      <rect x="2" y="3" width="20" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+      <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <!-- Mobile / Phone Controls -->
+    <symbol id="nr-ic-phone" viewBox="0 0 24 24">
+      <rect x="5" y="2" width="14" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+      <line x1="12" y1="18" x2="12.01" y2="18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+    </symbol>
   </defs>
 </svg>
 <div id="stage">
@@ -4661,6 +5105,7 @@ body.qual-low #fx{display:none}
         <div class="stat-col">
           <div class="stat-top-row">
             <div id="lives" title="Жизни"></div>
+            <button class="tbtn tbtn-cam" id="btnCamMode" type="button" aria-label="Kamera rejimini almashtirish (C)" title="Kamera (C)"><svg class="nr-icon nr-icon-xs" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg><span id="camModeLabel">3P</span></button>
             <button class="tbtn tbtn-pause" id="tP" type="button" aria-label="Пауза" title="Пауза"><svg class="nr-icon nr-icon-xs" aria-hidden="true"><use href="#nr-ic-pause"/></svg></button>
           </div>
           <div class="stat right"><small>МОНЕТЫ</small><b id="coins">0</b></div>
@@ -4721,6 +5166,15 @@ body.qual-low #fx{display:none}
           <div class="boss-hud-title" id="bossTitle">БОСС-ПОГОНЯ: ПЕРЕХВАТЧИК</div>
           <div class="boss-hud-sub" id="bossSub">ДИСТАНЦИЯ: 18 М · ВРЕМЯ: 22 С</div>
           <div class="boss-hud-bar-wrap"><div class="boss-hud-bar" id="bossBar"></div></div>
+          <div class="boss-hud-hp-wrap" id="bossHpWrap">
+            <span class="boss-hp-label">⚡ EMP ZAIFLIK:</span>
+            <div class="boss-hp-cells" id="bossHpCells">
+              <span class="hp-cell alive"></span>
+              <span class="hp-cell alive"></span>
+              <span class="hp-cell alive"></span>
+            </div>
+            <span class="boss-emp-hint">⚡ Yo'ldagi EMP kapsulasini oling!</span>
+          </div>
         </div>
       </div>
     </div>
@@ -5045,20 +5499,87 @@ body.qual-low #fx{display:none}
       <div class="keys" id="statList"></div>
     </div>
     <div class="card-plate hidden" id="tabSet">
-      <div class="row" style="justify-content:space-between">
-        <span style="font-size:13px;color:#a9d9ef">Звук / музыка</span>
-        <div class="row"><button class="btn sm ghost" id="btnSnd">ЗВУК</button><button class="btn sm ghost" id="btnMus">МУЗЫКА</button></div>
+      <div class="inventory-heading">
+        <div>
+          <span class="eyebrow">КОНФИГУРАЦИЯ СИСТЕМЫ</span>
+          <h3>НАСТРОЙКИ ИГРЫ</h3>
+        </div>
+        <span class="inventory-count">NEORUSH v2.0</span>
       </div>
-      <div class="row" style="justify-content:space-between;margin-top:10px">
-        <span style="font-size:13px;color:#a9d9ef">Графика</span>
-        <div class="row"><button class="btn sm ghost" id="btnQual">Высокая</button></div>
+      <p class="sub" style="text-align:left;margin-bottom:16px;font-size:12px">Параметры звука, производительности и интерфейса. Настройки сохраняются автоматически.</p>
+
+      <div class="settings-grid">
+        <!-- 1. AUDIO SECTION -->
+        <div class="settings-group">
+          <div class="settings-group-header">
+            <svg class="nr-icon nr-icon-sm" aria-hidden="true"><use href="#nr-ic-volume"/></svg>
+            <h4>ЗВУК И МУЗЫКА</h4>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label-wrap">
+              <span class="settings-label">Звуковые эффекты</span>
+              <span class="settings-sub">Рев мотора, нитро, щит и сбор бонусов</span>
+            </div>
+            <button class="settings-toggle-btn" id="btnSnd" type="button" aria-label="Переключить звук">ВКЛ</button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label-wrap">
+              <span class="settings-label">Музыкальное сопровождение</span>
+              <span class="settings-sub">Синтвейв саундтрек заезда</span>
+            </div>
+            <button class="settings-toggle-btn" id="btnMus" type="button" aria-label="Переключить музыку">ВКЛ</button>
+          </div>
+        </div>
+
+        <!-- 2. GRAPHICS & PERFORMANCE SECTION -->
+        <div class="settings-group">
+          <div class="settings-group-header">
+            <svg class="nr-icon nr-icon-sm" aria-hidden="true"><use href="#nr-ic-display"/></svg>
+            <h4>ГРАФИКА И ПРОИЗВОДИТЕЛЬНОСТЬ</h4>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label-wrap">
+              <span class="settings-label">Качество графики</span>
+              <span class="settings-sub">Тени, частицы и дальность прорисовки</span>
+            </div>
+            <button class="settings-cycle-btn" id="btnQual" type="button" aria-label="Сменить качество графики">Высокая</button>
+          </div>
+        </div>
+
+        <!-- 3. CONTROLS SECTION -->
+        <div class="settings-group">
+          <div class="settings-group-header">
+            <svg class="nr-icon nr-icon-sm" aria-hidden="true"><use href="#nr-ic-phone"/></svg>
+            <h4>УПРАВЛЕНИЕ</h4>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label-wrap">
+              <span class="settings-label">Сенсорный режим</span>
+              <span class="settings-sub">Экранные кнопки и жестовые свайпы</span>
+            </div>
+            <button class="settings-cycle-btn" id="btnCtl" type="button" aria-label="Переключить управление">Кнопки + свайпы</button>
+          </div>
+        </div>
+
+        <!-- 4. SYSTEM & TUTORIAL SECTION -->
+        <div class="settings-group">
+          <div class="settings-group-header">
+            <svg class="nr-icon nr-icon-sm" aria-hidden="true"><use href="#nr-ic-zap"/></svg>
+            <h4>ОБУЧЕНИЕ И СИСТЕМА</h4>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label-wrap">
+              <span class="settings-label">Курс пилота</span>
+              <span class="settings-sub">Пройти интерактивное обучение заново</span>
+            </div>
+            <button class="settings-action-btn" id="btnTut" type="button">▶ ОБУЧЕНИЕ</button>
+          </div>
+          <div class="settings-footer-info">
+            <span class="sys-badge">АВТОНОМНЫЙ РЕЖИМ</span>
+            <span class="sys-note">Локальное сохранение данных (localStorage) активно. Прогресс защищен.</span>
+          </div>
+        </div>
       </div>
-      <div class="row" style="justify-content:space-between;margin-top:10px">
-        <span style="font-size:13px;color:#a9d9ef">Управление на телефоне</span>
-        <div class="row"><button class="btn sm ghost" id="btnCtl">Кнопки + свайпы</button></div>
-      </div>
-      <div class="row" style="margin-top:10px"><button class="btn sm ghost" id="btnTut">▶ ПОВТОРИТЬ ОБУЧЕНИЕ</button></div>
-      <p class="sub" style="text-align:center;margin-top:10px;font-size:12px">Yandex Games: без SDK игра работает автономно.</p>
     </div>
     </div>
   </section>

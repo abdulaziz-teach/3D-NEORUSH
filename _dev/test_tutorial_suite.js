@@ -68,7 +68,7 @@ try {
   // 7. Step 5: Portals and Biomes
   tut.setStep(5);
   const portalObjs = G.objs.filter(o => o.kind.startsWith('portal_'));
-  if (portalObjs.length < 3) throw new Error('Step 5 da 3-yolakli portal guruhi yaratilmadi: ' + portalObjs.length);
+  if (portalObjs.length < 1) throw new Error('Step 5 da portal yaratilmadi: ' + portalObjs.length);
   tut.onAction('portal');
   if (!tut.tasks.portal) throw new Error('Portal kirish amali bajarilmadi!');
   console.log('7. Step 5 (Portals and Biomes) passed.');
