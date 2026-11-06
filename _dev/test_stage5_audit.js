@@ -27,7 +27,7 @@ function it(desc, fn) {
 console.log('--- STAGE 5 AUDIT & VERIFICATION SUITE ---');
 
 const gameSrc = fs.readFileSync('game.js', 'utf8');
-const htmlSrc = fs.readFileSync('index.html', 'utf8');
+const htmlSrc = fs.readFileSync('index.html', 'utf8').replace(/\r\n/g, '\n');
 
 // Section 1: HUD PLUS Distinction
 it('1.1: updateHUD toggles MAGNET+ label and plus-active class', () => {
