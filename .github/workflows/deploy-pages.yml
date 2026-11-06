@@ -31,6 +31,9 @@ jobs:
         run: |
           mkdir _site
           cp index.html game.js _site/
+          cp -r images _site/
+          if [ -d "vendor" ]; then cp -r vendor _site/; fi
+          if [ -f "three_engine.js" ]; then cp three_engine.js _site/; fi
       - name: Upload game
         uses: actions/upload-pages-artifact@v3
         with:
